@@ -1,0 +1,100 @@
+/* Legacy shell base layer extracted from trust-framework.html.
+   Owns resets, document-level typography, and accessibility utilities. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ff-body);
+  font-kerning: normal;
+  color: var(--ut-text);
+  background: var(--ut-grey);
+  overflow: hidden;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: var(--ut-darkblue);
+  color: #fff;
+  padding: 8px 16px;
+  z-index: 50;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 0 0 2px 0;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.shell-focus-anchor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.shell-focus-anchor:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0 12px;
+  clip: auto;
+  clip-path: none;
+  overflow: visible;
+  white-space: normal;
+}
+
+p,
+li {
+  color: var(--ut-text);
+  line-height: var(--lh-body);
+  font-size: var(--text-body);
+}
+
+.doc-section p,
+.form-section p {
+  max-width: 72ch;
+}
+
+ul,
+ol {
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.muted {
+  color: var(--ut-muted);
+}
+
+.small {
+  font-size: var(--text-body);
+}

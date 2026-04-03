@@ -1,0 +1,2626 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TRUST Framework</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <style id="legacyInlineShellStyles" data-future-split="static/css/tokens.css static/css/base.css static/css/layout.css static/css/components.css static/css/states.css static/css/print.css">
+    :root {
+      /* Primary color -- canonical token */
+      --ut-primary: #002c5f;
+      --ut-navy: var(--ut-primary);
+      --ut-darkblue: var(--ut-primary);
+      --ut-blue: #007d9c;
+      --ut-red: #c60c30;
+      --ut-green: #4a8355;
+      --ut-purple: #4f2d7f;
+      --ut-pink: #cf0072;
+      --ut-grey: #f0f1f2;
+
+      --ut-offwhite: #f0f1f2;
+      --ut-border: #c8cdd3;
+      --ut-text: #172033;
+      --ut-muted: #5B6474;
+
+      /* Panel-specific backgrounds */
+      --ut-panel-bg: #eef0f2;
+      --ut-white: #fff;
+
+      --tr: #2563EB;
+      --re: #16A34A;
+      --uc: #9333EA;
+      --se: #EA580C;
+      --tc: #0D9488;
+      --section-default: #64748B;
+
+      /* Score-level semantic colors */
+      --score-0: #c60c30;   /* Fails -- reuses --ut-red */
+      --score-1: #EA580C;   /* Partial -- reuses --se */
+      --score-2: #007d9c;   /* Meets baseline -- reuses --ut-blue */
+      --score-3: #4a8355;   /* Strong -- activates --ut-green */
+
+      /* Darkened variants for WCAG AA compliance on white-text nav buttons */
+      --se-dark: #c2410c;
+      --tc-dark: #0f766e;
+
+      /* Tokenize hardcoded slate */
+      --ut-slate: #94A3B8;
+
+      --header-h: 138px;
+
+      /* Type scale -- 5 steps, ~1.15-1.2 ratio */
+      --text-xs: 0.75rem;       /* 12px -- tags, sub-labels, micro-text */
+      --text-sm: 0.8125rem;     /* 13px -- kickers, chips, table headers, field labels */
+      --text-body: 0.9375rem;   /* 15px -- body text, list items, descriptions, mock controls, field help */
+      --text-sub: 1.0625rem;    /* 17px -- h3, h4, subheadings, criterion titles */
+      --text-heading: 1.1875rem;/* 19px -- h2 section headings (fixed, not fluid) */
+
+      /* Line heights */
+      --lh-body: 1.55;
+      --lh-heading: 1.2;
+
+      /* Letter spacing */
+      --ls-heading: -0.01em;
+      --ls-body: 0;
+      --ls-label: 0.02em;
+      --ls-uppercase: 0.04em;
+      --ls-kicker: 0.08em;
+      --ls-panel-title: 0.12em;
+
+      --radius-lg: 0px;
+      --radius-md: 2px;
+      --radius-sm: 1px;
+
+      --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+      --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+      --duration-instant: 100ms;
+      --duration-fast: 150ms;
+      --duration-normal: 200ms;
+
+      /* Font-family tokens */
+      --ff-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+      --ff-heading: "Arial Narrow", Arial, sans-serif;
+      --ff-mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      :root {
+        --duration-instant: 0ms;
+        --duration-fast: 0ms;
+        --duration-normal: 0ms;
+      }
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0ms !important;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--ff-body);
+      font-kerning: normal;
+      color: var(--ut-text);
+      background: var(--ut-grey);
+      overflow: hidden;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 0;
+      background: var(--ut-darkblue);
+      color: #fff;
+      padding: 8px 16px;
+      z-index: 50;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 0 0 2px 0;
+    }
+    .skip-link:focus {
+      top: 6px;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .shell-focus-anchor {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .shell-focus-anchor:focus {
+      position: static;
+      width: auto;
+      height: auto;
+      margin: 0 0 12px;
+      clip: auto;
+      clip-path: none;
+      overflow: visible;
+      white-space: normal;
+    }
+
+    .top-accent {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: 6px;
+      background: var(--ut-red);
+      z-index: 30;
+    }
+
+    .site-header {
+      position: fixed;
+      inset: 6px 0 auto 0;
+      z-index: 25;
+      background: var(--ut-white);
+      border-bottom: 2px solid var(--ut-border);
+      /* OPT-04: box-shadow removed -- border-bottom already provides visual separation */
+    }
+
+    .header-inner {
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 16px 24px 14px;
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 320px;
+    }
+
+    .logo-dept {
+      flex: 0 0 auto;
+      border-radius: 2px;
+    }
+
+    .brand-logos {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .trust-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 0 0 auto;
+    }
+
+    .brand-logos .logo-trust {
+      flex: 0 0 auto;
+    }
+
+    .brand-sep {
+      color: var(--ut-border);
+      font-size: 1.1rem;
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .trust-label p {
+      margin: 4px 0 0;
+      color: var(--ut-muted);
+      font-size: var(--text-sm);
+      font-family: var(--ff-heading);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: center;
+      width: 100%;
+    }
+
+    .top-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      position: relative;
+      justify-content: flex-end;
+    }
+
+    .completion-strip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border: 1px solid var(--ut-border);
+      border-radius: 2px;
+      background: var(--ut-white);
+      flex: 0 0 auto;
+    }
+
+    .strip-cell {
+      width: 28px;
+      height: 20px;
+      border: 1px solid var(--ut-border);
+      border-radius: 1px;
+      background: var(--ut-offwhite);
+      transition: background var(--duration-fast) var(--ease-out-quart),
+                  border-color var(--duration-fast) var(--ease-out-quart);
+    }
+
+    .strip-cell.filled.tr { background: rgba(37,99,235,0.30); border-color: var(--tr); }
+    .strip-cell.filled.re { background: rgba(22,163,74,0.30); border-color: var(--re); }
+    .strip-cell.filled.uc { background: rgba(147,51,234,0.30); border-color: var(--uc); }
+    .strip-cell.filled.se { background: rgba(234,88,12,0.30); border-color: var(--se); }
+    .strip-cell.filled.tc { background: rgba(13,148,136,0.30); border-color: var(--tc); }
+
+    .strip-cell:hover {
+      border-color: var(--ut-darkblue);
+    }
+
+    .strip-cell.just-filled {
+      animation: cellFill 200ms var(--ease-out-quint);
+    }
+    @keyframes cellFill {
+      0%   { transform: scale(0.85); }
+      100% { transform: scale(1); }
+    }
+
+    .nav-button {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      border: 1px solid var(--ut-border);
+      background: var(--ut-white);
+      color: var(--ut-navy);
+      padding: 10px 18px;
+      border-radius: 2px;
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-family: var(--ff-heading);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background var(--duration-fast) var(--ease-out-quart),
+                  color var(--duration-fast) var(--ease-out-quart),
+                  border-color var(--duration-fast) var(--ease-out-quart),
+                  box-shadow var(--duration-fast) var(--ease-out-quart);
+    }
+
+    .nav-button:focus-visible {
+      outline: 2px solid var(--ut-blue);
+      outline-offset: 2px;
+    }
+
+    .nav-button:hover {
+      background: var(--ut-grey);
+      border-color: var(--ut-darkblue);
+    }
+
+    .nav-button:active {
+      filter: brightness(0.92);
+    }
+
+    .nav-button.active {
+      color: #fff;
+      box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-button.active[data-target="tr"] { background: var(--tr); border-color: var(--tr); }
+    .nav-button.active[data-target="re"] { background: var(--re); border-color: var(--re); }
+    .nav-button.active[data-target="uc"] { background: var(--uc); border-color: var(--uc); }
+    .nav-button.active[data-target="se"] { background: var(--se-dark); border-color: var(--se-dark); }
+    .nav-button.active[data-target="tc"] { background: var(--tc-dark); border-color: var(--tc-dark); }
+
+    .nav-indicator {
+      position: absolute;
+      bottom: 0;
+      height: 3px;
+      background: var(--ut-red);
+      transition: left var(--duration-normal) var(--ease-out-quart),
+                  width var(--duration-normal) var(--ease-out-quart);
+    }
+
+    .panel-progress {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      height: 3px;
+      background: rgba(0, 125, 156, 0.08);
+    }
+
+    .panel-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--ut-blue);
+      will-change: width;
+      transition: width var(--duration-normal) var(--ease-out-quart);
+    }
+
+    .split-layout {
+      position: fixed;
+      inset: var(--header-h) 0 0 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .panel {
+      min-width: 0;
+      height: calc(100vh - var(--header-h));
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+
+    .framework-panel {
+      background: var(--ut-panel-bg);
+      border-right: 3px solid var(--ut-border);
+    }
+
+    .questionnaire-panel {
+      background: var(--ut-white);
+    }
+
+    .panel-inner {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 20px 20px 48px;
+    }
+
+    .panel-title {
+      margin: 0 0 16px;
+      color: var(--ut-navy);
+      font-size: var(--text-body);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 800;
+      font-family: var(--ff-heading);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--ut-border);
+    }
+
+    .panel-title-section {
+      color: var(--ut-muted);
+      font-weight: 400;
+      margin-left: 4px;
+      transition: color var(--duration-normal) var(--ease-out-quart);
+    }
+
+    .panel-title-section.tr { color: var(--tr); }
+    .panel-title-section.re { color: var(--re); }
+    .panel-title-section.uc { color: var(--uc); }
+    .panel-title-section.se { color: var(--se); }
+    .panel-title-section.tc { color: var(--tc); }
+
+    .doc-section,
+    .form-section {
+      position: relative;
+      margin: 0 0 16px;
+      background: var(--ut-white);
+      border: 1px solid var(--ut-border);
+      border-left: 6px solid var(--section-default);
+      border-radius: 0;
+      padding: 18px 20px;
+      scroll-margin-top: 22px;
+      transition: border-left-color var(--duration-fast) var(--ease-out-quart);
+      opacity: 0;
+      animation: sectionEnter 120ms var(--ease-out-quart) forwards;
+    }
+
+    @keyframes sectionEnter {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .doc-section.is-active,
+    .form-section.is-active {
+      background: rgba(0, 44, 95, 0.03);
+      border-left-width: 8px;
+      border-color: rgba(0, 44, 95, 0.12);
+    }
+
+    .doc-section.is-active[data-section="tr"],
+    .form-section.is-active[data-section="tr"] {
+      border-top-color: rgba(37, 99, 235, 0.10);
+      border-right-color: rgba(37, 99, 235, 0.10);
+      border-bottom-color: rgba(37, 99, 235, 0.10);
+      border-left-color: var(--tr);
+    }
+    .doc-section.is-active[data-section="re"],
+    .form-section.is-active[data-section="re"] {
+      border-top-color: rgba(22, 163, 74, 0.10);
+      border-right-color: rgba(22, 163, 74, 0.10);
+      border-bottom-color: rgba(22, 163, 74, 0.10);
+      border-left-color: var(--re);
+    }
+    .doc-section.is-active[data-section="uc"],
+    .form-section.is-active[data-section="uc"] {
+      border-top-color: rgba(147, 51, 234, 0.10);
+      border-right-color: rgba(147, 51, 234, 0.10);
+      border-bottom-color: rgba(147, 51, 234, 0.10);
+      border-left-color: var(--uc);
+    }
+    .doc-section.is-active[data-section="se"],
+    .form-section.is-active[data-section="se"] {
+      border-top-color: rgba(234, 88, 12, 0.10);
+      border-right-color: rgba(234, 88, 12, 0.10);
+      border-bottom-color: rgba(234, 88, 12, 0.10);
+      border-left-color: var(--se);
+    }
+    .doc-section.is-active[data-section="tc"],
+    .form-section.is-active[data-section="tc"] {
+      border-top-color: rgba(13, 148, 136, 0.10);
+      border-right-color: rgba(13, 148, 136, 0.10);
+      border-bottom-color: rgba(13, 148, 136, 0.10);
+      border-left-color: var(--tc);
+    }
+
+    /* OPT-06: sync-flash CSS keyframes and selector assignments removed --
+       JS uses Web Animations API (flashSection) for all sync flashing */
+
+    .questionnaire-panel .form-section {
+      background: var(--ut-white);
+    }
+
+    .doc-section[data-section="intro"],
+    .form-section[data-section="intro"],
+    .doc-section[data-section="governance"],
+    .form-section[data-section="governance"] {
+      border-left-color: var(--ut-darkblue);
+    }
+
+    .doc-section[data-section="scope"],
+    .form-section[data-section="scope"] {
+      border-left-color: var(--ut-blue);
+    }
+
+    .doc-section[data-section="scoring"],
+    .form-section[data-section="scoring"] {
+      border-left-color: var(--ut-pink);
+      border-top: 3px solid var(--ut-pink);
+    }
+
+    .doc-section[data-section="evidence"],
+    .form-section[data-section="evidence"] {
+      border-left-color: var(--section-default);
+    }
+
+    .doc-section[data-section="tr"], .form-section[data-section="tr"], .criterion-card.tr { border-left-color: var(--tr); }
+    .doc-section[data-section="re"], .form-section[data-section="re"], .criterion-card.re { border-left-color: var(--re); }
+    .doc-section[data-section="uc"], .form-section[data-section="uc"], .criterion-card.uc { border-left-color: var(--uc); }
+    .doc-section[data-section="se"], .form-section[data-section="se"], .criterion-card.se { border-left-color: var(--se); }
+    .doc-section[data-section="tc"], .form-section[data-section="tc"], .criterion-card.tc { border-left-color: var(--tc); }
+
+    .criterion-card.tr { background: rgba(37, 99, 235, 0.02); }
+    .criterion-card.re { background: rgba(22, 163, 74, 0.02); }
+    .criterion-card.uc { background: rgba(147, 51, 234, 0.02); }
+    .criterion-card.se { background: rgba(234, 88, 12, 0.02); }
+    .criterion-card.tc { background: rgba(13, 148, 136, 0.02); }
+
+    .doc-section[data-section="tr"],
+    .doc-section[data-section="re"],
+    .doc-section[data-section="uc"],
+    .doc-section[data-section="se"],
+    .doc-section[data-section="tc"],
+    .form-section[data-section="tr"],
+    .form-section[data-section="re"],
+    .form-section[data-section="uc"],
+    .form-section[data-section="se"],
+    .form-section[data-section="tc"] {
+      margin-bottom: 24px;
+      padding: 22px 24px;
+    }
+
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 2px;
+      padding: 5px 12px;
+      font-size: var(--text-sm);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ut-navy);
+      background: rgba(27, 42, 74, 0.06);
+      margin-bottom: 12px;
+      font-family: var(--ff-mono);
+    }
+
+    .section-kicker.tr { border-left: 3px solid var(--tr); color: var(--tr); background: rgba(37, 99, 235, 0.10); }
+    .section-kicker.re { border-left: 3px solid var(--re); color: var(--re); background: rgba(22, 163, 74, 0.10); }
+    .section-kicker.uc { border-left: 3px solid var(--uc); color: var(--uc); background: rgba(147, 51, 234, 0.10); }
+    .section-kicker.se { border-left: 3px solid var(--se); color: var(--se); background: rgba(234, 88, 12, 0.10); }
+    .section-kicker.tc { border-left: 3px solid var(--tc); color: var(--tc); background: rgba(13, 148, 136, 0.10); }
+
+    .doc-section[data-section="scoring"] .section-kicker,
+    .form-section[data-section="scoring"] .section-kicker {
+      color: var(--ut-pink);
+      background: rgba(207, 0, 114, 0.10);
+    }
+
+    .form-section#questionnaire-standard-answer-sets {
+      background: var(--ut-panel-bg);
+      border-left-width: 3px;
+      padding: 14px 16px;
+    }
+
+    .doc-section h2,
+    .form-section h2 {
+      margin: 0 0 10px;
+      color: var(--ut-navy);
+      font-size: var(--text-heading);
+      line-height: var(--lh-heading);
+      letter-spacing: var(--ls-heading);
+      font-family: var(--ff-heading);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .doc-section h3,
+    .form-section h3 {
+      margin: 16px 0 8px;
+      color: var(--ut-navy);
+      font-size: var(--text-sub);
+      line-height: 1.3;
+      font-weight: 800;
+    }
+
+    p, li {
+      color: var(--ut-text);
+      line-height: var(--lh-body);
+      font-size: var(--text-body);
+    }
+
+    .doc-section p,
+    .form-section p {
+      max-width: 72ch;
+    }
+
+    ul, ol {
+      margin: 10px 0 0;
+      padding-left: 20px;
+    }
+
+    .principle-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .principle-item {
+      padding: 12px 14px;
+      border-radius: 0;
+      background: var(--ut-offwhite);
+      border: 1px solid var(--ut-border);
+    }
+
+    .principle-item strong {
+      display: inline-block;
+      color: var(--ut-navy);
+      margin-bottom: 6px;
+    }
+
+    .score-cards,
+    .reference-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .mini-card {
+      background: var(--ut-white);
+      border: 1px solid var(--ut-border);
+      border-radius: 0;
+      padding: 12px;
+    }
+
+    .mini-card h3 {
+      margin: 0 0 8px;
+      color: var(--ut-navy);
+      font-size: var(--text-sub);
+    }
+
+    .mini-card p,
+    .mini-card li {
+      font-size: var(--text-body);
+      line-height: var(--lh-body);
+      color: var(--ut-muted);
+    }
+
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: var(--text-body);
+      border: 1px solid var(--ut-border);
+      background: var(--ut-white);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-table th,
+    .score-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--ut-border);
+      border-right: 1px solid var(--ut-border);
+      vertical-align: top;
+    }
+
+    .score-table th {
+      background: var(--ut-offwhite);
+      color: var(--ut-navy);
+      font-size: var(--text-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--ff-heading);
+      font-weight: 800;
+    }
+
+    .score-table tbody tr:nth-child(1) td:first-child { border-left: 3px solid var(--score-0); }
+    .score-table tbody tr:nth-child(2) td:first-child { border-left: 3px solid var(--score-1); }
+    .score-table tbody tr:nth-child(3) td:first-child { border-left: 3px solid var(--score-2); }
+    .score-table tbody tr:nth-child(4) td:first-child { border-left: 3px solid var(--score-3); }
+
+    .score-table td strong {
+      font-size: var(--text-sub);
+      font-weight: 800;
+    }
+
+    .muted { color: var(--ut-muted); }
+    .small { font-size: var(--text-body); }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 2px;
+      border: 1px solid var(--ut-border);
+      background: var(--ut-white);
+      font-size: var(--text-body);
+      font-weight: 700;
+      color: var(--ut-navy);
+      font-family: var(--ff-mono);
+    }
+
+    .chip.red { background: rgba(198, 12, 48, 0.10); border-color: rgba(198, 12, 48, 0.20); color: var(--ut-red); }
+    .chip.navy { background: rgba(0, 44, 95, 0.10); border-color: rgba(0, 44, 95, 0.20); color: var(--ut-navy); }
+    .chip.green { background: rgba(22, 163, 74, 0.10); border-color: rgba(22, 163, 74, 0.20); color: var(--re); }
+    .chip.orange { background: rgba(234, 88, 12, 0.10); border-color: rgba(234, 88, 12, 0.20); color: var(--se); }
+    .chip.purple { background: rgba(147, 51, 234, 0.10); border-color: rgba(147, 51, 234, 0.20); color: var(--uc); }
+    .chip.teal { background: rgba(13, 148, 136, 0.10); border-color: rgba(13, 148, 136, 0.20); color: var(--tc); }
+
+    .form-subsection {
+      margin-top: 16px;
+      padding-top: 8px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .field-grid.single { grid-template-columns: 1fr; }
+
+    .field-grid.principle-summary {
+      border-top: 2px solid var(--ut-border);
+      padding-top: 16px;
+      margin-top: 20px;
+    }
+
+    .field-group {
+      background: var(--ut-white);
+      border: 1px solid var(--ut-border);
+      border-radius: 0;
+      padding: 12px;
+    }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      color: var(--ut-navy);
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-family: var(--ff-heading);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .condition-tag,
+    .display-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 2px;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-family: var(--ff-mono);
+    }
+
+    .condition-tag {
+      color: var(--ut-muted);   /* neutral default for non-principle sections */
+      background: var(--ut-grey);
+      border: 1px solid rgba(100, 116, 139, 0.15);
+    }
+
+    /* Principle-section overrides */
+    .form-section[data-section="tr"] .condition-tag { color: var(--tr); background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.15); }
+    .form-section[data-section="re"] .condition-tag { color: var(--re); background: rgba(22,163,74,0.08); border-color: rgba(22,163,74,0.15); }
+    .form-section[data-section="uc"] .condition-tag { color: var(--uc); background: rgba(147,51,234,0.08); border-color: rgba(147,51,234,0.15); }
+    .form-section[data-section="se"] .condition-tag { color: var(--se); background: rgba(234,88,12,0.08); border-color: rgba(234,88,12,0.15); }
+    .form-section[data-section="tc"] .condition-tag { color: var(--tc); background: rgba(13,148,136,0.08); border-color: rgba(13,148,136,0.15); }
+
+    /* OPT-13: condition-tag.now-active animation removed -- JS uses Web Animations API */
+
+    .display-tag {
+      color: var(--ut-muted);
+      background: var(--ut-grey);
+      border: 1px solid rgba(27, 42, 74, 0.08);
+    }
+
+    .completion-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 2px;
+      border: 1px solid var(--ut-border);
+      background: var(--ut-white);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      font-family: var(--ff-mono);
+      color: var(--ut-muted);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      text-transform: none;
+      margin-left: 10px;
+      vertical-align: middle;
+      transition: color var(--duration-fast) var(--ease-out-quart),
+                  border-color var(--duration-fast) var(--ease-out-quart),
+                  background var(--duration-fast) var(--ease-out-quart);
+    }
+
+    .completion-badge.complete {
+      color: var(--ut-navy);
+      border-color: rgba(0, 44, 95, 0.15);
+      background: rgba(0, 44, 95, 0.04);
+    }
+
+    .completion-badge.complete.tr { color: var(--tr); border-color: rgba(37,99,235,0.20); background: rgba(37,99,235,0.06); }
+    .completion-badge.complete.re { color: var(--re); border-color: rgba(22,163,74,0.20); background: rgba(22,163,74,0.06); }
+    .completion-badge.complete.uc { color: var(--uc); border-color: rgba(147,51,234,0.20); background: rgba(147,51,234,0.06); }
+    .completion-badge.complete.se { color: var(--se); border-color: rgba(234,88,12,0.20); background: rgba(234,88,12,0.06); }
+    .completion-badge.complete.tc { color: var(--tc); border-color: rgba(13,148,136,0.20); background: rgba(13,148,136,0.06); }
+
+    .completion-badge.just-completed {
+      animation: completePulse 200ms var(--ease-out-quint);
+    }
+    @keyframes completePulse {
+      0%   { border-color: var(--ut-navy); }
+      100% { border-color: var(--ut-border); }
+    }
+
+    .mock-control,
+    .textarea-mock,
+    .rating-scale,
+    .checkbox-block {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--ut-border);
+      background: var(--ut-grey);
+    }
+
+    .mock-control {
+      min-height: 40px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--ut-muted);
+      font-size: var(--text-body);
+    }
+
+    .mock-control .value {
+      color: var(--ut-text);
+      font-weight: 600;
+    }
+
+    .mock-control .arrow {
+      color: var(--ut-slate);
+      font-size: var(--text-body);
+      line-height: 1;
+    }
+
+    /* Judgment value color-encoding */
+    .mock-control.judgment-pass {
+      color: var(--score-3);
+      background: rgba(74, 131, 85, 0.10);
+      border-color: rgba(74, 131, 85, 0.20);
+    }
+    .mock-control.judgment-pass .value { color: var(--score-3); }
+
+    .mock-control.judgment-conditional {
+      color: var(--score-1);
+      background: rgba(234, 88, 12, 0.10);
+      border-color: rgba(234, 88, 12, 0.20);
+    }
+    .mock-control.judgment-conditional .value { color: var(--score-1); }
+
+    .mock-control.judgment-fail {
+      color: var(--score-0);
+      background: rgba(198, 12, 48, 0.10);
+      border-color: rgba(198, 12, 48, 0.20);
+    }
+    .mock-control.judgment-fail .value { color: var(--score-0); }
+
+    .mock-control.judgment-pass,
+    .mock-control.judgment-conditional,
+    .mock-control.judgment-fail {
+      min-height: 48px;
+      padding: 12px 14px;
+      border-left: 4px solid;
+      font-weight: 700;
+    }
+
+    .mock-control.judgment-pass { border-left-color: var(--score-3); }
+    .mock-control.judgment-conditional { border-left-color: var(--score-1); }
+    .mock-control.judgment-fail { border-left-color: var(--score-0); }
+
+    /* OPT-07: judgment-flash keyframes removed -- JS uses Web Animations API */
+
+    .textarea-mock {
+      min-height: 100px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .placeholder-line {
+      height: 8px;
+      border-radius: 0;
+      background: rgba(148, 163, 184, 0.20);
+    }
+
+    .placeholder-line.w-90 { width: 90%; }
+    .placeholder-line.w-75 { width: 75%; }
+    .placeholder-line.w-62 { width: 62%; }
+    .placeholder-line.w-48 { width: 48%; }
+    .placeholder-line.w-35 { width: 35%; }
+
+    .field-help {
+      margin-top: 8px;
+      font-size: var(--text-body);
+      color: var(--ut-muted);
+      line-height: var(--lh-body);
+    }
+
+    .checkbox-block {
+      padding: 12px 14px;
+    }
+
+    .checkbox-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--ut-text);
+      font-size: var(--text-body);
+      line-height: var(--lh-body);
+    }
+
+    .checkbox-item input {
+      margin-top: 2px;
+      accent-color: var(--ut-red);
+    }
+
+    .checkbox-item input:focus-visible {
+      outline: 2px solid var(--ut-blue);
+      outline-offset: 2px;
+    }
+
+    /* Critical-fail flags keep red */
+    .form-section[id="questionnaire-section-8"] .checkbox-block:first-of-type .checkbox-item input {
+      accent-color: var(--ut-red);
+    }
+
+    /* Completion checklist uses green */
+    .form-section[id="questionnaire-section-8"] .checkbox-block:last-of-type .checkbox-item input {
+      accent-color: var(--ut-green);
+    }
+
+    /* Tool profile sections use blue */
+    .form-section[id="questionnaire-section-1"] .checkbox-block .checkbox-item input {
+      accent-color: var(--ut-blue);
+    }
+
+    .form-section#questionnaire-section-8 .checkbox-block:first-of-type {
+      border-color: rgba(198, 12, 48, 0.20);
+      background: rgba(198, 12, 48, 0.02);
+    }
+
+    .form-section#questionnaire-section-8 .checkbox-block:last-of-type {
+      border-color: rgba(74, 131, 85, 0.20);
+      background: rgba(74, 131, 85, 0.02);
+    }
+
+    .checkbox-item {
+      transition: color var(--duration-instant) var(--ease-out-quart),
+                  background var(--duration-instant) var(--ease-out-quart);
+    }
+
+    .checkbox-item:hover {
+      background: rgba(0, 44, 95, 0.02);
+      border-radius: 2px;
+    }
+
+    .checkbox-item:has(input:checked) {
+      color: var(--ut-navy);
+      font-weight: 500;
+      background: rgba(0, 44, 95, 0.03);
+      border-radius: 2px;
+      margin: -2px -4px;
+      padding: 2px 4px;
+      transition: background var(--duration-instant) var(--ease-out-quart);
+    }
+
+    .checkbox-item.has-checked {
+      color: var(--ut-navy);
+      font-weight: 500;
+      background: rgba(0, 44, 95, 0.03);
+      border-radius: 2px;
+      margin: -2px -4px;
+      padding: 2px 4px;
+    }
+
+    .mock-control,
+    .textarea-mock,
+    .field-group {
+      transition: border-color var(--duration-fast) var(--ease-out-quart);
+    }
+
+    .mock-control:focus-within,
+    .textarea-mock:focus-within,
+    .field-group:focus-within {
+      border-color: var(--ut-blue);
+    }
+
+    .rating-scale {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      padding: 10px;
+    }
+
+    .rating-option {
+      background: var(--ut-white);
+      border: 1px solid var(--ut-border);
+      border-radius: 1px;
+      padding: 8px 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+      cursor: pointer;
+      transition: background var(--duration-instant) var(--ease-out-quart),
+                  border-color var(--duration-instant) var(--ease-out-quart);
+    }
+
+    .rating-option:nth-child(1) { border-left: 2px solid rgba(198, 12, 48, 0.25); }
+    .rating-option:nth-child(2) { border-left: 2px solid rgba(234, 88, 12, 0.25); }
+    .rating-option:nth-child(3) { border-left: 2px solid rgba(0, 125, 156, 0.25); }
+    .rating-option:nth-child(4) { border-left: 2px solid rgba(74, 131, 85, 0.25); }
+
+    .rating-option:hover {
+      background: var(--ut-offwhite);
+      border-color: var(--ut-darkblue);
+    }
+
+    .rating-option:focus-visible {
+      outline: 2px solid var(--ut-blue);
+      outline-offset: 1px;
+    }
+
+    .rating-option.focused {
+      background: var(--ut-offwhite);
+      border-color: var(--ut-darkblue);
+    }
+
+    .rating-option.selected {
+      background: rgba(0, 44, 95, 0.06);
+      border-color: var(--ut-darkblue);
+      border-left: 3px solid var(--ut-darkblue);
+    }
+
+    .rating-option.selected .rating-dot {
+      border-color: var(--ut-darkblue);
+      background: var(--ut-darkblue);
+    }
+
+    /* Score-specific rating option colors */
+    .rating-option.score-0 { border-left: 3px solid var(--score-0); background: rgba(198, 12, 48, 0.08); border-color: rgba(198, 12, 48, 0.20); }
+    .rating-option.score-1 { border-left: 3px solid var(--score-1); background: rgba(234, 88, 12, 0.08); border-color: rgba(234, 88, 12, 0.20); }
+    .rating-option.score-2 { border-left: 3px solid var(--score-2); background: rgba(0, 125, 156, 0.08); border-color: rgba(0, 125, 156, 0.20); }
+    .rating-option.score-3 { border-left: 3px solid var(--score-3); background: rgba(74, 131, 85, 0.08); border-color: rgba(74, 131, 85, 0.20); }
+
+    .rating-option.score-0 .rating-dot { border-color: var(--score-0); background: var(--score-0); }
+    .rating-option.score-1 .rating-dot { border-color: var(--score-1); background: var(--score-1); }
+    .rating-option.score-2 .rating-dot { border-color: var(--score-2); background: var(--score-2); }
+    .rating-option.score-3 .rating-dot { border-color: var(--score-3); background: var(--score-3); }
+
+    .rating-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--ut-slate);
+      background: transparent;
+      flex: 0 0 auto;
+      transition: background var(--duration-instant) var(--ease-out-quart),
+                  border-color var(--duration-instant) var(--ease-out-quart);
+    }
+
+    .rating-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .rating-text strong {
+      font-size: var(--text-sm);
+      color: var(--ut-navy);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rating-text span {
+      font-size: var(--text-xs);
+      color: var(--ut-muted);
+    }
+
+    .criterion-card {
+      position: relative;
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 0;
+      border: 1px solid var(--ut-border);
+      border-left: 6px solid var(--section-default);
+      transition: border-left-width var(--duration-fast) var(--ease-out-quart),
+                  border-color var(--duration-fast) var(--ease-out-quart);
+    }
+
+    .criterion-card::after {
+      content: attr(data-criterion);
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      max-width: 30%;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      font-family: var(--ff-mono);
+      color: var(--ut-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .criterion-card.tr::after { color: var(--tr); }
+    .criterion-card.re::after { color: var(--re); }
+    .criterion-card.uc::after { color: var(--uc); }
+    .criterion-card.se::after { color: var(--se); }
+    .criterion-card.tc::after { color: var(--tc); }
+
+    .criterion-card.is-active {
+      border-left-width: 8px;
+    }
+
+    .criterion-card:focus-within {
+      border-left-width: 8px;
+      border-color: rgba(0, 44, 95, 0.08);
+      border-left-color: var(--ut-darkblue);
+    }
+
+    .criterion-card.tr:focus-within { border-left-color: var(--tr); border-color: rgba(37,99,235,0.08); }
+    .criterion-card.re:focus-within { border-left-color: var(--re); border-color: rgba(22,163,74,0.08); }
+    .criterion-card.uc:focus-within { border-left-color: var(--uc); border-color: rgba(147,51,234,0.08); }
+    .criterion-card.se:focus-within { border-left-color: var(--se); border-color: rgba(234,88,12,0.08); }
+    .criterion-card.tc:focus-within { border-left-color: var(--tc); border-color: rgba(13,148,136,0.08); }
+
+    .criterion-card h3 {
+      margin: 0 0 8px;
+      color: var(--ut-navy);
+      font-size: var(--text-sub);
+      line-height: 1.35;
+    }
+
+    .criterion-card p {
+      margin: 0 0 12px;
+      color: var(--ut-muted);
+      font-size: var(--text-body);
+    }
+
+    .criteria-stack {
+      display: grid;
+      gap: 18px;
+      margin-top: 14px;
+    }
+
+    .subhead {
+      margin: 24px 0 12px;
+      color: var(--ut-navy);
+      font-size: var(--text-sub);
+      font-weight: 800;
+    }
+
+    .two-col-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px 18px;
+      margin-top: 12px;
+    }
+
+    .two-col-list .mini-card { margin: 0; }
+
+    .notice {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border-radius: 0;
+      background: rgba(198, 12, 48, 0.08);
+      border-left: 6px solid var(--ut-red);
+      border-top: 1px solid rgba(198, 12, 48, 0.15);
+      border-right: 1px solid rgba(198, 12, 48, 0.15);
+      border-bottom: 1px solid rgba(198, 12, 48, 0.15);
+      color: var(--ut-navy);
+      font-size: var(--text-body);
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .legend-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .form-section#questionnaire-section-9 {
+      border-top: 3px solid var(--ut-darkblue);
+    }
+
+    .form-section#questionnaire-section-9 .mock-control:first-of-type .value {
+      font-size: var(--text-sub);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .doc-section + .doc-section,
+    .form-section + .form-section {
+      margin-top: 16px;
+      padding-top: 0;
+      border-top: 1px solid var(--ut-border);
+    }
+
+    .panel::before,
+    .panel::after {
+      content: '';
+      position: sticky;
+      left: 0;
+      right: 0;
+      height: 6px;
+      z-index: 4;
+      pointer-events: none;
+      transition: opacity var(--duration-fast) var(--ease-out-quart);
+    }
+
+    .panel::before {
+      top: 3px;
+      background: linear-gradient(to bottom, rgba(0, 44, 95, 0.04), transparent);
+      opacity: 0;
+    }
+
+    .panel::after {
+      bottom: 0;
+      background: linear-gradient(to top, rgba(0, 44, 95, 0.04), transparent);
+      opacity: 0;
+    }
+
+    .panel.can-scroll-down::after { opacity: 1; }
+    .panel.can-scroll-up::before { opacity: 1; }
+
+    @media (max-width: 1160px) {
+      :root { --header-h: 160px; }
+      .split-layout { grid-template-columns: 1fr; }
+      .panel {
+        height: calc((100vh - var(--header-h)) / 2);
+      }
+      .framework-panel {
+        border-right: 0;
+        border-bottom: 3px solid var(--ut-border);
+      }
+    }
+
+    @media (max-width: 760px) {
+      :root { --header-h: 196px; --text-heading: 1.0625rem; }
+      .header-inner { padding-inline: 16px; }
+      .panel-inner { padding: 14px 14px 36px; }
+      .rating-scale { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .doc-section, .form-section { padding: 14px; }
+      .brand { min-width: 0; }
+      .completion-strip {
+        order: 10;
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .rating-scale {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      @page { margin: 1.5cm; }
+
+      .top-accent,
+      .site-header,
+      .panel-progress,
+      .nav-indicator,
+      .completion-strip {
+        display: none;
+      }
+
+      .section-kicker.tr,
+      .section-kicker.re,
+      .section-kicker.uc,
+      .section-kicker.se,
+      .section-kicker.tc {
+        display: none;
+      }
+
+      .split-layout {
+        position: static;
+        display: block;
+      }
+
+      .panel {
+        height: auto;
+        overflow: visible;
+        position: static;
+      }
+
+      .framework-panel {
+        border-right: none;
+      }
+
+      .panel-inner {
+        max-width: 100%;
+        padding: 0;
+      }
+
+      .doc-section,
+      .form-section {
+        break-inside: avoid;
+        opacity: 1;
+        animation: none;
+      }
+
+      .rating-option.score-0,
+      .rating-option.score-1,
+      .rating-option.score-2,
+      .rating-option.score-3 {
+        border: 2px solid #000;
+      }
+
+      .form-section[data-section="tr"]::before,
+      .doc-section[data-section="tr"]::before {
+        content: "TR ";
+        font-weight: 800;
+        font-family: var(--ff-mono);
+        font-size: 12pt;
+      }
+      .form-section[data-section="re"]::before,
+      .doc-section[data-section="re"]::before {
+        content: "RE ";
+        font-weight: 800;
+        font-family: var(--ff-mono);
+        font-size: 12pt;
+      }
+      .form-section[data-section="uc"]::before,
+      .doc-section[data-section="uc"]::before {
+        content: "UC ";
+        font-weight: 800;
+        font-family: var(--ff-mono);
+        font-size: 12pt;
+      }
+      .form-section[data-section="se"]::before,
+      .doc-section[data-section="se"]::before {
+        content: "SE ";
+        font-weight: 800;
+        font-family: var(--ff-mono);
+        font-size: 12pt;
+      }
+      .form-section[data-section="tc"]::before,
+      .doc-section[data-section="tc"]::before {
+        content: "TC ";
+        font-weight: 800;
+        font-family: var(--ff-mono);
+        font-size: 12pt;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#questionnairePanel" class="skip-link">Skip to questionnaire</a>
+  <div class="top-accent"></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <img src="static/ut-logo.png" alt="UNIVERSITY TWENTE" class="logo-dept" height="48" width="48" />
+        <img src="static/lisa-eis.svg" alt="LISA EIS" class="logo-dept" height="48" width="48" />
+        <div class="brand-text">
+          <div class="brand-logos">
+            <span class="trust-label">
+              <img src="static/trust.svg" alt="TRUST" class="logo-trust" height="32" width="32" />
+              <p>Framework</p>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="completion-strip" aria-label="Evaluation progress" aria-hidden="true">
+        <div class="strip-cell tr" title="Transparent"></div>
+        <div class="strip-cell re" title="Reliable"></div>
+        <div class="strip-cell uc" title="User-centric"></div>
+        <div class="strip-cell se" title="Secure"></div>
+        <div class="strip-cell tc" title="Traceable"></div>
+      </div>
+      <nav class="top-nav" id="quickJumpMount" aria-label="TRUST principle quick jump" data-shell-mount="quick-jump">
+        <button class="nav-button" type="button" data-target="tr" data-page-id="TR">TR</button>
+        <button class="nav-button" type="button" data-target="re" data-page-id="RE">RE</button>
+        <button class="nav-button" type="button" data-target="uc" data-page-id="UC">UC</button>
+        <button class="nav-button" type="button" data-target="se" data-page-id="SE">SE</button>
+        <button class="nav-button" type="button" data-target="tc" data-page-id="TC">TC</button>
+        <div class="nav-indicator" id="navIndicator"></div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="split-layout shell-layout" id="trustShell" data-shell-architecture="page-based">
+    <section class="panel framework-panel" id="frameworkPanel" aria-labelledby="contextPanelTitle" tabindex="-1">
+      <div class="panel-progress"><div class="panel-progress-bar" id="frameworkProgress"></div></div>
+      <div class="panel-inner">
+        <div id="contextSidebarFocusReturn" class="shell-focus-anchor" tabindex="-1"></div>
+        <h1 class="panel-title" id="contextPanelTitle">Documentation</h1>
+        <nav id="pageSidebarMount" aria-label="Canonical questionnaire page index" data-shell-mount="page-sidebar" hidden></nav>
+        <div id="contextSidebarMount" data-shell-mount="context-sidebar" data-shell-fallback="literal-framework-content">
+
+        <section class="doc-section" data-section="intro" data-topic-area="about" data-topic-ids="about.framework-overview context.workflow-control" id="framework-intro">
+          <div class="section-kicker" aria-hidden="true">Framework overview</div>
+          <h2>1. Introduction</h2>
+          <p>Academic libraries increasingly encounter tools that use generative AI to help users discover, summarize, and synthesize scholarly information. These tools can be powerful, but they also introduce risks that matter in a scholarly context: fabricated citations, unfaithful synthesis, opaque provenance, hidden bias, and the erosion of critical evaluation skills. The TRUST framework provides the EIS-IS team with a principled, structured, and repeatable method for evaluating such tools before recommending them to the University of Twente community.</p>
+          <p>TRUST stands for <strong>Transparent</strong>, <strong>Reliable</strong>, <strong>User-centric</strong>, <strong>Secure</strong>, and <strong>Traceable</strong>. These five principles encode the academic standards that an AI-based search tool must meet to be considered trustworthy enough for institutional recommendation. The framework is designed to complement the university's commitment to the FAIR Guiding Principles and to align with the transparency and risk-tier requirements of the EU AI Act.</p>
+        </section>
+
+        <section class="doc-section" data-section="scope" data-topic-area="about" data-topic-ids="about.scope-and-definitions context.tool-profile" id="framework-scope">
+          <div class="section-kicker" aria-hidden="true">Scope and definitions</div>
+          <h2>2. Scope and Definitions</h2>
+          <h3>AI-based search tool</h3>
+          <p>Any information search system that relies on non-deterministic, generative models to produce output.</p>
+          <h3>Coverage</h3>
+          <ul>
+            <li>Standalone AI search tools</li>
+            <li>AI features on existing platforms</li>
+            <li>General-purpose LLM interfaces</li>
+          </ul>
+          <h3>Exclusions</h3>
+          <ul>
+            <li>Deterministic search tools</li>
+            <li>AI tools for non-search purposes</li>
+            <li>Internal prototypes</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" data-section="tr" data-topic-area="context" data-topic-ids="context.transparent" id="framework-tr">
+          <div class="section-kicker tr">TR</div>
+          <h2>3.1 Transparent (TR)</h2>
+          <p>The tool's inner workings, data sources, and limitations must be clearly documented and disclosed.</p>
+          <div class="principle-list">
+            <div class="principle-item">
+              <strong>TR1.</strong>
+              <div>The tool provides clear documentation on its primary data sources and the scope of its indexed content, including the disciplines, languages, and date ranges covered, and the update cadence of the corpus.</div>
+            </div>
+            <div class="principle-item">
+              <strong>TR2.</strong>
+              <div>The tool's methodology is explicitly documented, including the model family/version used, the retrieval/generation architecture, the corpus or source base used to answer queries, how many or what type of sources inform an answer, and whether users can inspect source-selection or provenance information.</div>
+            </div>
+            <div class="principle-item">
+              <strong>TR3.</strong>
+              <div>The tool's known limitations, indexing gaps (e.g., disciplines or languages omitted), and update frequency are openly acknowledged.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" data-section="re" data-topic-area="context" data-topic-ids="context.reliable" id="framework-re">
+          <div class="section-kicker re">RE</div>
+          <h2>3.2 Reliable (RE)</h2>
+          <p>The tool's outputs must be accurate, verifiable, and consistent enough to be depended upon for scholarly work.</p>
+          <div class="principle-list">
+            <div class="principle-item">
+              <strong>RE1.</strong>
+              <div>The tool generates factually accurate and verifiable outputs, with robust mechanisms to minimize or eliminate hallucinated citations.</div>
+            </div>
+            <div class="principle-item">
+              <strong>RE2.</strong>
+              <div>When identical queries are run multiple times, the tool's core conclusions should remain substantively aligned even if wording or source order varies.</div>
+            </div>
+            <div class="principle-item">
+              <strong>RE3.</strong>
+              <div>When the tool synthesizes information, the synthesis must remain faithful to retrieved source material and must not introduce claims that are unsupported, exaggerated, or materially misleading.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" data-section="uc" data-topic-area="context" data-topic-ids="context.user-centric" id="framework-uc">
+          <div class="section-kicker uc">UC</div>
+          <h2>3.3 User-Centric (UC)</h2>
+          <p>The tool must be designed with the needs of its academic users in mind, integrating smoothly into their existing workflows and actively encouraging their critical thinking expertise.</p>
+          <div class="principle-list">
+            <div class="principle-item">
+              <strong>UC1.</strong>
+              <div>The tool is fit for its intended purpose and aligns with the research and educational needs of the University of Twente community.</div>
+            </div>
+            <div class="principle-item">
+              <strong>UC2.</strong>
+              <div>The tool integrates with standard academic workflows through features such as support for reference managers, standard data export formats, persistent links, and citation portability.</div>
+            </div>
+            <div class="principle-item">
+              <strong>UC3.</strong>
+              <div>The tool is usable and accessible for its intended audience without prohibitive technical expertise.</div>
+            </div>
+            <div class="principle-item">
+              <strong>UC4.</strong>
+              <div>The interface clearly communicates that it is AI-assisted, surfaces uncertainty or limitation cues where appropriate, and actively prompts users to verify source material rather than relying on the answer alone.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" data-section="se" data-topic-area="context" data-topic-ids="context.secure" id="framework-se">
+          <div class="section-kicker se">SE</div>
+          <h2>3.4 Secure (SE)</h2>
+          <p>The tool must be designed to protect user privacy and data, complying with all relevant legal, institutional, and ethical regulations.</p>
+          <div class="principle-list">
+            <div class="principle-item">
+              <strong>SE1.</strong>
+              <div>The tool adheres to the principles of data protection by design and by default, in compliance with GDPR.</div>
+            </div>
+            <div class="principle-item">
+              <strong>SE2.</strong>
+              <div>Users are clearly informed how their data — including prompts and queries — is used, stored, retained, and whether it may be used for model improvement or analytics; users have meaningful control where applicable.</div>
+            </div>
+            <div class="principle-item">
+              <strong>SE3.</strong>
+              <div>The tool's security practices are transparent and do not conflict with relevant institutional policies, national guidelines (e.g., SURF), or sector frameworks (e.g., EU AI Act).</div>
+            </div>
+            <div class="principle-item">
+              <strong>SE4.</strong>
+              <div>The tool documents major disciplinary, geographic, and language coverage gaps, acknowledges relevant algorithmic or data-bias risks, and provides evidence of any mitigation measures or safeguards that are actually in place.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" data-section="tc" data-topic-area="context" data-topic-ids="context.traceable" id="framework-tc">
+          <div class="section-kicker tc">TC</div>
+          <h2>3.5 Traceable (TC)</h2>
+          <p>Every piece of information generated by the tool must be traceable back to its original source. This principle is the cornerstone of academic accountability and is non-negotiable.</p>
+          <div class="principle-list">
+            <div class="principle-item">
+              <strong>TC1.</strong>
+              <div>The tool provides clear, accurate, and persistent attribution for the sources used to generate an answer. Where available, it should also surface helpful source-quality cues such as publication type, peer-review status, or retraction notices.</div>
+            </div>
+            <div class="principle-item">
+              <strong>TC2.</strong>
+              <div>The tool allows users and reviewers to inspect the provenance of an answer by showing which sources were selected and how retrieved evidence is distinguished from generated synthesis.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" data-section="scoring" data-topic-area="reference" data-topic-ids="reference.scoring-model context.critical-fails-and-confidence context.overall-recommendation" id="framework-scoring">
+          <div class="section-kicker" aria-hidden="true">Scoring model</div>
+          <h2>4. Evaluation Scoring Model</h2>
+          <table class="score-table" aria-label="Criterion rating scale">
+            <thead>
+              <tr>
+                <th>4.1 Criterion rating scale</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>0</strong> = Fails</td><td>The criterion is not met, or there is no evidence that it is met.</td></tr>
+              <tr><td><strong>1</strong> = Partial / unclear</td><td>Some evidence exists but it remains incomplete or insufficient.</td></tr>
+              <tr><td><strong>2</strong> = Meets baseline</td><td>The criterion is met to a satisfactory standard, supported by evidence.</td></tr>
+              <tr><td><strong>3</strong> = Strong</td><td>The criterion is met to a high standard, with clear and compelling evidence.</td></tr>
+            </tbody>
+          </table>
+          <div class="score-cards">
+            <div class="mini-card">
+              <h3>4.2 Per-principle judgment</h3>
+              <ul>
+                <li><strong>Pass</strong> — all criteria score 2 or above</li>
+                <li><strong>Conditional pass</strong> — some 1s, no 0s</li>
+                <li><strong>Fail</strong> — any 0</li>
+              </ul>
+            </div>
+            <div class="mini-card">
+              <h3>4.3 Final recommendation categories</h3>
+              <ul>
+                <li>Recommended</li>
+                <li>Recommended with caveats</li>
+                <li>Needs review / provisional</li>
+                <li>Pilot only</li>
+                <li>Not recommended</li>
+                <li>Out of scope</li>
+              </ul>
+            </div>
+            <div class="mini-card">
+              <h3>4.4 Confidence levels</h3>
+              <ul>
+                <li>High</li>
+                <li>Medium</li>
+                <li>Low</li>
+              </ul>
+            </div>
+          </div>
+          <h3>4.5 Critical fail flags</h3>
+          <ul>
+            <li>Fabricated or unverifiable citation found</li>
+            <li>Materially unfaithful synthesis found</li>
+            <li>Major claim not traceable to a primary source</li>
+            <li>Provenance path not inspectable enough for academic use</li>
+            <li>Privacy/data-use terms unclear or unacceptable</li>
+            <li>Serious security/compliance concern</li>
+            <li>Serious bias/fairness concern without credible mitigation</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" data-section="evidence" data-topic-area="reference" data-topic-ids="reference.evidence-requirements context.evaluation-setup" id="framework-evidence">
+          <div class="section-kicker" aria-hidden="true">Evidence</div>
+          <h2>5. Minimum Evidence Requirements</h2>
+          <div class="principle-list">
+            <div class="principle-item"><strong>5.1 Desk review of documentation</strong><div>Vendor documentation, privacy/terms documentation, and methodology/source explanations.</div></div>
+            <div class="principle-item"><strong>5.2 Hands-on testing</strong><div>Minimum 3 scenarios: known-item, exploratory, synthesis.</div></div>
+            <div class="principle-item"><strong>5.3 Repeated-query test</strong><div>Minimum 1 query, run 3 times.</div></div>
+            <div class="principle-item"><strong>5.4 Manual source verification</strong><div>Minimum 5 claims checked against source material.</div></div>
+            <div class="principle-item"><strong>5.5 Evidence bundle</strong><div>Screenshots, excerpts, links, and notes stored in an auditable evidence pack.</div></div>
+          </div>
+        </section>
+
+        <section class="doc-section" data-section="governance" data-topic-area="about" data-topic-ids="about.governance-workflow context.primary-evaluation-handoff context.second-review context.final-team-decision" id="framework-governance">
+          <div class="section-kicker" aria-hidden="true">Governance</div>
+          <h2>6. Governance and Review Workflow</h2>
+          <div class="principle-list">
+            <div class="principle-item"><strong>6.1 Evaluation cycle</strong><div>Nomination → Primary evaluation → Second review → Final team decision.</div></div>
+            <div class="principle-item"><strong>6.2 Two-person review requirement</strong><div>No tool receives a final recommendation without review by at least two EIS-IS team members.</div></div>
+            <div class="principle-item"><strong>6.3 Disagreement handling</strong><div>Disputed criteria are documented and escalated to the full team for resolution.</div></div>
+            <div class="principle-item"><strong>6.4 Re-evaluation triggers</strong><div>Major vendor/tool changes, reported incidents, scheduled review dates, or claimed remediation of previous critical failures.</div></div>
+            <div class="principle-item"><strong>6.5 Decision categories</strong><div>Recommendation status, publication status, suitable/unsuitable use cases, and review frequency are recorded together.</div></div>
+          </div>
+        </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel questionnaire-panel" id="questionnairePanel" aria-labelledby="questionnairePanelTitle" tabindex="-1">
+      <div class="panel-progress"><div class="panel-progress-bar" id="questionnaireProgress"></div></div>
+      <div class="panel-inner">
+        <h1 class="panel-title" id="questionnairePanelTitle">Questionnaire</h1>
+        <nav id="pagerMount" aria-label="Sequential questionnaire pager" data-shell-mount="pager-navigation" hidden></nav>
+        <div id="referenceDrawerMount" data-shell-mount="reference-drawers" data-shell-fallback="static-reference-cards">
+
+        <section class="form-section" data-section="scoring" data-topic-area="reference" data-topic-ids="reference.answer-sets reference.scoring-model reference.critical-fail-flags" id="questionnaire-standard-answer-sets">
+          <div class="section-kicker" aria-hidden="true">Reference cards</div>
+          <h2>Standard Answer Sets</h2>
+          <div class="reference-cards">
+            <div class="mini-card">
+              <h3>Criterion Rating Scale</h3>
+              <table class="score-table" aria-label="Criterion scale reference">
+                <tbody>
+                  <tr><td><strong>0</strong></td><td>Fails</td></tr>
+                  <tr><td><strong>1</strong></td><td>Partial / unclear</td></tr>
+                  <tr><td><strong>2</strong></td><td>Meets baseline</td></tr>
+                  <tr><td><strong>3</strong></td><td>Strong</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mini-card">
+              <h3>Final Recommendation Options</h3>
+              <div class="chips">
+                <span class="chip red">Recommended</span>
+                <span class="chip navy">Recommended with caveats</span>
+                <span class="chip orange">Needs review / provisional</span>
+                <span class="chip purple">Pilot only</span>
+                <span class="chip teal">Not recommended</span>
+                <span class="chip">Out of scope</span>
+              </div>
+            </div>
+            <div class="mini-card">
+              <h3>Confidence Levels</h3>
+              <div class="chips">
+                <span class="chip green">High</span>
+                <span class="chip navy">Medium</span>
+                <span class="chip">Low</span>
+              </div>
+              <h3 class="subhead">Critical-Fail Flags</h3>
+              <div class="checkbox-list">
+                <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Fabricated or unverifiable citation found</label>
+                <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Materially unfaithful synthesis found</label>
+                <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Major claim not traceable to a primary source</label>
+                <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Provenance path not inspectable enough for academic use</label>
+                <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Privacy/data-use terms unclear or unacceptable</label>
+                <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Serious security/compliance concern</label>
+                <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Serious bias/fairness concern without credible mitigation</label>
+              </div>
+            </div>
+          </div>
+        </section>
+        </div>
+        <div id="questionnaireRenderRoot" data-shell-mount="questionnaire-pages" data-shell-fallback="static-questionnaire-pages">
+
+        <section class="form-section" data-section="intro" data-page-id="S0" data-page-slug="workflow-control" data-context-topic-id="context.workflow-control" id="questionnaire-section-0" aria-labelledby="q-s0-heading">
+          <div class="section-kicker" aria-hidden="true">Section 0</div>
+          <h2 id="q-s0-heading">Workflow Control</h2>
+          <div class="field-grid">
+            <div class="field-group">
+              <div class="field-label"><span>0.1 Submission type</span><span class="display-tag">Display only</span></div>
+              <div class="mock-control"><span class="value">Nomination</span><span class="arrow">▾</span></div>
+              <div class="field-help">Workflow stage: Nomination → Primary evaluation → Second review → Final team decision → Re-evaluation</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>0.2 Tool name</span></div>
+              <div class="mock-control"><span>Enter canonical tool name</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>0.3 Tool URL</span></div>
+              <div class="mock-control"><span>https://example-tool.org</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>0.4 Prior evaluation ID</span><span class="condition-tag">Required for re-evaluations</span></div>
+              <div class="mock-control"><span>TRUST-2026-001</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>0.5 Responder role</span></div>
+              <div class="mock-control"><span class="value">Nominator</span><span class="arrow">▾</span></div>
+            </div>
+          </div>
+          <div class="field-grid single">
+            <div class="field-group">
+              <div class="field-label"><span>0.6 Nomination reason</span><span class="condition-tag">Required for nominations</span></div>
+              <div class="textarea-mock">
+                <div class="placeholder-line w-90"></div>
+                <div class="placeholder-line w-75"></div>
+                <div class="placeholder-line w-62"></div>
+                <div class="placeholder-line w-48"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="scope" data-page-id="S1" data-page-slug="tool-profile" data-context-topic-id="context.tool-profile" id="questionnaire-section-1" aria-labelledby="q-s1-heading">
+          <div class="section-kicker" aria-hidden="true">Section 1</div>
+          <h2 id="q-s1-heading">Tool Profile</h2>
+          <div class="field-grid">
+            <div class="field-group">
+              <div class="field-label"><span>1.1 Vendor</span></div>
+              <div class="mock-control"><span>Vendor / publisher / lab</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>1.3 Deployment type</span></div>
+              <div class="mock-control"><span class="value">Cloud SaaS</span><span class="arrow">▾</span></div>
+              <div class="field-help">Options: Cloud SaaS, On-premises, Hybrid, Browser extension, API-only</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>1.4 Scope eligibility</span></div>
+              <div class="mock-control"><span class="value">In scope</span><span class="arrow">▾</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>1.8 Access model</span></div>
+              <div class="mock-control"><span class="value">Free</span><span class="arrow">▾</span></div>
+              <div class="field-help">Free / Freemium / Paid / Institutional license</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>1.9 Account required</span></div>
+              <div class="mock-control"><span class="value">Yes</span><span class="arrow">▾</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>1.10 Sign-in method</span><span class="condition-tag">Required if account needed</span></div>
+              <div class="mock-control"><span>Institutional SSO or email sign-in</span></div>
+            </div>
+          </div>
+
+          <div class="field-grid single">
+            <div class="field-group">
+              <div class="field-label"><span>1.2 Category</span></div>
+              <div class="checkbox-block">
+                <div class="checkbox-list">
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> AI search engine</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> AI layer on existing database</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Summarisation assistant</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Citation discovery</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Query development</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Other</label>
+                </div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>1.5 Scope rationale</span><span class="condition-tag">Required if out of scope</span></div>
+              <div class="textarea-mock">
+                <div class="placeholder-line w-90"></div>
+                <div class="placeholder-line w-90"></div>
+                <div class="placeholder-line w-75"></div>
+                <div class="placeholder-line w-48"></div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>1.6 Primary use cases</span></div>
+              <div class="checkbox-block">
+                <div class="checkbox-list">
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Literature search</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Paper discovery</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Citation tracing</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Abstract summarisation</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Teaching/demo</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Query development</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Other</label>
+                </div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>1.7 Target user groups</span></div>
+              <div class="checkbox-block">
+                <div class="checkbox-list">
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Students</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Researchers</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> PhD candidates</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Teachers</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Information specialists</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> All UT users</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Other</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="evidence" data-page-id="S2" data-page-slug="evaluation-setup" data-context-topic-id="context.evaluation-setup" id="questionnaire-section-2" aria-labelledby="q-s2-heading">
+          <div class="section-kicker" aria-hidden="true">Section 2</div>
+          <h2 id="q-s2-heading">Evaluation Setup</h2>
+          <div class="field-grid">
+            <div class="field-group">
+              <div class="field-label"><span>2.1 Testing dates</span></div>
+              <div class="mock-control"><span>2026-04-02 → 2026-04-09</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>2.2 Pricing tier tested</span></div>
+              <div class="mock-control"><span>Free / institutional trial tier</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>2.3 Hands-on access confirmed</span></div>
+              <div class="mock-control"><span class="value">Yes</span><span class="arrow">▾</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>2.5 Repeated query test performed</span></div>
+              <div class="mock-control"><span class="value">Yes</span><span class="arrow">▾</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>2.7 Benchmark comparison performed</span></div>
+              <div class="mock-control"><span class="value">Yes</span><span class="arrow">▾</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>2.9 Sensitive data submitted to tool</span></div>
+              <div class="mock-control"><span class="value">No</span><span class="arrow">▾</span></div>
+            </div>
+          </div>
+          <div class="field-grid single">
+            <div class="field-group">
+              <div class="field-label"><span>2.4 Sample queries/scenarios</span></div>
+              <div class="textarea-mock">
+                <div class="placeholder-line w-90"></div>
+                <div class="placeholder-line w-90"></div>
+                <div class="placeholder-line w-75"></div>
+                <div class="placeholder-line w-62"></div>
+                <div class="placeholder-line w-48"></div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>2.6 Repeated query text</span><span class="condition-tag">Required if repeated test performed</span></div>
+              <div class="textarea-mock">
+                <div class="placeholder-line w-90"></div>
+                <div class="placeholder-line w-75"></div>
+                <div class="placeholder-line w-35"></div>
+              </div>
+              <div class="field-help">The exact query string used for the repeated-query test</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>2.8 Benchmark comparison tools</span><span class="condition-tag">Required if benchmark performed</span></div>
+              <div class="textarea-mock">
+                <div class="placeholder-line w-75"></div>
+                <div class="placeholder-line w-62"></div>
+                <div class="placeholder-line w-48"></div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>2.10 Evidence folder link</span></div>
+              <div class="mock-control"><span>https://sharepoint.example/trust/evidence/...</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="tr" data-page-id="TR" data-page-slug="transparent" data-context-topic-id="context.transparent" id="questionnaire-section-3" aria-labelledby="q-s3-heading">
+          <div class="section-kicker tr">Section 3 — TR</div>
+          <h2 id="q-s3-heading">Transparent (TR)</h2>
+          <div class="criteria-stack">
+            <article class="criterion-card tr" data-criterion="TR1">
+              <h3>TR1 — Data sources and indexed scope</h3>
+              <p>The tool provides clear documentation on its primary data sources and the scope of its indexed content.</p>
+              <div class="field-grid single">
+                <div class="field-group">
+                  <div class="field-label"><span>Score</span></div>
+                  <div class="rating-scale">
+                    <div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div>
+                    <div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div>
+                    <div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div>
+                    <div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div>
+                  </div>
+                </div>
+                <div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div>
+              </div>
+            </article>
+            <article class="criterion-card tr" data-criterion="TR2">
+              <h3>TR2 — Methodology disclosure</h3>
+              <p>The tool’s methodology is explicitly explained, including the model(s) used, retrieval/generation architecture, source corpus, and whether provenance/reasoning information is visible to the user.</p>
+              <div class="field-grid single">
+                <div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+              </div>
+            </article>
+            <article class="criterion-card tr" data-criterion="TR3">
+              <h3>TR3 — Limitations and update frequency</h3>
+              <p>The tool openly acknowledges its known limitations, indexing gaps, and update frequency.</p>
+              <div class="field-grid single">
+                <div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div>
+              </div>
+            </article>
+          </div>
+          <div class="field-grid single principle-summary">
+            <div class="field-group"><div class="field-label"><span>TR Principle summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>TR Principle judgment</span></div><div class="mock-control judgment-pass"><span class="value">Pass</span><span class="arrow">▾</span></div></div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="re" data-page-id="RE" data-page-slug="reliable" data-context-topic-id="context.reliable" id="questionnaire-section-4" aria-labelledby="q-s4-heading">
+          <div class="section-kicker re">Section 4 — RE</div>
+          <h2 id="q-s4-heading">Reliable (RE)</h2>
+          <div class="criteria-stack">
+            <article class="criterion-card re" data-criterion="RE1">
+              <h3>RE1 — Accuracy and verifiability</h3>
+              <p>The tool generates factually accurate and verifiable outputs, with robust mechanisms to minimize or eliminate hallucinated citations.</p>
+              <div class="field-grid single">
+                <div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div>
+              </div>
+            </article>
+            <article class="criterion-card re" data-criterion="RE2">
+              <h3>RE2 — Consistency of conclusions across repeated runs</h3>
+              <p>When identical queries are repeated, the tool shows consistency of consensus: core conclusions remain substantively aligned even if wording or source order varies.</p>
+              <div class="field-grid single">
+                <div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div>
+              </div>
+            </article>
+            <article class="criterion-card re" data-criterion="RE3">
+              <h3>RE3 — Faithfulness of synthesis</h3>
+              <p>When the tool synthesizes information, the synthesis remains faithful to retrieved source material and does not introduce unsupported or materially misleading claims.</p>
+              <div class="field-grid single">
+                <div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div>
+                <div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div>
+              </div>
+            </article>
+          </div>
+          <div class="field-grid single principle-summary">
+            <div class="field-group"><div class="field-label"><span>RE Test method description</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>RE Claims manually checked</span></div><div class="mock-control"><span>5</span></div></div>
+            <div class="field-group"><div class="field-label"><span>RE Principle summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>RE Principle judgment</span></div><div class="mock-control judgment-conditional"><span class="value">Conditional pass</span><span class="arrow">▾</span></div></div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="uc" data-page-id="UC" data-page-slug="user-centric" data-context-topic-id="context.user-centric" id="questionnaire-section-5" aria-labelledby="q-s5-heading">
+          <div class="section-kicker uc">Section 5 — UC</div>
+          <h2 id="q-s5-heading">User-Centric (UC)</h2>
+          <div class="criteria-stack">
+            <article class="criterion-card uc" data-criterion="UC1">
+              <h3>UC1 — Fit for academic purpose</h3>
+              <p>The tool is fit for its intended purpose and aligns with the research and educational needs of the University of Twente community.</p>
+              <div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div>
+            </article>
+            <article class="criterion-card uc" data-criterion="UC2">
+              <h3>UC2 — Workflow integration</h3>
+              <p>The tool integrates with standard academic workflows through useful export options, citation workflows, or reference-manager compatibility.</p>
+              <div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div>
+            </article>
+            <article class="criterion-card uc" data-criterion="UC3">
+              <h3>UC3 — Usability and accessibility</h3>
+              <p>The tool is usable and accessible for its intended audience without prohibitive technical expertise.</p>
+              <div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div>
+            </article>
+            <article class="criterion-card uc" data-criterion="UC4">
+              <h3>UC4 — Cognitive guardrails</h3>
+              <p>The interface clearly communicates that it is AI-assisted, warns users about hallucination/limitation risks, and actively prompts source verification to reduce automation bias.</p>
+              <div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div>
+            </article>
+          </div>
+          <div class="field-grid single principle-summary">
+            <div class="field-group"><div class="field-label"><span>UC Target user personas</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>UC Workflow integrations observed</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>UC Principle summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>UC Principle judgment</span></div><div class="mock-control judgment-conditional"><span class="value">Conditional pass</span><span class="arrow">▾</span></div></div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="se" data-page-id="SE" data-page-slug="secure" data-context-topic-id="context.secure" id="questionnaire-section-6" aria-labelledby="q-s6-heading">
+          <div class="section-kicker se">Section 6 — SE</div>
+          <h2 id="q-s6-heading">Secure (SE)</h2>
+          <div class="criteria-stack">
+            <article class="criterion-card se" data-criterion="SE1"><h3>SE1 — Data protection by design</h3><p>The tool follows data-protection-by-design and by-default principles in a way that is acceptable under GDPR-oriented review.</p><div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div></article>
+            <article class="criterion-card se" data-criterion="SE2"><h3>SE2 — Prompt and data handling</h3><p>Users are clearly informed how their data, including prompts/queries, is used, stored, retained, and whether it may be used for model improvement or analytics; users have meaningful control where applicable.</p><div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div></div></article>
+            <article class="criterion-card se" data-criterion="SE3"><h3>SE3 — Security and policy alignment</h3><p>The tool’s security posture is transparent and does not conflict with relevant institutional, national, or sector guidance.</p><div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div></article>
+            <article class="criterion-card se" data-criterion="SE4"><h3>SE4 — Bias, coverage, and mitigation</h3><p>The tool documents major disciplinary, geographic, language, or algorithmic bias risks and provides evidence of any mitigation measures or safeguards in place.</p><div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div></article>
+          </div>
+          <div class="field-grid">
+            <div class="field-group"><div class="field-label"><span>SE DPIA/privacy escalation needed</span></div>
+              <div class="mock-control"><span class="value">Unclear</span><span class="arrow">▾</span></div>
+              <div class="field-help">Data Protection Impact Assessment — whether institutional privacy review is required</div></div>
+            <div class="field-group"><div class="field-label"><span>SE Copyright/licensing concern identified</span></div><div class="mock-control"><span class="value">Unclear</span><span class="arrow">▾</span></div></div>
+            <div class="field-group"><div class="field-label"><span>SE Compliance assessment</span></div><div class="mock-control"><span class="value">Likely compliant</span><span class="arrow">▾</span></div>
+              <div class="field-help">Compliant / Likely compliant / Unclear / Non-compliant</div></div>
+          </div>
+          <div class="field-grid single principle-summary">
+            <div class="field-group"><div class="field-label"><span>SE Principle summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>SE Principle judgment</span></div><div class="mock-control judgment-conditional"><span class="value">Conditional pass</span><span class="arrow">▾</span></div></div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="tc" data-page-id="TC" data-page-slug="traceable" data-context-topic-id="context.traceable" id="questionnaire-section-7" aria-labelledby="q-s7-heading">
+          <div class="section-kicker tc">Section 7 — TC</div>
+          <h2 id="q-s7-heading">Traceable (TC)</h2>
+          <div class="criteria-stack">
+            <article class="criterion-card tc" data-criterion="TC1"><h3>TC1 — Source attribution and source-quality cues</h3><p>The tool provides clear, accurate, and persistent attribution for the sources used to generate an answer; where available, it also surfaces helpful source-quality cues such as publication type, peer-review status, or retraction notices.</p><div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div></article>
+            <article class="criterion-card tc" data-criterion="TC2"><h3>TC2 — Provenance inspection</h3><p>The tool allows users and reviewers to inspect the provenance of an answer by showing which sources were selected and how retrieved evidence is distinguished from generated synthesis.</p><div class="field-grid single"><div class="field-group"><div class="field-label"><span>Score</span></div><div class="rating-scale"><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>0</strong><span>Fails</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>1</strong><span>Partial</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>2</strong><span>Meets baseline</span></span></div><div class="rating-option"><span class="rating-dot"></span><span class="rating-text"><strong>3</strong><span>Strong</span></span></div></div></div><div class="field-group"><div class="field-label"><span>Evidence summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div><div class="field-group"><div class="field-label"><span>Evidence links</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div><div class="field-group"><div class="field-label"><span>Uncertainty or blockers</span><span class="condition-tag">Required if score is 0 or 1</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div></div></article>
+          </div>
+          <div class="field-grid single principle-summary">
+            <div class="field-group"><div class="field-label"><span>TC Traceable claims</span></div><div class="mock-control"><span>0–100% of claims manually checked</span></div></div>
+            <div class="field-group"><div class="field-label"><span>TC Principle judgment</span></div><div class="mock-control judgment-pass"><span class="value">Pass</span><span class="arrow">▾</span></div></div>
+            <div class="field-group"><div class="field-label"><span>TC Principle summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="scoring" data-page-id="S8" data-page-slug="critical-fails-and-confidence" data-context-topic-id="context.critical-fails-and-confidence" id="questionnaire-section-8" aria-labelledby="q-s8-heading">
+          <div class="section-kicker" aria-hidden="true">Section 8</div>
+          <h2 id="q-s8-heading">Critical Fails and Confidence</h2>
+          <div class="field-grid single">
+            <div class="field-group">
+              <div class="field-label"><span>8.1 Critical fail flags</span></div>
+              <div class="checkbox-block">
+                <div class="checkbox-list">
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Fabricated or unverifiable citation found</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Materially unfaithful synthesis found</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Major claim not traceable to a primary source</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Provenance path not inspectable enough for academic use</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Privacy/data-use terms unclear or unacceptable</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Serious security/compliance concern</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Serious bias/fairness concern without credible mitigation</label>
+                </div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>8.2 Critical fail notes</span><span class="condition-tag">Required if any flag checked</span></div>
+              <div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>8.3 Completion checklist</span></div>
+              <div class="checkbox-block">
+                <div class="checkbox-list">
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Documentation reviewed</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Privacy policy reviewed</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Three test scenarios completed</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Repeated query test completed</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Five claims/citations manually checked</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Evidence bundle assembled</label>
+                  <label class="checkbox-item"><input type="checkbox" aria-disabled="true" tabindex="-1" /> Two-person review completed</label>
+                </div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label"><span>8.4 Overall review confidence</span></div>
+              <div class="mock-control"><span class="value">Medium</span><span class="arrow">▾</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="governance" data-page-id="S9" data-page-slug="overall-recommendation" data-context-topic-id="context.overall-recommendation" id="questionnaire-section-9" aria-labelledby="q-s9-heading">
+          <div class="section-kicker" aria-hidden="true">Section 9</div>
+          <h2 id="q-s9-heading">Overall Recommendation</h2>
+          <div class="field-grid">
+            <div class="field-group"><div class="field-label"><span>9.1 Recommendation status</span></div><div class="mock-control"><span class="value">Needs review / provisional</span><span class="arrow">▾</span></div></div>
+            <div class="field-group"><div class="field-label"><span>9.7 Next review due</span></div><div class="mock-control"><span>2026-10-02</span></div></div>
+          </div>
+          <div class="field-grid single">
+            <div class="field-group"><div class="field-label"><span>9.2 Conclusion summary</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>9.3 Conditions/caveats</span><span class="condition-tag">Required unless "Recommended"</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>9.4 Suitable use cases</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>9.5 Unsuitable/high-risk use cases</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>9.6 Public-facing summary draft</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div></div></div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="governance" data-page-id="S10A" data-page-slug="primary-evaluation-handoff" data-context-topic-id="context.primary-evaluation-handoff" id="questionnaire-section-10a" aria-labelledby="q-s10a-heading">
+          <div class="section-kicker" aria-hidden="true">Section 10A</div>
+          <h2 id="q-s10a-heading">Primary Evaluation Handoff</h2>
+          <div class="field-grid">
+            <div class="field-group"><div class="field-label"><span>10A.1 Primary evaluator name</span></div><div class="mock-control"><span>Evaluator name</span></div></div>
+            <div class="field-group"><div class="field-label"><span>10A.2 Date submitted for review</span></div><div class="mock-control"><span>2026-04-09</span></div></div>
+          </div>
+          <div class="field-grid single">
+            <div class="field-group"><div class="field-label"><span>10A.3 Key concerns for second reviewer</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>10A.4 Areas of uncertainty</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="governance" data-page-id="S10B" data-page-slug="second-review" data-context-topic-id="context.second-review" id="questionnaire-section-10b" aria-labelledby="q-s10b-heading">
+          <div class="section-kicker" aria-hidden="true">Section 10B</div>
+          <h2 id="q-s10b-heading">Second Review</h2>
+          <div class="field-grid">
+            <div class="field-group"><div class="field-label"><span>10B.1 Second reviewer name</span></div><div class="mock-control"><span>Second reviewer</span></div></div>
+            <div class="field-group"><div class="field-label"><span>10B.2 Date of second review</span></div><div class="mock-control"><span>2026-04-12</span></div></div>
+            <div class="field-group"><div class="field-label"><span>10B.3 Agreement with primary evaluation</span></div><div class="mock-control"><span class="value">Partial agreement</span><span class="arrow">▾</span></div></div>
+            <div class="field-group"><div class="field-label"><span>10B.5 Second reviewer recommendation</span></div><div class="mock-control"><span class="value">Recommended with caveats</span><span class="arrow">▾</span></div></div>
+          </div>
+          <div class="field-grid single">
+            <div class="field-group"><div class="field-label"><span>10B.4 Criteria to revisit</span><span class="condition-tag">Required if partial disagreement</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-35"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>10B.6 Conflict summary</span><span class="condition-tag">Required if disagreement exists</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+          </div>
+        </section>
+
+        <section class="form-section" data-section="governance" data-page-id="S10C" data-page-slug="final-team-decision" data-context-topic-id="context.final-team-decision" id="questionnaire-section-10c" aria-labelledby="q-s10c-heading">
+          <div class="section-kicker" aria-hidden="true">Section 10C</div>
+          <h2 id="q-s10c-heading">Final Team Decision</h2>
+          <div class="field-grid">
+            <div class="field-group"><div class="field-label"><span>10C.1 Decision meeting date</span></div><div class="mock-control"><span>2026-04-16</span></div></div>
+            <div class="field-group"><div class="field-label"><span>10C.3 Final status</span></div><div class="mock-control"><span class="value">Approved with conditions</span><span class="arrow">▾</span></div></div>
+            <div class="field-group"><div class="field-label"><span>10C.5 Publication status</span></div><div class="mock-control"><span class="value">Published internally</span><span class="arrow">▾</span></div></div>
+            <div class="field-group"><div class="field-label"><span>10C.6 Review cycle frequency</span></div><div class="mock-control"><span class="value">12 months</span><span class="arrow">▾</span></div></div>
+          </div>
+          <div class="field-grid single">
+            <div class="field-group"><div class="field-label"><span>10C.2 Meeting participants</span></div><div class="textarea-mock"><div class="placeholder-line w-75"></div><div class="placeholder-line w-62"></div><div class="placeholder-line w-48"></div></div></div>
+            <div class="field-group"><div class="field-label"><span>10C.4 Final status rationale</span></div><div class="textarea-mock"><div class="placeholder-line w-90"></div><div class="placeholder-line w-90"></div><div class="placeholder-line w-75"></div><div class="placeholder-line w-48"></div></div></div>
+          </div>
+        </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="aboutSurfaceFocusReturn" class="shell-focus-anchor" tabindex="-1"></div>
+  <aside id="aboutSurfaceMount" data-shell-mount="about-surface" aria-labelledby="aboutSurfaceHeading" hidden>
+    <h2 id="aboutSurfaceHeading" class="visually-hidden">Info and about surface</h2>
+  </aside>
+  <div id="helpSurfaceFocusReturn" class="shell-focus-anchor" tabindex="-1"></div>
+  <aside id="helpSurfaceMount" data-shell-mount="help-surface" aria-labelledby="helpSurfaceHeading" hidden>
+    <h2 id="helpSurfaceHeading" class="visually-hidden">Help surface</h2>
+  </aside>
+
+  <script id="legacyInlineShellRuntime" data-future-entry="static/js/app.js" data-runtime-mode="legacy-inline-fallback">
+    (function () {
+      const contextPanel = document.getElementById('frameworkPanel');
+      const questionnairePanel = document.getElementById('questionnairePanel');
+      const questionnaireRenderRoot = document.getElementById('questionnaireRenderRoot');
+      const contextSidebarMount = document.getElementById('contextSidebarMount');
+      const navButtons = Array.from(document.querySelectorAll('.nav-button[data-page-id]'));
+      const navIndicator = document.getElementById('navIndicator');
+      const contextProgress = document.getElementById('frameworkProgress');
+      const questionnaireProgress = document.getElementById('questionnaireProgress');
+      const principlePageIds = new Set(['TR', 'RE', 'UC', 'SE', 'TC']);
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const pageSections = questionnaireRenderRoot ? Array.from(questionnaireRenderRoot.querySelectorAll('[data-page-id]')) : [];
+      const contextSections = contextSidebarMount ? Array.from(contextSidebarMount.querySelectorAll('[data-topic-ids]')) : [];
+      const pageRatios = new Map();
+      let currentPageId = pageSections.length ? pageSections[0].dataset.pageId : 'S0';
+
+      const panels = {
+        context: contextPanel,
+        questionnaire: questionnairePanel,
+      };
+
+      function toPrincipleKey(pageId) {
+        return principlePageIds.has(pageId) ? pageId.toLowerCase() : null;
+      }
+
+      function parseTopicIds(rawValue) {
+        return rawValue ? rawValue.trim().split(/\s+/) : [];
+      }
+
+      function getPageSection(pageId) {
+        return pageSections.find(function (section) {
+          return section.dataset.pageId === pageId;
+        }) || null;
+      }
+
+      function getTopicSections(topicId) {
+        if (!topicId) {
+          return [];
+        }
+
+        return contextSections.filter(function (section) {
+          return parseTopicIds(section.dataset.topicIds).includes(topicId);
+        });
+      }
+
+      function getSectionHeading(section) {
+        const heading = section ? section.querySelector('h2') : null;
+        return heading ? heading.textContent.trim() : '';
+      }
+
+      function hideNavIndicator() {
+        if (!navIndicator) {
+          return;
+        }
+
+        navIndicator.style.width = '0px';
+      }
+
+      function moveNavIndicator(pageId) {
+        const button = navButtons.find(function (candidate) {
+          return candidate.dataset.pageId === pageId;
+        });
+
+        if (!button || !navIndicator) {
+          hideNavIndicator();
+          return;
+        }
+
+        const nav = button.parentElement;
+        const navRect = nav.getBoundingClientRect();
+        const buttonRect = button.getBoundingClientRect();
+        const principleKey = button.dataset.target;
+        const colorMap = {
+          tr: 'var(--tr)',
+          re: 'var(--re)',
+          uc: 'var(--uc)',
+          se: 'var(--se-dark)',
+          tc: 'var(--tc-dark)',
+        };
+
+        navIndicator.style.left = (buttonRect.left - navRect.left) + 'px';
+        navIndicator.style.width = buttonRect.width + 'px';
+        navIndicator.style.background = colorMap[principleKey] || 'var(--ut-red)';
+      }
+
+      function updateQuickJump(pageId) {
+        const principleKey = toPrincipleKey(pageId);
+
+        navButtons.forEach(function (button) {
+          const isActive = Boolean(principleKey && button.dataset.pageId === pageId);
+          button.classList.toggle('active', isActive);
+
+          if (isActive) {
+            button.setAttribute('aria-current', 'page');
+          } else {
+            button.removeAttribute('aria-current');
+          }
+        });
+
+        if (principleKey) {
+          moveNavIndicator(pageId);
+        } else {
+          hideNavIndicator();
+        }
+      }
+
+      function updateProgress(panelName) {
+        const panel = panels[panelName];
+        const bar = panelName === 'context' ? contextProgress : questionnaireProgress;
+
+        if (!panel || !bar) {
+          return;
+        }
+
+        const scrollTop = panel.scrollTop;
+        const scrollHeight = panel.scrollHeight - panel.clientHeight;
+        const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+        bar.style.width = Math.min(pct, 100) + '%';
+      }
+
+      function updateScrollShadows(panelName) {
+        const panel = panels[panelName];
+        if (!panel) {
+          return;
+        }
+
+        const scrollTop = panel.scrollTop;
+        const scrollHeight = panel.scrollHeight - panel.clientHeight;
+        panel.classList.toggle('can-scroll-up', scrollTop > 10);
+        panel.classList.toggle('can-scroll-down', scrollTop < scrollHeight - 10);
+      }
+
+      function updatePanelTitle(panel, matchedSection, pageId) {
+        if (!panel) {
+          return;
+        }
+
+        const title = panel.querySelector('.panel-title');
+        if (!title) {
+          return;
+        }
+
+        let sectionSpan = title.querySelector('.panel-title-section');
+        if (!sectionSpan) {
+          sectionSpan = document.createElement('span');
+          sectionSpan.className = 'panel-title-section';
+          title.appendChild(sectionSpan);
+        }
+
+        const principleKey = toPrincipleKey(pageId);
+        const heading = getSectionHeading(matchedSection);
+
+        sectionSpan.className = 'panel-title-section';
+        if (principleKey) {
+          sectionSpan.classList.add(principleKey);
+        }
+
+        sectionSpan.textContent = heading ? ' — ' + heading : '';
+      }
+
+      function revealContextSections(sections) {
+        if (!sections.length || !contextPanel) {
+          return;
+        }
+
+        contextPanel.scrollTo({
+          top: Math.max(sections[0].offsetTop - 12, 0),
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        });
+      }
+
+      function updateContextSurface(pageId, options) {
+        const pageSection = getPageSection(pageId);
+        const topicId = pageSection ? pageSection.dataset.contextTopicId : null;
+        const matchedSections = getTopicSections(topicId);
+
+        contextSections.forEach(function (section) {
+          section.classList.toggle('is-active', matchedSections.includes(section));
+        });
+
+        updatePanelTitle(contextPanel, matchedSections[0] || null, pageId);
+
+        if (options && options.reveal) {
+          revealContextSections(matchedSections);
+        }
+      }
+
+      function setCurrentPage(pageId, options) {
+        const pageSection = getPageSection(pageId);
+        if (!pageSection) {
+          return;
+        }
+
+        currentPageId = pageId;
+        updateQuickJump(pageId);
+        updatePanelTitle(questionnairePanel, pageSection, pageId);
+        updateContextSurface(pageId, options || {});
+      }
+
+      function chooseBestPageId() {
+        let bestPageId = null;
+        let bestRatio = 0;
+
+        pageRatios.forEach(function (ratio, section) {
+          if (ratio > bestRatio) {
+            bestRatio = ratio;
+            bestPageId = section.dataset.pageId;
+          }
+        });
+
+        return bestRatio >= 0.18 ? bestPageId : null;
+      }
+
+      function handlePageIntersections(entries) {
+        entries.forEach(function (entry) {
+          entry.target.classList.toggle('is-active', entry.isIntersecting);
+          pageRatios.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0);
+        });
+
+        const bestPageId = chooseBestPageId();
+        if (bestPageId && bestPageId !== currentPageId) {
+          setCurrentPage(bestPageId);
+        }
+      }
+
+      const pageObserver = questionnairePanel && pageSections.length
+        ? new IntersectionObserver(handlePageIntersections, {
+            root: questionnairePanel,
+            threshold: [0.2, 0.5],
+          })
+        : null;
+
+      if (pageObserver) {
+        pageSections.forEach(function (section) {
+          pageObserver.observe(section);
+        });
+      }
+
+      if (contextPanel) {
+        contextPanel.addEventListener('scroll', function () {
+          updateProgress('context');
+          updateScrollShadows('context');
+        }, { passive: true });
+      }
+
+      if (questionnairePanel) {
+        questionnairePanel.addEventListener('scroll', function () {
+          updateProgress('questionnaire');
+          updateScrollShadows('questionnaire');
+        }, { passive: true });
+      }
+
+      navButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          const targetPageId = button.dataset.pageId;
+          const targetSection = getPageSection(targetPageId);
+          if (!targetSection || !questionnairePanel) {
+            return;
+          }
+
+          questionnairePanel.scrollTo({
+            top: Math.max(targetSection.offsetTop - 12, 0),
+            behavior: prefersReducedMotion ? 'auto' : 'smooth',
+          });
+
+          setCurrentPage(targetPageId, { reveal: true });
+        });
+      });
+
+      const scoreDefinitions = [
+        '0 — Fails: The criterion is not met, or there is no evidence that it is met.',
+        '1 — Partial / unclear: Some evidence exists but it remains incomplete or insufficient.',
+        '2 — Meets baseline: The criterion is met to a satisfactory standard, supported by evidence.',
+        '3 — Strong: The criterion is met to a high standard, with clear and compelling evidence.',
+      ];
+
+      document.querySelectorAll('.rating-scale').forEach(function (scale) {
+        const options = Array.from(scale.querySelectorAll('.rating-option'));
+        const card = scale.closest('.criterion-card');
+        const label = card ? card.querySelector('h3') : null;
+
+        scale.setAttribute('role', 'radiogroup');
+        if (label && card) {
+          label.id = label.id || ('label-' + card.dataset.criterion.toLowerCase());
+          scale.setAttribute('aria-labelledby', label.id);
+        }
+
+        options.forEach(function (option, index) {
+          option.dataset.score = String(index);
+          option.setAttribute('tabindex', '0');
+          option.setAttribute('role', 'radio');
+          option.setAttribute('aria-checked', 'false');
+          option.setAttribute('aria-label', scoreDefinitions[index]);
+          option.setAttribute('title', scoreDefinitions[index]);
+
+          option.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+              event.preventDefault();
+              options[Math.min(index + 1, options.length - 1)].focus();
+            } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+              event.preventDefault();
+              options[Math.max(index - 1, 0)].focus();
+            } else if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              option.click();
+            }
+          });
+
+          option.addEventListener('click', function () {
+            options.forEach(function (candidate) {
+              candidate.classList.remove('selected', 'score-0', 'score-1', 'score-2', 'score-3');
+              candidate.setAttribute('aria-checked', 'false');
+            });
+
+            option.classList.add('selected', 'score-' + index);
+            option.setAttribute('aria-checked', 'true');
+          });
+        });
+      });
+
+      document.querySelectorAll('.checkbox-block').forEach(function (block) {
+        block.addEventListener('change', function (event) {
+          const checkbox = event.target;
+          if (!(checkbox instanceof HTMLInputElement) || checkbox.type !== 'checkbox') {
+            return;
+          }
+
+          const item = checkbox.closest('.checkbox-item');
+          if (item) {
+            item.classList.toggle('has-checked', checkbox.checked);
+          }
+        });
+
+        block.querySelectorAll('.checkbox-item').forEach(function (item) {
+          const input = item.querySelector('input');
+          if (input instanceof HTMLInputElement && input.checked) {
+            item.classList.add('has-checked');
+          }
+        });
+      });
+
+      (function initCompletionTracking() {
+        const principleConfigs = [
+          { key: 'tr', sectionId: 'questionnaire-section-3', selector: '.criterion-card.tr' },
+          { key: 're', sectionId: 'questionnaire-section-4', selector: '.criterion-card.re' },
+          { key: 'uc', sectionId: 'questionnaire-section-5', selector: '.criterion-card.uc' },
+          { key: 'se', sectionId: 'questionnaire-section-6', selector: '.criterion-card.se' },
+          { key: 'tc', sectionId: 'questionnaire-section-7', selector: '.criterion-card.tc' },
+        ];
+
+        const stripCells = {};
+        ['tr', 're', 'uc', 'se', 'tc'].forEach(function (key) {
+          const cell = document.querySelector('.strip-cell.' + key);
+          if (cell) {
+            stripCells[key] = cell;
+          }
+        });
+
+        principleConfigs.forEach(function (config) {
+          const section = document.getElementById(config.sectionId);
+          if (!section) {
+            return;
+          }
+
+          const heading = section.querySelector('h2');
+          const cards = Array.from(section.querySelectorAll(config.selector));
+          if (!heading || !cards.length) {
+            return;
+          }
+
+          const badge = document.createElement('span');
+          badge.className = 'completion-badge ' + config.key;
+          badge.textContent = '0/' + cards.length + ' scored';
+          heading.appendChild(badge);
+
+          const updateCompletion = function () {
+            const scored = cards.filter(function (card) {
+              return card.querySelector('.rating-option.selected');
+            }).length;
+            const isComplete = scored === cards.length;
+
+            badge.textContent = scored + '/' + cards.length + ' scored';
+            badge.classList.toggle('complete', isComplete);
+
+            const cell = stripCells[config.key];
+            if (cell) {
+              cell.classList.toggle('filled', isComplete);
+            }
+          };
+
+          section.addEventListener('click', function (event) {
+            if (!event.target.closest('.rating-option')) {
+              return;
+            }
+
+            updateCompletion();
+          });
+        });
+      }());
+
+      const shortcutMap = {
+        '1': 'TR',
+        '2': 'RE',
+        '3': 'UC',
+        '4': 'SE',
+        '5': 'TC',
+        t: 'TR',
+        r: 'RE',
+        u: 'UC',
+        s: 'SE',
+        c: 'TC',
+      };
+
+      document.addEventListener('keydown', function (event) {
+        if (!event.altKey) {
+          return;
+        }
+
+        const targetPageId = shortcutMap[event.key.toLowerCase()];
+        const targetSection = getPageSection(targetPageId);
+        if (!targetPageId || !targetSection || !questionnairePanel) {
+          return;
+        }
+
+        event.preventDefault();
+        questionnairePanel.scrollTo({
+          top: Math.max(targetSection.offsetTop - 12, 0),
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        });
+        setCurrentPage(targetPageId, { reveal: true });
+      });
+
+      setCurrentPage(currentPageId);
+      updateProgress('context');
+      updateProgress('questionnaire');
+      updateScrollShadows('context');
+      updateScrollShadows('questionnaire');
+
+      let resizeFrame = 0;
+      window.addEventListener('resize', function () {
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(function () {
+          updateQuickJump(currentPageId);
+        });
+      });
+    }());
+  </script>
+</body>
+</html>

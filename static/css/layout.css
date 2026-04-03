@@ -1,0 +1,212 @@
+/* Legacy shell layout layer extracted from trust-framework.html.
+   Owns the fixed shell chrome, panel grid, and viewport-responsive structure. */
+
+.top-accent {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 6px;
+  background: var(--ut-red);
+  z-index: 30;
+}
+
+.site-header {
+  position: fixed;
+  inset: 6px 0 auto 0;
+  z-index: 25;
+  background: var(--ut-white);
+  border-bottom: 2px solid var(--ut-border);
+}
+
+.header-inner {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 16px 24px 14px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 320px;
+}
+
+.logo-dept {
+  flex: 0 0 auto;
+  border-radius: 2px;
+}
+
+.brand-logos {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trust-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.brand-logos .logo-trust {
+  flex: 0 0 auto;
+}
+
+.brand-sep {
+  color: var(--ut-border);
+  font-size: 1.1rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.trust-label p {
+  margin: 4px 0 0;
+  color: var(--ut-muted);
+  font-size: var(--text-sm);
+  font-family: var(--ff-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  width: 100%;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: relative;
+  justify-content: flex-end;
+}
+
+.panel-progress {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: 3px;
+  background: rgba(0, 125, 156, 0.08);
+}
+
+.panel-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--ut-blue);
+  will-change: width;
+  transition: width var(--duration-normal) var(--ease-out-quart);
+}
+
+.split-layout {
+  position: fixed;
+  inset: var(--header-h) 0 0 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+}
+
+.panel {
+  min-width: 0;
+  height: calc(100vh - var(--header-h));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.framework-panel {
+  background: var(--ut-panel-bg);
+  border-right: 3px solid var(--ut-border);
+}
+
+.questionnaire-panel {
+  background: var(--ut-white);
+}
+
+.panel-inner {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 20px 20px 48px;
+}
+
+.panel-title {
+  margin: 0 0 16px;
+  color: var(--ut-navy);
+  font-size: var(--text-body);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 800;
+  font-family: var(--ff-heading);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ut-border);
+}
+
+.panel-title-section {
+  color: var(--ut-muted);
+  font-weight: 400;
+  margin-left: 4px;
+  transition: color var(--duration-normal) var(--ease-out-quart);
+}
+
+.panel::before,
+.panel::after {
+  content: '';
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 6px;
+  z-index: 4;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out-quart);
+}
+
+.panel::before {
+  top: 3px;
+  background: linear-gradient(to bottom, rgba(0, 44, 95, 0.04), transparent);
+  opacity: 0;
+}
+
+.panel::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0, 44, 95, 0.04), transparent);
+  opacity: 0;
+}
+
+@media (max-width: 1160px) {
+  :root {
+    --header-h: 160px;
+  }
+
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    height: calc((100vh - var(--header-h)) / 2);
+  }
+
+  .framework-panel {
+    border-right: 0;
+    border-bottom: 3px solid var(--ut-border);
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --header-h: 196px;
+    --text-heading: 1.0625rem;
+  }
+
+  .header-inner {
+    padding-inline: 16px;
+  }
+
+  .panel-inner {
+    padding: 14px 14px 36px;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+}

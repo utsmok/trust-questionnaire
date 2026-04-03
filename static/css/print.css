@@ -1,0 +1,98 @@
+/* Legacy shell print layer extracted from trust-framework.html.
+   Load last so print-only overrides stay isolated from screen styles. */
+
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  .top-accent,
+  .site-header,
+  .panel-progress,
+  .nav-indicator,
+  .completion-strip {
+    display: none;
+  }
+
+  .section-kicker.tr,
+  .section-kicker.re,
+  .section-kicker.uc,
+  .section-kicker.se,
+  .section-kicker.tc {
+    display: none;
+  }
+
+  .split-layout {
+    position: static;
+    display: block;
+  }
+
+  .panel {
+    height: auto;
+    overflow: visible;
+    position: static;
+  }
+
+  .framework-panel {
+    border-right: none;
+  }
+
+  .panel-inner {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .doc-section,
+  .form-section {
+    break-inside: avoid;
+    opacity: 1;
+    animation: none;
+  }
+
+  .rating-option.score-0,
+  .rating-option.score-1,
+  .rating-option.score-2,
+  .rating-option.score-3 {
+    border: 2px solid #000;
+  }
+
+  .form-section[data-section="tr"]::before,
+  .doc-section[data-section="tr"]::before {
+    content: "TR ";
+    font-weight: 800;
+    font-family: var(--ff-mono);
+    font-size: 12pt;
+  }
+
+  .form-section[data-section="re"]::before,
+  .doc-section[data-section="re"]::before {
+    content: "RE ";
+    font-weight: 800;
+    font-family: var(--ff-mono);
+    font-size: 12pt;
+  }
+
+  .form-section[data-section="uc"]::before,
+  .doc-section[data-section="uc"]::before {
+    content: "UC ";
+    font-weight: 800;
+    font-family: var(--ff-mono);
+    font-size: 12pt;
+  }
+
+  .form-section[data-section="se"]::before,
+  .doc-section[data-section="se"]::before {
+    content: "SE ";
+    font-weight: 800;
+    font-family: var(--ff-mono);
+    font-size: 12pt;
+  }
+
+  .form-section[data-section="tc"]::before,
+  .doc-section[data-section="tc"]::before {
+    content: "TC ";
+    font-weight: 800;
+    font-family: var(--ff-mono);
+    font-size: 12pt;
+  }
+}
