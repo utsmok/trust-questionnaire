@@ -6,7 +6,9 @@ const resolveDocumentRef = (documentRef) => {
     return documentRef;
   }
 
-  throw new Error('[dom-factories] A document reference is required to create questionnaire DOM nodes.');
+  throw new Error(
+    '[dom-factories] A document reference is required to create questionnaire DOM nodes.',
+  );
 };
 
 const INLINE_TEXT_CONTROL_STYLE = [
@@ -46,10 +48,7 @@ const INLINE_HIDDEN_CHOICE_INPUT_STYLE = [
   'pointer-events:none',
 ].join(';');
 
-const INLINE_STACK_STYLE = [
-  'display:grid',
-  'gap:8px',
-].join(';');
+const INLINE_STACK_STYLE = ['display:grid', 'gap:8px'].join(';');
 
 const toClassNames = (value) => {
   if (!value) {
@@ -283,9 +282,7 @@ export const createFieldGroup = ({
 
 const normalizeTextLines = (value) => {
   if (Array.isArray(value)) {
-    return value
-      .flatMap((entry) => normalizeTextLines(entry))
-      .filter(Boolean);
+    return value.flatMap((entry) => normalizeTextLines(entry)).filter(Boolean);
   }
 
   if (typeof value === 'string') {
@@ -302,10 +299,7 @@ const normalizeTextLines = (value) => {
   return [String(value)];
 };
 
-export const createPlaceholderLine = ({
-  documentRef,
-  widthClass = 'w-90',
-} = {}) =>
+export const createPlaceholderLine = ({ documentRef, widthClass = 'w-90' } = {}) =>
   createElement('div', {
     documentRef,
     className: ['placeholder-line', widthClass],
@@ -358,17 +352,20 @@ export const createTextareaMock = ({
   attributes = {},
 } = {}) => {
   const lines = normalizeTextLines(valueText);
-  const children = lines.length > 0
-    ? lines.map((line) =>
-        createElement('div', {
-          documentRef,
-          text: line,
-        }))
-    : placeholderLineClasses.map((widthClass) =>
-        createPlaceholderLine({
-          documentRef,
-          widthClass,
-        }));
+  const children =
+    lines.length > 0
+      ? lines.map((line) =>
+          createElement('div', {
+            documentRef,
+            text: line,
+          }),
+        )
+      : placeholderLineClasses.map((widthClass) =>
+          createPlaceholderLine({
+            documentRef,
+            widthClass,
+          }),
+        );
 
   return createElement('div', {
     documentRef,
@@ -689,11 +686,12 @@ export const createRatingScale = ({
   inputDataset = {},
   attributes = {},
 } = {}) => {
-  const normalizedSelectedValue = selectedValue === null || selectedValue === undefined
-    ? null
-    : Number.isFinite(Number(selectedValue))
-      ? Number(selectedValue)
-      : selectedValue;
+  const normalizedSelectedValue =
+    selectedValue === null || selectedValue === undefined
+      ? null
+      : Number.isFinite(Number(selectedValue))
+        ? Number(selectedValue)
+        : selectedValue;
 
   const scale = createElement('div', {
     documentRef,
@@ -708,7 +706,9 @@ export const createRatingScale = ({
   });
 
   options.forEach((option) => {
-    const numericValue = Number.isFinite(Number(option.value)) ? Number(option.value) : option.value;
+    const numericValue = Number.isFinite(Number(option.value))
+      ? Number(option.value)
+      : option.value;
     const isSelected = normalizedSelectedValue === numericValue;
     const radioInput = createElement('input', {
       documentRef,
@@ -818,6 +818,97 @@ export const createCriterionCard = ({
   appendChildren(card, children);
 
   return card;
+};
+
+let tooltipUid = 0;
+
+export const createTooltipTrigger = ({ documentRef, label, tooltipText } = {}) => {
+  const id = `tooltip-${++tooltipUid}`;
+
+  const btn = createElement('button', {
+    documentRef,
+    className: 'tooltip-trigger-btn',
+    text: '?',
+    attributes: {
+      type: 'button',
+      'aria-describedby': id,
+      'aria-label': label,
+      title: tooltipText,
+    },
+  });
+
+  const tip = createElement('span', {
+    documentRef,
+    className: 'tooltip-content',
+    text: tooltipText,
+    attributes: {
+      id,
+      role: 'tooltip',
+    },
+  });
+
+  const wrapper = createElement('span', {
+    documentRef,
+    className: 'tooltip-trigger',
+    children: [btn, tip],
+  });
+
+  let hoverTimer = null;
+
+  const positionTooltip = () => {
+    const rect = btn.getBoundingClientRect();
+    const viewH = window.innerHeight;
+    const spaceBelow = viewH - rect.bottom;
+    const spaceAbove = rect.top;
+    const estimatedHeight = tip.offsetHeight || 80;
+
+    tip.classList.toggle('is-flipped', spaceBelow < estimatedHeight && spaceAbove > spaceBelow);
+  };
+
+  const show = () => {
+    tip.removeAttribute('hidden');
+    positionTooltip();
+    wrapper.classList.add('is-active');
+  };
+
+  const hide = () => {
+    wrapper.classList.remove('is-active');
+    tip.setAttribute('hidden', '');
+  };
+
+  btn.addEventListener('mouseenter', () => {
+    hoverTimer = setTimeout(show, 300);
+  });
+
+  btn.addEventListener('mouseleave', () => {
+    clearTimeout(hoverTimer);
+    hoverTimer = null;
+    hide();
+  });
+
+  btn.addEventListener('focus', show);
+  btn.addEventListener('blur', hide);
+
+  btn.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hide();
+      btn.blur();
+    }
+  });
+
+  documentRef.addEventListener(
+    'click',
+    (e) => {
+      if (!wrapper.contains(e.target)) {
+        hide();
+      }
+    },
+    true,
+  );
+
+  tip.setAttribute('hidden', '');
+
+  return wrapper;
 };
 
 export const createSection = ({

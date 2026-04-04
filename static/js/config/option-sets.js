@@ -86,7 +86,8 @@ export const OPTION_SET_LIST = freezeArray([
       createOption('it_admin', 'IT admin'),
       createOption('other', 'Other'),
     ],
-    notes: 'The questionnaire specification uses academic responder roles; workflow path is modeled separately by submission type.',
+    notes:
+      'The questionnaire specification uses academic responder roles; workflow path is modeled separately by submission type.',
   }),
   createOptionSet({
     id: OPTION_SET_IDS.TOOL_CATEGORY,
@@ -177,10 +178,7 @@ export const OPTION_SET_LIST = freezeArray([
     id: OPTION_SET_IDS.BINARY_YES_NO,
     label: 'Yes / No',
     selection: 'single',
-    options: [
-      createOption('yes', 'Yes'),
-      createOption('no', 'No'),
-    ],
+    options: [createOption('yes', 'Yes'), createOption('no', 'No')],
   }),
   createOptionSet({
     id: OPTION_SET_IDS.TRI_STATE_YES_NO_UNCLEAR,
@@ -218,13 +216,25 @@ export const OPTION_SET_LIST = freezeArray([
     label: 'Critical fail flags',
     selection: 'multiple',
     options: [
-      createOption('fabricated_or_unverifiable_citation', 'Fabricated or unverifiable citation found'),
+      createOption(
+        'fabricated_or_unverifiable_citation',
+        'Fabricated or unverifiable citation found',
+      ),
       createOption('materially_unfaithful_synthesis', 'Materially unfaithful synthesis found'),
       createOption('major_claim_not_traceable', 'Major claim not traceable to a primary source'),
-      createOption('provenance_not_inspectable', 'Provenance path not inspectable enough for academic use'),
-      createOption('privacy_terms_unclear_or_unacceptable', 'Privacy/data-use terms unclear or unacceptable'),
+      createOption(
+        'provenance_not_inspectable',
+        'Provenance path not inspectable enough for academic use',
+      ),
+      createOption(
+        'privacy_terms_unclear_or_unacceptable',
+        'Privacy/data-use terms unclear or unacceptable',
+      ),
       createOption('serious_security_or_compliance_concern', 'Serious security/compliance concern'),
-      createOption('serious_bias_without_mitigation', 'Serious bias/fairness concern without credible mitigation'),
+      createOption(
+        'serious_bias_without_mitigation',
+        'Serious bias/fairness concern without credible mitigation',
+      ),
     ],
   }),
   createOptionSet({
@@ -233,12 +243,24 @@ export const OPTION_SET_LIST = freezeArray([
     selection: 'multiple',
     options: [
       createOption('all_criteria_scored_with_evidence', 'All TRUST criteria scored with evidence'),
-      createOption('evidence_bundle_populated', 'Evidence folder populated with screenshots and exports'),
-      createOption('repeated_query_test_complete_or_omission_documented', 'Repeated query test completed (or documented reason for omission)'),
-      createOption('benchmark_complete_or_omission_documented', 'Benchmark comparison completed (or documented reason for omission)'),
+      createOption(
+        'evidence_bundle_populated',
+        'Evidence folder populated with screenshots and exports',
+      ),
+      createOption(
+        'repeated_query_test_complete_or_omission_documented',
+        'Repeated query test completed (or documented reason for omission)',
+      ),
+      createOption(
+        'benchmark_complete_or_omission_documented',
+        'Benchmark comparison completed (or documented reason for omission)',
+      ),
       createOption('privacy_terms_reviewed', 'Privacy terms reviewed'),
       createOption('sample_queries_documented', 'Sample queries documented'),
-      createOption('all_low_score_blockers_completed', 'All uncertainty/blocker fields completed for scores of 0 or 1'),
+      createOption(
+        'all_low_score_blockers_completed',
+        'All uncertainty/blocker fields completed for scores of 0 or 1',
+      ),
     ],
   }),
   createOptionSet({
@@ -319,7 +341,8 @@ export const OPTION_SET_LIST = freezeArray([
       createOption('unclear', 'Unclear'),
       createOption('escalated', 'Escalated'),
     ],
-    notes: 'This follows the canonical questionnaire wording; the HTML prototype used a different display label.',
+    notes:
+      'This follows the canonical questionnaire wording; the HTML prototype used a different display label.',
   }),
   createOptionSet({
     id: OPTION_SET_IDS.CRITERION_CODES,
@@ -333,15 +356,21 @@ export const OPTION_SET_LIST = freezeArray([
     selection: 'single',
     options: [
       createOption('not_applicable_to_tool', 'Not applicable to tool', { availability: 'user' }),
-      createOption('not_available_in_tested_tier', 'Not available in tested tier', { availability: 'user' }),
+      createOption('not_available_in_tested_tier', 'Not available in tested tier', {
+        availability: 'user',
+      }),
       createOption('access_blocked', 'Access blocked', { availability: 'user' }),
-      createOption('insufficient_documentation', 'Insufficient documentation', { availability: 'user' }),
+      createOption('insufficient_documentation', 'Insufficient documentation', {
+        availability: 'user',
+      }),
       createOption('test_not_performed', 'Test not performed', { availability: 'user' }),
       createOption('covered_elsewhere', 'Covered elsewhere', { availability: 'user' }),
       createOption('other', 'Other', { availability: 'user' }),
       createOption('workflow_hidden', 'Workflow hidden', { availability: 'system' }),
       createOption('out_of_scope_closeout', 'Out-of-scope closeout', { availability: 'system' }),
-      createOption('inherited_from_section_skip', 'Inherited from section skip', { availability: 'system' }),
+      createOption('inherited_from_section_skip', 'Inherited from section skip', {
+        availability: 'system',
+      }),
     ],
   }),
 ]);

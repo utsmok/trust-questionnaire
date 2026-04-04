@@ -11,10 +11,7 @@ import {
   QUESTIONNAIRE_FIELDS_BY_ID,
   QUESTIONNAIRE_SECTIONS_BY_ID,
 } from '../config/questionnaire-schema.js';
-import {
-  OPTION_SET_IDS,
-  OPTION_SETS,
-} from '../config/option-sets.js';
+import { OPTION_SET_IDS, OPTION_SETS } from '../config/option-sets.js';
 import {
   FIELD_REQUIREMENT_RULES_BY_TARGET,
   FIELD_VISIBILITY_RULES_BY_TARGET,
@@ -35,17 +32,18 @@ import {
   createSectionKicker,
   createSelectControl,
   createTextareaControl,
+  createTooltipTrigger,
 } from './dom-factories.js';
-import {
-  createEvidenceBlockElement,
-  createEvidenceScope,
-} from './evidence.js';
+import { createEvidenceBlockElement, createEvidenceScope } from './evidence.js';
 import { EMPTY_ARRAY, freezeArray, isPlainObject } from '../utils/shared.js';
 
 const EMPTY_OBJECT = Object.freeze({});
-const SECTION_NOTE_HELP_TEXT = 'Optional section-level note for observations not captured elsewhere. This does not satisfy required summary, blocker, or rationale fields.';
-const SECTION_SKIP_SCAFFOLD_HELP_TEXT = 'Section skip overrides child field dependencies and requiredness for this page, but both a skip reason and a substantive rationale are required.';
-const CRITERION_SKIP_SCAFFOLD_HELP_TEXT = 'Criterion skip is separate from a low or negative score. Use it only when the criterion cannot be assessed; both a skip reason and a substantive rationale are required, and criterion child fields stop contributing requiredness while the skip is active.';
+const SECTION_NOTE_HELP_TEXT =
+  "Free-form note for observations that don't fit elsewhere. Does not satisfy any required field.";
+const SECTION_SKIP_SCAFFOLD_HELP_TEXT =
+  'Skip this section to mark it as not applicable. All fields inside become optional. A reason and rationale are required.';
+const CRITERION_SKIP_SCAFFOLD_HELP_TEXT =
+  'Skip only when the criterion cannot be assessed (e.g., insufficient data or tool unavailable). Score normally if you can evaluate it. Reason and rationale required. All child fields become optional.';
 
 const assertInvariant = (condition, message) => {
   if (!condition) {
@@ -53,12 +51,7 @@ const assertInvariant = (condition, message) => {
   }
 };
 
-const createFieldGroupLayout = ({
-  anchor,
-  fieldIds,
-  layout = 'default',
-  className = '',
-}) =>
+const createFieldGroupLayout = ({ anchor, fieldIds, layout = 'default', className = '' }) =>
   Object.freeze({
     anchor,
     fieldIds: freezeArray(fieldIds),
@@ -66,11 +59,7 @@ const createFieldGroupLayout = ({
     className,
   });
 
-const createPageLayout = ({
-  dataSection,
-  criterionAnchor = 'criteria',
-  groups = EMPTY_ARRAY,
-}) =>
+const createPageLayout = ({ dataSection, criterionAnchor = 'criteria', groups = EMPTY_ARRAY }) =>
   Object.freeze({
     dataSection,
     criterionAnchor,
@@ -89,6 +78,15 @@ const PAGE_LAYOUTS = Object.freeze({
           FIELD_IDS.S0.TOOL_URL,
           FIELD_IDS.S0.EXISTING_EVALUATION_ID,
           FIELD_IDS.S0.RESPONDER_ROLE,
+        ],
+      }),
+      createFieldGroupLayout({
+        anchor: 'reviewer',
+        fieldIds: [
+          FIELD_IDS.S0.REVIEWER_NAME,
+          FIELD_IDS.S0.REVIEWER_EMAIL,
+          FIELD_IDS.S0.REVIEWER_AFFILIATION,
+          FIELD_IDS.S0.REVIEW_DATE,
         ],
       }),
       createFieldGroupLayout({
@@ -155,10 +153,7 @@ const PAGE_LAYOUTS = Object.freeze({
     groups: [
       createFieldGroupLayout({
         anchor: 'summary',
-        fieldIds: [
-          FIELD_IDS.TR.PRINCIPLE_SUMMARY,
-          FIELD_IDS.TR.PRINCIPLE_JUDGMENT,
-        ],
+        fieldIds: [FIELD_IDS.TR.PRINCIPLE_SUMMARY, FIELD_IDS.TR.PRINCIPLE_JUDGMENT],
         layout: 'single',
         className: 'principle-summary',
       }),
@@ -176,10 +171,7 @@ const PAGE_LAYOUTS = Object.freeze({
       }),
       createFieldGroupLayout({
         anchor: 'summary',
-        fieldIds: [
-          FIELD_IDS.RE.PRINCIPLE_SUMMARY,
-          FIELD_IDS.RE.PRINCIPLE_JUDGMENT,
-        ],
+        fieldIds: [FIELD_IDS.RE.PRINCIPLE_SUMMARY, FIELD_IDS.RE.PRINCIPLE_JUDGMENT],
         layout: 'single',
         className: 'principle-summary',
       }),
@@ -190,17 +182,11 @@ const PAGE_LAYOUTS = Object.freeze({
     groups: [
       createFieldGroupLayout({
         anchor: 'supplementary',
-        fieldIds: [
-          FIELD_IDS.UC.TARGET_USER_PERSONAS,
-          FIELD_IDS.UC.WORKFLOW_INTEGRATIONS_OBSERVED,
-        ],
+        fieldIds: [FIELD_IDS.UC.TARGET_USER_PERSONAS, FIELD_IDS.UC.WORKFLOW_INTEGRATIONS_OBSERVED],
       }),
       createFieldGroupLayout({
         anchor: 'summary',
-        fieldIds: [
-          FIELD_IDS.UC.PRINCIPLE_SUMMARY,
-          FIELD_IDS.UC.PRINCIPLE_JUDGMENT,
-        ],
+        fieldIds: [FIELD_IDS.UC.PRINCIPLE_SUMMARY, FIELD_IDS.UC.PRINCIPLE_JUDGMENT],
         layout: 'single',
         className: 'principle-summary',
       }),
@@ -219,10 +205,7 @@ const PAGE_LAYOUTS = Object.freeze({
       }),
       createFieldGroupLayout({
         anchor: 'summary',
-        fieldIds: [
-          FIELD_IDS.SE.PRINCIPLE_SUMMARY,
-          FIELD_IDS.SE.PRINCIPLE_JUDGMENT,
-        ],
+        fieldIds: [FIELD_IDS.SE.PRINCIPLE_SUMMARY, FIELD_IDS.SE.PRINCIPLE_JUDGMENT],
         layout: 'single',
         className: 'principle-summary',
       }),
@@ -237,10 +220,7 @@ const PAGE_LAYOUTS = Object.freeze({
       }),
       createFieldGroupLayout({
         anchor: 'summary',
-        fieldIds: [
-          FIELD_IDS.TC.PRINCIPLE_SUMMARY,
-          FIELD_IDS.TC.PRINCIPLE_JUDGMENT,
-        ],
+        fieldIds: [FIELD_IDS.TC.PRINCIPLE_SUMMARY, FIELD_IDS.TC.PRINCIPLE_JUDGMENT],
         layout: 'single',
         className: 'principle-summary',
       }),
@@ -266,10 +246,7 @@ const PAGE_LAYOUTS = Object.freeze({
     groups: [
       createFieldGroupLayout({
         anchor: 'primary',
-        fieldIds: [
-          FIELD_IDS.S9.RECOMMENDATION_STATUS,
-          FIELD_IDS.S9.NEXT_REVIEW_DUE,
-        ],
+        fieldIds: [FIELD_IDS.S9.RECOMMENDATION_STATUS, FIELD_IDS.S9.NEXT_REVIEW_DUE],
       }),
       createFieldGroupLayout({
         anchor: 'summary',
@@ -289,10 +266,7 @@ const PAGE_LAYOUTS = Object.freeze({
     groups: [
       createFieldGroupLayout({
         anchor: 'primary',
-        fieldIds: [
-          FIELD_IDS.S10A.PRIMARY_EVALUATOR,
-          FIELD_IDS.S10A.DATE_SUBMITTED_FOR_REVIEW,
-        ],
+        fieldIds: [FIELD_IDS.S10A.PRIMARY_EVALUATOR, FIELD_IDS.S10A.DATE_SUBMITTED_FOR_REVIEW],
       }),
       createFieldGroupLayout({
         anchor: 'summary',
@@ -318,10 +292,7 @@ const PAGE_LAYOUTS = Object.freeze({
       }),
       createFieldGroupLayout({
         anchor: 'summary',
-        fieldIds: [
-          FIELD_IDS.S10B.CRITERIA_TO_REVISIT,
-          FIELD_IDS.S10B.CONFLICT_SUMMARY,
-        ],
+        fieldIds: [FIELD_IDS.S10B.CRITERIA_TO_REVISIT, FIELD_IDS.S10B.CONFLICT_SUMMARY],
         layout: 'single',
       }),
     ],
@@ -340,10 +311,7 @@ const PAGE_LAYOUTS = Object.freeze({
       }),
       createFieldGroupLayout({
         anchor: 'summary',
-        fieldIds: [
-          FIELD_IDS.S10C.MEETING_PARTICIPANTS,
-          FIELD_IDS.S10C.FINAL_STATUS_RATIONALE,
-        ],
+        fieldIds: [FIELD_IDS.S10C.MEETING_PARTICIPANTS, FIELD_IDS.S10C.FINAL_STATUS_RATIONALE],
         layout: 'single',
       }),
     ],
@@ -370,14 +338,18 @@ const sanitizeHookToken = (value) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-const uniqueText = (items) =>
-  [...new Set(items.filter(Boolean).map((item) => item.trim()).filter(Boolean))];
+const uniqueText = (items) => [
+  ...new Set(
+    items
+      .filter(Boolean)
+      .map((item) => item.trim())
+      .filter(Boolean),
+  ),
+];
 
 const normalizeListValue = (value, splitter = /[\n,]+/) => {
   if (Array.isArray(value)) {
-    return value
-      .flatMap((item) => normalizeListValue(item, splitter))
-      .filter(Boolean);
+    return value.flatMap((item) => normalizeListValue(item, splitter)).filter(Boolean);
   }
 
   if (value instanceof Set) {
@@ -446,11 +418,7 @@ const formatPersonValue = (value) => {
     return null;
   }
 
-  return value.name
-    || value.displayName
-    || value.email
-    || value.id
-    || null;
+  return value.name || value.displayName || value.email || value.id || null;
 };
 
 const formatDateRangeValue = (value) => {
@@ -466,9 +434,9 @@ const formatDateRangeValue = (value) => {
 };
 
 const getOptionLabel = (optionSet, optionValue) =>
-  optionSet?.options.find((option) => option.value === optionValue)?.label
-  ?? optionSet?.options.find((option) => String(option.value) === String(optionValue))?.label
-  ?? (optionValue === null || optionValue === undefined ? null : String(optionValue));
+  optionSet?.options.find((option) => option.value === optionValue)?.label ??
+  optionSet?.options.find((option) => String(option.value) === String(optionValue))?.label ??
+  (optionValue === null || optionValue === undefined ? null : String(optionValue));
 
 const resolveSelectValueLabel = (field, rawValue, optionSet) => {
   if (rawValue === null || rawValue === undefined || rawValue === '') {
@@ -493,14 +461,16 @@ const formatFieldValue = (field, rawValue, optionSet) => {
     case FIELD_TYPES.LONG_TEXT:
     case FIELD_TYPES.URL:
     case FIELD_TYPES.DATE:
-      return typeof rawValue === 'string' ? rawValue.trim() || null : rawValue ?? null;
+      return typeof rawValue === 'string' ? rawValue.trim() || null : (rawValue ?? null);
     case FIELD_TYPES.URL_LIST:
       return normalizeListValue(rawValue, /\n+/).join('\n') || null;
     case FIELD_TYPES.DATE_RANGE:
       return formatDateRangeValue(rawValue);
     case FIELD_TYPES.NUMBER:
     case FIELD_TYPES.PERCENT:
-      return rawValue === null || rawValue === undefined || rawValue === '' ? null : String(rawValue);
+      return rawValue === null || rawValue === undefined || rawValue === ''
+        ? null
+        : String(rawValue);
     case FIELD_TYPES.PERSON:
       return formatPersonValue(rawValue);
     case FIELD_TYPES.PEOPLE_LIST:
@@ -545,7 +515,7 @@ const serializeFieldValueForControl = (field, rawValue) => {
     case FIELD_TYPES.LONG_TEXT:
     case FIELD_TYPES.URL:
     case FIELD_TYPES.DATE:
-      return typeof rawValue === 'string' ? rawValue : rawValue ?? '';
+      return typeof rawValue === 'string' ? rawValue : (rawValue ?? '');
     case FIELD_TYPES.URL_LIST:
       return normalizeListValue(rawValue, /\n+/).join('\n');
     case FIELD_TYPES.DATE_RANGE:
@@ -564,7 +534,7 @@ const serializeFieldValueForControl = (field, rawValue) => {
 
 const getMockControlPlaceholder = (field) => {
   if (field.derived) {
-    return 'Derived from current state';
+    return 'Auto-filled based on your responses';
   }
 
   switch (field.type) {
@@ -583,7 +553,7 @@ const getMockControlPlaceholder = (field) => {
     case FIELD_TYPES.SHORT_TEXT:
       return `Enter ${field.label.toLowerCase()}`;
     case FIELD_TYPES.SINGLE_SELECT:
-      return field.control === 'computed_select' ? 'Computed value' : 'Select an option';
+      return field.control === 'computed_select' ? 'Auto-calculated' : 'Select an option';
     default:
       return field.label;
   }
@@ -600,6 +570,8 @@ const getTextareaPlaceholderLines = (field) => {
   }
 };
 
+const SECTION_LABEL_PREFIXES = ['TR ', 'RE ', 'UC ', 'SE ', 'TC '];
+
 const getFieldDisplayLabel = (field) => {
   if (field.criterionCode && field.label.startsWith(`${field.criterionCode} `)) {
     return field.label.slice(field.criterionCode.length + 1);
@@ -607,6 +579,12 @@ const getFieldDisplayLabel = (field) => {
 
   if (/^\d/.test(field.code)) {
     return `${field.code} ${field.label}`;
+  }
+
+  for (const prefix of SECTION_LABEL_PREFIXES) {
+    if (field.label.startsWith(prefix)) {
+      return field.label.slice(prefix.length);
+    }
   }
 
   return field.label;
@@ -625,7 +603,7 @@ const getFieldTagMeta = (field, fieldState) => {
 
   if (field.requiredPolicy === 'conditional') {
     return {
-      text: fieldState?.required ? 'Condition active' : 'Conditional',
+      text: fieldState?.required ? 'Required now' : 'Conditional',
       kind: 'condition',
     };
   }
@@ -636,11 +614,10 @@ const getFieldTagMeta = (field, fieldState) => {
 const getFieldHelpText = (field) => {
   const optionSet = field.optionSetId ? OPTION_SETS[field.optionSetId] : null;
 
-  return uniqueText([
-    field.notes,
-    optionSet?.notes,
-    ...getRuleDescriptions(field.id),
-  ]).join(' • ') || null;
+  return (
+    uniqueText([field.notes, optionSet?.notes, ...getRuleDescriptions(field.id)]).join(' • ') ||
+    null
+  );
 };
 
 const getJudgmentClassName = (field, rawValue) => {
@@ -678,9 +655,9 @@ const resolveFieldBodyKind = (field) => {
   }
 
   if (
-    field.control === 'textarea'
-    || field.control === 'url_list'
-    || field.control === 'people_list_input'
+    field.control === 'textarea' ||
+    field.control === 'url_list' ||
+    field.control === 'people_list_input'
   ) {
     return 'textarea';
   }
@@ -689,9 +666,8 @@ const resolveFieldBodyKind = (field) => {
 };
 
 const resolvePageOrder = (pageOrder) => {
-  const candidateOrder = Array.isArray(pageOrder) && pageOrder.length > 0
-    ? pageOrder
-    : RENDERABLE_PAGE_SEQUENCE;
+  const candidateOrder =
+    Array.isArray(pageOrder) && pageOrder.length > 0 ? pageOrder : RENDERABLE_PAGE_SEQUENCE;
   const seenPageIds = new Set();
 
   return candidateOrder.filter((pageId) => {
@@ -704,9 +680,7 @@ const resolvePageOrder = (pageOrder) => {
   });
 };
 
-const hasStoreInterface = (store) =>
-  Boolean(store)
-  && typeof store.getState === 'function';
+const hasStoreInterface = (store) => Boolean(store) && typeof store.getState === 'function';
 
 const resolveRenderState = ({
   store = null,
@@ -751,17 +725,13 @@ export const getPageHeadingId = (pageId) => {
 export const getCriterionElementId = (criterionCode) =>
   `questionnaire-criterion-${sanitizeHookToken(criterionCode)}`;
 
-export const getFieldElementId = (fieldId) =>
-  `questionnaire-field-${sanitizeHookToken(fieldId)}`;
+export const getFieldElementId = (fieldId) => `questionnaire-field-${sanitizeHookToken(fieldId)}`;
 
-export const getFieldLabelId = (fieldId) =>
-  `${getFieldElementId(fieldId)}-label`;
+export const getFieldLabelId = (fieldId) => `${getFieldElementId(fieldId)}-label`;
 
-export const getFieldHelpId = (fieldId) =>
-  `${getFieldElementId(fieldId)}-help`;
+export const getFieldHelpId = (fieldId) => `${getFieldElementId(fieldId)}-help`;
 
-export const getFieldControlId = (fieldId) =>
-  `${getFieldElementId(fieldId)}-control`;
+export const getFieldControlId = (fieldId) => `${getFieldElementId(fieldId)}-control`;
 
 export const getSectionMetaElementId = (pageId, key) =>
   `questionnaire-section-meta-${sanitizeHookToken(pageId)}-${sanitizeHookToken(key)}`;
@@ -785,13 +755,12 @@ const getSectionKickerText = (sectionDefinition) =>
     ? `Section ${sectionDefinition.sectionCode} — ${sectionDefinition.principleKey}`
     : `Section ${sectionDefinition.sectionCode}`;
 
-const getAccentClass = (sectionDefinition) =>
-  sectionDefinition.principleKey?.toLowerCase() ?? null;
+const getAccentClass = (sectionDefinition) => sectionDefinition.principleKey?.toLowerCase() ?? null;
 
 const buildFieldModel = (fieldId, renderState) => {
   const field = QUESTIONNAIRE_FIELDS_BY_ID[fieldId];
   const fieldState = renderState.derived.fieldStates.byId[fieldId] ?? EMPTY_OBJECT;
-  const optionSet = field.optionSetId ? OPTION_SETS[field.optionSetId] ?? null : null;
+  const optionSet = field.optionSetId ? (OPTION_SETS[field.optionSetId] ?? null) : null;
   const rawValue = fieldState.value;
   const bodyKind = resolveFieldBodyKind(field);
 
@@ -819,9 +788,13 @@ const buildFieldModel = (fieldId, renderState) => {
   };
 };
 
-const buildFieldGroupModel = (pageId, groupLayout, renderState, { respectVisibility = false } = {}) => {
-  const fieldModels = groupLayout.fieldIds
-    .map((fieldId) => buildFieldModel(fieldId, renderState));
+const buildFieldGroupModel = (
+  pageId,
+  groupLayout,
+  renderState,
+  { respectVisibility = false } = {},
+) => {
+  const fieldModels = groupLayout.fieldIds.map((fieldId) => buildFieldModel(fieldId, renderState));
 
   if (fieldModels.length === 0) {
     return null;
@@ -845,8 +818,9 @@ const buildCriterionModel = (pageId, criterionCode, renderState, options) => {
   const criterionFieldIds = schemaSection.fieldIds.filter(
     (fieldId) => QUESTIONNAIRE_FIELDS_BY_ID[fieldId].criterionCode === criterionCode,
   );
-  const localSkipRequested = criterionState.skipState === SKIP_STATES.USER_SKIPPED
-    || criterionState.skipMeta?.requested === true;
+  const localSkipRequested =
+    criterionState.skipState === SKIP_STATES.USER_SKIPPED ||
+    criterionState.skipMeta?.requested === true;
   const inheritedSectionSkip = criterionState.skipState === SKIP_STATES.INHERITED_SECTION_SKIP;
   const systemSkipped = criterionState.skipState === SKIP_STATES.SYSTEM_SKIPPED;
 
@@ -869,18 +843,19 @@ const buildCriterionModel = (pageId, criterionCode, renderState, options) => {
       requested: localSkipRequested,
       inheritedSectionSkip,
       systemSkipped,
-      controlsEnabled: pageState.isEditable && localSkipRequested && !inheritedSectionSkip && !systemSkipped,
+      controlsEnabled:
+        pageState.isEditable && localSkipRequested && !inheritedSectionSkip && !systemSkipped,
       isEditable: pageState.isEditable,
-      options: (OPTION_SETS[OPTION_SET_IDS.SKIP_REASON_CODES]?.options ?? EMPTY_ARRAY)
-        .filter((option) => option.availability !== 'system'),
+      options: (OPTION_SETS[OPTION_SET_IDS.SKIP_REASON_CODES]?.options ?? EMPTY_ARRAY).filter(
+        (option) => option.availability !== 'system',
+      ),
     },
     evidenceEditable:
-      pageState.isEditable
-      && criterionState.skipState !== SKIP_STATES.USER_SKIPPED
-      && criterionState.skipState !== SKIP_STATES.INHERITED_SECTION_SKIP
-      && criterionState.skipState !== SKIP_STATES.SYSTEM_SKIPPED,
-    fieldModels: criterionFieldIds
-      .map((fieldId) => buildFieldModel(fieldId, renderState)),
+      pageState.isEditable &&
+      criterionState.skipState !== SKIP_STATES.USER_SKIPPED &&
+      criterionState.skipState !== SKIP_STATES.INHERITED_SECTION_SKIP &&
+      criterionState.skipState !== SKIP_STATES.SYSTEM_SKIPPED,
+    fieldModels: criterionFieldIds.map((fieldId) => buildFieldModel(fieldId, renderState)),
   };
 };
 
@@ -897,11 +872,12 @@ const buildSectionMetaModel = (pageId, renderState) => {
       labelId: `${getSectionMetaElementId(pageId, 'note')}-label`,
       helpId: `${getSectionMetaElementId(pageId, 'note')}-help`,
       controlId: `${getSectionMetaElementId(pageId, 'note')}-control`,
-      value: typeof sectionRecord.sectionNote === 'string'
-        ? sectionRecord.sectionNote
-        : typeof sectionRecord.section_note === 'string'
-          ? sectionRecord.section_note
-          : '',
+      value:
+        typeof sectionRecord.sectionNote === 'string'
+          ? sectionRecord.sectionNote
+          : typeof sectionRecord.section_note === 'string'
+            ? sectionRecord.section_note
+            : '',
     },
     skipScaffold: {
       elementId: getSectionMetaElementId(pageId, 'skip-scaffold'),
@@ -909,19 +885,22 @@ const buildSectionMetaModel = (pageId, renderState) => {
       helpId: `${getSectionMetaElementId(pageId, 'skip-scaffold')}-help`,
       reasonControlId: `${getSectionMetaElementId(pageId, 'skip-scaffold')}-reason`,
       rationaleControlId: `${getSectionMetaElementId(pageId, 'skip-scaffold')}-rationale`,
-      reasonValue: typeof sectionRecord.sectionSkipReasonCode === 'string'
-        ? sectionRecord.sectionSkipReasonCode
-        : typeof sectionRecord.section_skip_reason_code === 'string'
-          ? sectionRecord.section_skip_reason_code
-          : '',
-      rationaleValue: typeof sectionRecord.sectionSkipRationale === 'string'
-        ? sectionRecord.sectionSkipRationale
-        : typeof sectionRecord.section_skip_rationale === 'string'
-          ? sectionRecord.section_skip_rationale
-          : '',
+      reasonValue:
+        typeof sectionRecord.sectionSkipReasonCode === 'string'
+          ? sectionRecord.sectionSkipReasonCode
+          : typeof sectionRecord.section_skip_reason_code === 'string'
+            ? sectionRecord.section_skip_reason_code
+            : '',
+      rationaleValue:
+        typeof sectionRecord.sectionSkipRationale === 'string'
+          ? sectionRecord.sectionSkipRationale
+          : typeof sectionRecord.section_skip_rationale === 'string'
+            ? sectionRecord.section_skip_rationale
+            : '',
       requested: sectionState.skipRequested === true,
-      options: (OPTION_SETS[OPTION_SET_IDS.SKIP_REASON_CODES]?.options ?? EMPTY_ARRAY)
-        .filter((option) => option.availability !== 'system'),
+      options: (OPTION_SETS[OPTION_SET_IDS.SKIP_REASON_CODES]?.options ?? EMPTY_ARRAY).filter(
+        (option) => option.availability !== 'system',
+      ),
     },
   };
 };
@@ -937,7 +916,8 @@ const buildPageModel = (pageId, renderState, options = {}) => {
     .map((groupLayout) => buildFieldGroupModel(pageId, groupLayout, renderState, options))
     .filter(Boolean);
   const criterionModels = schemaSection.criterionCodes.map((criterionCode) =>
-    buildCriterionModel(pageId, criterionCode, renderState, options));
+    buildCriterionModel(pageId, criterionCode, renderState, options),
+  );
 
   return {
     pageId,
@@ -951,17 +931,20 @@ const buildPageModel = (pageId, renderState, options = {}) => {
     headingId: getPageHeadingId(pageId),
     title: getPageTitle(sectionDefinition),
     sectionKickerText: getSectionKickerText(sectionDefinition),
-    criterionAnchor: criterionModels.length > 0
-      ? {
-          anchor: getSummaryAnchorToken(pageId, layout.criterionAnchor),
-          elementId: getSummaryAnchorId(pageId, layout.criterionAnchor),
-        }
-      : null,
+    criterionAnchor:
+      criterionModels.length > 0
+        ? {
+            anchor: getSummaryAnchorToken(pageId, layout.criterionAnchor),
+            elementId: getSummaryAnchorId(pageId, layout.criterionAnchor),
+          }
+        : null,
     criterionModels,
     groupModels,
     sectionMeta: buildSectionMetaModel(pageId, renderState),
     summaryAnchors: [
-      ...(criterionModels.length > 0 ? [getSummaryAnchorToken(pageId, layout.criterionAnchor)] : []),
+      ...(criterionModels.length > 0
+        ? [getSummaryAnchorToken(pageId, layout.criterionAnchor)]
+        : []),
       ...groupModels.map((groupModel) => groupModel.summaryAnchor),
     ],
   };
@@ -975,7 +958,8 @@ export const buildQuestionnairePageModels = ({
 } = {}) => {
   const renderState = resolveRenderState({ store, evaluation, pageOrder });
   const pageModels = renderState.pageOrder.map((pageId) =>
-    buildPageModel(pageId, renderState, { respectVisibility }));
+    buildPageModel(pageId, renderState, { respectVisibility }),
+  );
 
   return {
     ...renderState,
@@ -1109,11 +1093,13 @@ const createFieldBodyElement = (fieldModel, documentRef) => {
         attributes: {
           id: fieldModel.controlId,
           inputmode:
-            fieldModel.field.type === FIELD_TYPES.NUMBER || fieldModel.field.type === FIELD_TYPES.PERCENT
+            fieldModel.field.type === FIELD_TYPES.NUMBER ||
+            fieldModel.field.type === FIELD_TYPES.PERCENT
               ? 'numeric'
               : null,
           step:
-            fieldModel.field.type === FIELD_TYPES.NUMBER || fieldModel.field.type === FIELD_TYPES.PERCENT
+            fieldModel.field.type === FIELD_TYPES.NUMBER ||
+            fieldModel.field.type === FIELD_TYPES.PERCENT
               ? '1'
               : null,
           min: fieldModel.field.type === FIELD_TYPES.PERCENT ? '0' : null,
@@ -1123,6 +1109,43 @@ const createFieldBodyElement = (fieldModel, documentRef) => {
         },
         readOnly: fieldModel.fieldState.readOnly,
       });
+  }
+};
+
+const applyFieldValidationAccessibility = (fieldGroup, fieldModel, documentRef) => {
+  const { validationState, issues } = fieldModel.fieldState;
+  const isErrored = validationState === 'invalid' || validationState === 'blocked';
+  const control = fieldGroup.querySelector(`[id="${fieldModel.controlId}"]`);
+  const targets = control
+    ? [control]
+    : Array.from(fieldGroup.querySelectorAll('input, select, textarea'));
+
+  for (const target of targets) {
+    if (isErrored) {
+      target.setAttribute('aria-invalid', 'true');
+    } else {
+      target.removeAttribute('aria-invalid');
+    }
+  }
+
+  const existing = fieldGroup.querySelector('.validation-message');
+
+  if (isErrored && Array.isArray(issues) && issues.length > 0) {
+    const text = issues.map((issue) => issue.message).join(' ');
+    if (existing) {
+      existing.textContent = text;
+    } else {
+      fieldGroup.appendChild(
+        createElement('div', {
+          documentRef,
+          className: 'validation-message',
+          text,
+          attributes: { role: 'alert' },
+        }),
+      );
+    }
+  } else if (existing) {
+    existing.remove();
   }
 };
 
@@ -1163,6 +1186,18 @@ const createFieldGroupElement = (fieldModel, documentRef, { respectVisibility = 
       'aria-hidden': respectVisibility && fieldModel.fieldState.visible === false ? 'true' : null,
     },
   });
+
+  if (fieldModel.field.tooltip) {
+    fieldGroup.querySelector('.field-label').appendChild(
+      createTooltipTrigger({
+        documentRef,
+        label: fieldModel.field.label,
+        tooltipText: fieldModel.field.tooltip,
+      }),
+    );
+  }
+
+  applyFieldValidationAccessibility(fieldGroup, fieldModel, documentRef);
 
   return fieldGroup;
 };
@@ -1300,7 +1335,8 @@ const createFieldGridElement = (groupModel, documentRef, options) =>
       id: groupModel.elementId,
     },
     children: groupModel.fieldModels.map((fieldModel) =>
-      createFieldGroupElement(fieldModel, documentRef, options)),
+      createFieldGroupElement(fieldModel, documentRef, options),
+    ),
   });
 
 const createCriterionSkipElement = (criterionModel, documentRef) => {
@@ -1313,7 +1349,8 @@ const createCriterionSkipElement = (criterionModel, documentRef) => {
         ? 'Active'
         : 'Optional';
   const controlsDisabled = !skipScaffold.controlsEnabled;
-  const toggleDisabled = !skipScaffold.isEditable || skipScaffold.inheritedSectionSkip || skipScaffold.systemSkipped;
+  const toggleDisabled =
+    !skipScaffold.isEditable || skipScaffold.inheritedSectionSkip || skipScaffold.systemSkipped;
 
   const body = createElement('div', {
     documentRef,
@@ -1329,7 +1366,10 @@ const createCriterionSkipElement = (criterionModel, documentRef) => {
         children: [
           createElement('button', {
             documentRef,
-            className: ['evidence-button', skipScaffold.requested ? null : 'evidence-button-primary'],
+            className: [
+              'evidence-button',
+              skipScaffold.requested ? null : 'evidence-button-primary',
+            ],
             text: skipScaffold.requested ? 'Resume criterion' : 'Skip criterion',
             dataset: {
               criterionAction: 'toggle-skip',
@@ -1419,73 +1459,81 @@ const createCriterionSkipElement = (criterionModel, documentRef) => {
   });
 };
 
-export const createQuestionnairePageElement = (pageModel, { documentRef, respectVisibility = false } = {}) => {
-  const criteriaStack = pageModel.criterionModels.length > 0
-    ? createElement('div', {
-        documentRef,
-        className: 'criteria-stack',
-        dataset: {
-          pageId: pageModel.pageId,
-          summaryAnchor: pageModel.criterionAnchor.anchor,
-        },
-        attributes: {
-          id: pageModel.criterionAnchor.elementId,
-        },
-        children: pageModel.criterionModels.map((criterionModel) =>
-          createCriterionCard({
-            documentRef,
-            criterionCode: criterionModel.criterionCode,
-            headingId: criterionModel.headingId,
-            title: `${criterionModel.criterion.code} — ${criterionModel.criterion.title}`,
-            statement: criterionModel.criterion.statement,
-            accentClass: pageModel.accentClass,
-            dataset: {
-              pageId: pageModel.pageId,
-              criterionStatus: criterionModel.criterionState.status,
-              criterionSkipState: criterionModel.criterionState.skipState,
-              criterionValidationState: criterionModel.criterionState.validationState,
-              criterionAttention: criterionModel.criterionState.attention,
-              criterionInvalid: criterionModel.criterionState.invalid,
-              criterionBlocked: criterionModel.criterionState.blocked,
-              criterionOrder: criterionModel.criterion.orderWithinSection,
-            },
-            attributes: {
-              id: criterionModel.elementId,
-            },
-            children: [
-              createCriterionSkipElement(criterionModel, documentRef),
-              createFieldGrid({
-                documentRef,
-                layout: 'single',
-                dataset: {
-                  pageId: pageModel.pageId,
-                  criterion: criterionModel.criterionCode,
-                },
-                children: criterionModel.fieldModels.map((fieldModel) =>
-                  createFieldGroupElement(fieldModel, documentRef, { respectVisibility })),
-              }),
-              createEvidenceBlockElement({
-                documentRef,
-                scope: createEvidenceScope({
-                  pageId: pageModel.pageId,
-                  criterionCode: criterionModel.criterionCode,
+export const createQuestionnairePageElement = (
+  pageModel,
+  { documentRef, respectVisibility = false } = {},
+) => {
+  const criteriaStack =
+    pageModel.criterionModels.length > 0
+      ? createElement('div', {
+          documentRef,
+          className: 'criteria-stack',
+          dataset: {
+            pageId: pageModel.pageId,
+            summaryAnchor: pageModel.criterionAnchor.anchor,
+          },
+          attributes: {
+            id: pageModel.criterionAnchor.elementId,
+          },
+          children: pageModel.criterionModels.map((criterionModel) =>
+            createCriterionCard({
+              documentRef,
+              criterionCode: criterionModel.criterionCode,
+              headingId: criterionModel.headingId,
+              title: `${criterionModel.criterion.code} — ${criterionModel.criterion.title}`,
+              statement: criterionModel.criterion.statement,
+              accentClass: pageModel.accentClass,
+              dataset: {
+                pageId: pageModel.pageId,
+                criterionStatus: criterionModel.criterionState.status,
+                criterionSkipState: criterionModel.criterionState.skipState,
+                criterionValidationState: criterionModel.criterionState.validationState,
+                criterionAttention: criterionModel.criterionState.attention,
+                criterionInvalid: criterionModel.criterionState.invalid,
+                criterionBlocked: criterionModel.criterionState.blocked,
+                criterionOrder: criterionModel.criterion.orderWithinSection,
+              },
+              attributes: {
+                id: criterionModel.elementId,
+              },
+              children: [
+                createCriterionSkipElement(criterionModel, documentRef),
+                createFieldGrid({
+                  documentRef,
+                  layout: 'single',
+                  dataset: {
+                    pageId: pageModel.pageId,
+                    criterion: criterionModel.criterionCode,
+                  },
+                  children: criterionModel.fieldModels.map((fieldModel) =>
+                    createFieldGroupElement(fieldModel, documentRef, { respectVisibility }),
+                  ),
                 }),
-                editable: criterionModel.evidenceEditable,
-              }),
-            ],
-          })),
-      })
-    : null;
+                createEvidenceBlockElement({
+                  documentRef,
+                  scope: createEvidenceScope({
+                    pageId: pageModel.pageId,
+                    criterionCode: criterionModel.criterionCode,
+                  }),
+                  editable: criterionModel.evidenceEditable,
+                }),
+              ],
+            }),
+          ),
+        })
+      : null;
 
   const fieldGrids = pageModel.groupModels.map((groupModel) =>
-    createFieldGridElement(groupModel, documentRef, { respectVisibility }));
-  const evaluationEvidenceBlock = pageModel.pageId === SECTION_IDS.S2
-    ? createEvidenceBlockElement({
-        documentRef,
-        scope: createEvidenceScope({ pageId: pageModel.pageId }),
-        editable: pageModel.pageState.isEditable,
-      })
-    : null;
+    createFieldGridElement(groupModel, documentRef, { respectVisibility }),
+  );
+  const evaluationEvidenceBlock =
+    pageModel.pageId === SECTION_IDS.S2
+      ? createEvidenceBlockElement({
+          documentRef,
+          scope: createEvidenceScope({ pageId: pageModel.pageId }),
+          editable: pageModel.pageState.isEditable,
+        })
+      : null;
   const sectionMeta = createSectionMetaElement(pageModel.sectionMeta, documentRef);
 
   return createSection({
@@ -1517,12 +1565,7 @@ export const createQuestionnairePageElement = (pageModel, { documentRef, respect
       pageInvalid: pageModel.sectionState.invalid,
       pageBlocked: pageModel.sectionState.blocked,
     },
-    children: [
-      criteriaStack,
-      ...fieldGrids,
-      evaluationEvidenceBlock,
-      sectionMeta,
-    ],
+    children: [criteriaStack, ...fieldGrids, evaluationEvidenceBlock, sectionMeta],
   });
 };
 
@@ -1572,7 +1615,10 @@ export const renderQuestionnairePages = (
     respectVisibility = false,
   } = {},
 ) => {
-  assertInvariant(root?.ownerDocument ?? root?.appendChild, 'A root element is required to render questionnaire pages.');
+  assertInvariant(
+    root?.ownerDocument ?? root?.appendChild,
+    'A root element is required to render questionnaire pages.',
+  );
 
   const documentRef = root.ownerDocument ?? globalThis.document;
   const renderBundle = createQuestionnairePagesFragment({

@@ -1,17 +1,6 @@
-import {
-  SECTION_IDS,
-  SECTION_WORKFLOW_STATES,
-  WORKFLOW_MODES,
-} from './sections.js';
-import {
-  OPTION_SET_IDS,
-  OPTION_SETS,
-} from './option-sets.js';
-import {
-  CRITERIA,
-  CRITERION_FIELD_IDS,
-  FIELD_IDS,
-} from './questionnaire-schema.js';
+import { SECTION_IDS, SECTION_WORKFLOW_STATES, WORKFLOW_MODES } from './sections.js';
+import { OPTION_SET_IDS, OPTION_SETS } from './option-sets.js';
+import { CRITERIA, CRITERION_FIELD_IDS, FIELD_IDS } from './questionnaire-schema.js';
 
 import { freezeArray } from '../utils/shared.js';
 
@@ -28,12 +17,7 @@ const indexRulesByTarget = (rules) =>
 const createRule = ({ id, targetFieldId, when, description }) =>
   Object.freeze({ id, targetFieldId, when, description });
 
-const createTextValidationRule = ({
-  id,
-  targetFieldId,
-  minSubstantiveLength,
-  description,
-}) =>
+const createTextValidationRule = ({ id, targetFieldId, minSubstantiveLength, description }) =>
   Object.freeze({
     id,
     targetFieldId,
@@ -41,13 +25,7 @@ const createTextValidationRule = ({
     description,
   });
 
-const createCrossFieldValidationRule = ({
-  id,
-  type,
-  targetFieldIds,
-  description,
-  ...config
-}) =>
+const createCrossFieldValidationRule = ({ id, type, targetFieldIds, description, ...config }) =>
   Object.freeze({
     id,
     type,
@@ -72,7 +50,8 @@ const createWorkflowEscalationRule = ({
   });
 
 const equals = (fieldId, value) => Object.freeze({ fieldId, operator: 'equals', value });
-const inValues = (fieldId, values) => Object.freeze({ fieldId, operator: 'in', value: freezeArray(values) });
+const inValues = (fieldId, values) =>
+  Object.freeze({ fieldId, operator: 'in', value: freezeArray(values) });
 const hasAny = (fieldId) => Object.freeze({ fieldId, operator: 'has_any' });
 
 export const SKIP_STATES = Object.freeze({
@@ -241,12 +220,16 @@ export const FIELD_VISIBILITY_RULES = freezeArray([
       'needs_review_provisional',
       'pilot_only',
     ]),
-    description: 'Conditions/caveats are shown for conditional or restricted recommendation outcomes.',
+    description:
+      'Conditions/caveats are shown for conditional or restricted recommendation outcomes.',
   }),
   createRule({
     id: 'show_criteria_to_revisit',
     targetFieldId: FIELD_IDS.S10B.CRITERIA_TO_REVISIT,
-    when: inValues(FIELD_IDS.S10B.AGREEMENT_WITH_PRIMARY_EVALUATION, ['partial_agreement', 'disagreement']),
+    when: inValues(FIELD_IDS.S10B.AGREEMENT_WITH_PRIMARY_EVALUATION, [
+      'partial_agreement',
+      'disagreement',
+    ]),
     description: 'Criteria-to-revisit is shown for partial agreement and disagreement paths.',
   }),
   createRule({
@@ -320,19 +303,24 @@ export const FIELD_REQUIREMENT_RULES = freezeArray([
       'needs_review_provisional',
       'pilot_only',
     ]),
-    description: 'Conditions/caveats are required for conditional or restricted recommendation outcomes.',
+    description:
+      'Conditions/caveats are required for conditional or restricted recommendation outcomes.',
   }),
   createRule({
     id: 'require_criteria_to_revisit',
     targetFieldId: FIELD_IDS.S10B.CRITERIA_TO_REVISIT,
-    when: inValues(FIELD_IDS.S10B.AGREEMENT_WITH_PRIMARY_EVALUATION, ['partial_agreement', 'disagreement']),
+    when: inValues(FIELD_IDS.S10B.AGREEMENT_WITH_PRIMARY_EVALUATION, [
+      'partial_agreement',
+      'disagreement',
+    ]),
     description: 'Criteria to revisit are required for partial agreement and disagreement paths.',
   }),
   createRule({
     id: 'require_conflict_summary',
     targetFieldId: FIELD_IDS.S10B.CONFLICT_SUMMARY,
     when: equals(FIELD_IDS.S10B.AGREEMENT_WITH_PRIMARY_EVALUATION, 'disagreement'),
-    description: 'Conflict summary is required when the second reviewer disagrees with the primary evaluation.',
+    description:
+      'Conflict summary is required when the second reviewer disagrees with the primary evaluation.',
   }),
 ]);
 
@@ -386,7 +374,9 @@ export const FIELD_TEXT_VALIDATION_RULES = freezeArray([
   }),
 ]);
 
-export const FIELD_TEXT_VALIDATION_RULES_BY_TARGET = indexRulesByTarget(FIELD_TEXT_VALIDATION_RULES);
+export const FIELD_TEXT_VALIDATION_RULES_BY_TARGET = indexRulesByTarget(
+  FIELD_TEXT_VALIDATION_RULES,
+);
 
 export const CROSS_FIELD_VALIDATION_RULES = freezeArray([
   createCrossFieldValidationRule({
@@ -405,10 +395,7 @@ export const CROSS_FIELD_VALIDATION_RULES = freezeArray([
     type: 'date_order',
     earlierFieldId: FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
     laterFieldId: FIELD_IDS.S10C.DECISION_MEETING_DATE,
-    targetFieldIds: [
-      FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
-      FIELD_IDS.S10C.DECISION_MEETING_DATE,
-    ],
+    targetFieldIds: [FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW, FIELD_IDS.S10C.DECISION_MEETING_DATE],
     description: 'The final decision meeting date must be on or after the second-review date.',
   }),
   createCrossFieldValidationRule({
@@ -426,7 +413,8 @@ export const CROSS_FIELD_VALIDATION_RULES = freezeArray([
       FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
       FIELD_IDS.S10C.DECISION_MEETING_DATE,
     ],
-    description: 'The next review due date must fall after the latest completed governance milestone.',
+    description:
+      'The next review due date must fall after the latest completed governance milestone.',
   }),
   createCrossFieldValidationRule({
     id: 'validate_out_of_scope_recommendation_alignment',
@@ -435,10 +423,7 @@ export const CROSS_FIELD_VALIDATION_RULES = freezeArray([
     sourceValue: 'out_of_scope',
     relatedFieldId: FIELD_IDS.S1.IN_SCOPE_CHECK,
     expectedValue: 'out_of_scope',
-    targetFieldIds: [
-      FIELD_IDS.S9.RECOMMENDATION_STATUS,
-      FIELD_IDS.S1.IN_SCOPE_CHECK,
-    ],
+    targetFieldIds: [FIELD_IDS.S9.RECOMMENDATION_STATUS, FIELD_IDS.S1.IN_SCOPE_CHECK],
     description: 'Selecting “Out of scope” requires the scope check to also be “Out of scope”.',
   }),
 ]);
@@ -495,9 +480,22 @@ export const SKIP_POLICY = Object.freeze({
 export const PRINCIPLE_JUDGMENT_RULES = Object.freeze({
   severityOrder: freezeArray(['pass', 'conditional_pass', 'fail']),
   defaultRules: freezeArray([
-    Object.freeze({ id: 'principle_fail_on_zero', result: 'fail', description: 'Any criterion score of 0 yields a Fail judgment.' }),
-    Object.freeze({ id: 'principle_conditional_on_one', result: 'conditional_pass', description: 'One or more criterion scores of 1, with no 0 scores, yields a Conditional pass judgment.' }),
-    Object.freeze({ id: 'principle_pass_on_all_two_or_above', result: 'pass', description: 'All criterion scores of 2 or above yield a Pass judgment.' }),
+    Object.freeze({
+      id: 'principle_fail_on_zero',
+      result: 'fail',
+      description: 'Any criterion score of 0 yields a Fail judgment.',
+    }),
+    Object.freeze({
+      id: 'principle_conditional_on_one',
+      result: 'conditional_pass',
+      description:
+        'One or more criterion scores of 1, with no 0 scores, yields a Conditional pass judgment.',
+    }),
+    Object.freeze({
+      id: 'principle_pass_on_all_two_or_above',
+      result: 'pass',
+      description: 'All criterion scores of 2 or above yield a Pass judgment.',
+    }),
   ]),
   overridePolicy: Object.freeze({
     allowDownwardOverride: true,
@@ -531,7 +529,13 @@ export const RECOMMENDATION_CONSTRAINT_RULES = freezeArray([
     id: 'recommendation_out_of_scope_lock',
     when: equals(FIELD_IDS.S1.IN_SCOPE_CHECK, 'out_of_scope'),
     allowedValues: freezeArray(['out_of_scope']),
-    blockedValues: freezeArray(['recommended', 'recommended_with_caveats', 'needs_review_provisional', 'pilot_only', 'not_recommended']),
+    blockedValues: freezeArray([
+      'recommended',
+      'recommended_with_caveats',
+      'needs_review_provisional',
+      'pilot_only',
+      'not_recommended',
+    ]),
     description: 'Out-of-scope tools can only resolve to the Out of scope recommendation.',
   }),
   Object.freeze({
@@ -539,14 +543,16 @@ export const RECOMMENDATION_CONSTRAINT_RULES = freezeArray([
     when: hasAny(FIELD_IDS.S8.CRITICAL_FAIL_FLAGS),
     blockedValues: POSITIVE_RECOMMENDATION_VALUES,
     releaseCondition: { fieldId: FIELD_IDS.S10C.FINAL_STATUS, operator: 'not_empty' },
-    description: 'Positive recommendations stay locked until final team decision records a reviewed outcome when critical fail flags are present.',
+    description:
+      'Positive recommendations stay locked until final team decision records a reviewed outcome when critical fail flags are present.',
   }),
   Object.freeze({
     id: 'recommendation_positive_lock_on_disagreement',
     when: equals(FIELD_IDS.S10B.AGREEMENT_WITH_PRIMARY_EVALUATION, 'disagreement'),
     blockedValues: POSITIVE_RECOMMENDATION_VALUES,
     releaseCondition: { fieldId: FIELD_IDS.S10C.FINAL_STATUS, operator: 'not_empty' },
-    description: 'Positive recommendations stay locked until final team decision resolves reviewer disagreement.',
+    description:
+      'Positive recommendations stay locked until final team decision resolves reviewer disagreement.',
   }),
 ]);
 
@@ -584,13 +590,15 @@ export const COMPLETION_CHECK_RULES = freezeArray([
     id: 'completion_repeated_query_complete_or_documented',
     value: 'repeated_query_test_complete_or_omission_documented',
     label: 'Repeated query test completed (or documented reason for omission)',
-    description: 'Repeated-query execution is complete or the omission is explicitly recorded by the controlling field.',
+    description:
+      'Repeated-query execution is complete or the omission is explicitly recorded by the controlling field.',
   }),
   Object.freeze({
     id: 'completion_benchmark_complete_or_documented',
     value: 'benchmark_complete_or_omission_documented',
     label: 'Benchmark comparison completed (or documented reason for omission)',
-    description: 'Benchmark comparison is complete or the omission is explicitly recorded by the controlling field.',
+    description:
+      'Benchmark comparison is complete or the omission is explicitly recorded by the controlling field.',
   }),
   Object.freeze({
     id: 'completion_privacy_terms_reviewed',
@@ -608,7 +616,8 @@ export const COMPLETION_CHECK_RULES = freezeArray([
     id: 'completion_all_low_score_blockers_completed',
     value: 'all_low_score_blockers_completed',
     label: 'All uncertainty/blocker fields completed for scores of 0 or 1',
-    description: 'Every low or unclear criterion score has the required uncertainty/blocker follow-up text.',
+    description:
+      'Every low or unclear criterion score has the required uncertainty/blocker follow-up text.',
   }),
 ]);
 
@@ -617,13 +626,15 @@ export const EVIDENCE_COMPLETENESS_RULES = freezeArray([
     id: 'evidence_evaluation_folder_required',
     scope: 'evaluation',
     fieldId: FIELD_IDS.S2.EVIDENCE_FOLDER_LINK,
-    description: 'Primary evaluation and re-evaluation paths require an evaluation-level evidence folder reference.',
+    description:
+      'Primary evaluation and re-evaluation paths require an evaluation-level evidence folder reference.',
   }),
   Object.freeze({
     id: 'evidence_criterion_payload_required',
     scope: 'criterion',
     fieldKeys: freezeArray(['evidenceSummary', 'evidenceLinks']),
-    description: 'Every answered criterion must carry both an evidence summary and at least one evidence link.',
+    description:
+      'Every answered criterion must carry both an evidence summary and at least one evidence link.',
   }),
   Object.freeze({
     id: 'evidence_criterion_association_note_hook',
