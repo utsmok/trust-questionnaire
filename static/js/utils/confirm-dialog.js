@@ -123,6 +123,21 @@ export const confirmDialog = (message, { documentRef = document } = {}) => {
         e.preventDefault();
         teardown(false);
       }
+      if (e.key === 'Tab') {
+        const focusable = card.querySelectorAll(
+          'button:not([disabled]), [href]:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length < 2) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && documentRef.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && documentRef.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
 
     documentRef.addEventListener('keydown', handleKeydown);

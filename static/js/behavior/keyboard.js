@@ -1,11 +1,11 @@
 import { getDocumentRef } from '../utils/shared.js';
 
 const QUICK_JUMP_SHORTCUTS = Object.freeze({
-  '1': 'TR',
-  '2': 'RE',
-  '3': 'UC',
-  '4': 'SE',
-  '5': 'TC',
+  1: 'TR',
+  2: 'RE',
+  3: 'UC',
+  4: 'SE',
+  5: 'TC',
   t: 'TR',
   r: 'RE',
   u: 'UC',
@@ -15,10 +15,7 @@ const QUICK_JUMP_SHORTCUTS = Object.freeze({
 
 const isActivationKey = (key) => key === 'Enter' || key === ' ';
 
-export const initializeKeyboardBehavior = ({
-  root = document,
-  navigateToPage,
-}) => {
+export const initializeKeyboardBehavior = ({ root = document, navigateToPage }) => {
   const documentRef = getDocumentRef(root);
   const cleanup = [];
 
@@ -85,9 +82,7 @@ export const initializeKeyboardBehavior = ({
       return;
     }
 
-    const shortcutKey = typeof event.key === 'string'
-      ? event.key.toLowerCase()
-      : '';
+    const shortcutKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
     const targetPageId = QUICK_JUMP_SHORTCUTS[shortcutKey];
 
     if (!targetPageId) {

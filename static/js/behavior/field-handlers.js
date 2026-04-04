@@ -1,17 +1,15 @@
 import { OPTION_SET_IDS } from '../config/option-sets.js';
-import {
-  FIELD_TYPES,
-  QUESTIONNAIRE_FIELDS_BY_ID,
-} from '../config/questionnaire-schema.js';
+import { FIELD_TYPES, QUESTIONNAIRE_FIELDS_BY_ID } from '../config/questionnaire-schema.js';
 import { SKIP_STATES } from '../config/rules.js';
+import { getFieldControlId } from '../render/questionnaire-pages.js';
 import { initializeEvidenceUi } from '../render/evidence.js';
 import { toArray, getDocumentRef, isPlainObject } from '../utils/shared.js';
 const EVIDENCE_BLOCK_SELECTOR = '[data-evidence-block="true"]';
 
 const isFormControl = (value) =>
-  value instanceof HTMLInputElement
-  || value instanceof HTMLTextAreaElement
-  || value instanceof HTMLSelectElement;
+  value instanceof HTMLInputElement ||
+  value instanceof HTMLTextAreaElement ||
+  value instanceof HTMLSelectElement;
 
 const getRenderedPageSections = (root) =>
   toArray(root?.children).filter(
@@ -91,9 +89,13 @@ const normalizeListValue = (value, splitter = /[\n,]+/) => {
           ? []
           : [value];
 
-  return [...new Set(items
-    .map((item) => (typeof item === 'string' ? item.trim() : String(item).trim()))
-    .filter(Boolean))];
+  return [
+    ...new Set(
+      items
+        .map((item) => (typeof item === 'string' ? item.trim() : String(item).trim()))
+        .filter(Boolean),
+    ),
+  ];
 };
 
 const serializeDateRangeValue = (value) => {
@@ -136,9 +138,9 @@ const serializeFieldValueForControl = (field, rawValue) => {
     case FIELD_TYPES.PERSON:
       return typeof rawValue === 'string'
         ? rawValue
-        : rawValue?.name ?? rawValue?.displayName ?? rawValue?.email ?? rawValue?.id ?? '';
+        : (rawValue?.name ?? rawValue?.displayName ?? rawValue?.email ?? rawValue?.id ?? '');
     default:
-      return typeof rawValue === 'string' ? rawValue : rawValue ?? '';
+      return typeof rawValue === 'string' ? rawValue : (rawValue ?? '');
   }
 };
 
@@ -206,14 +208,16 @@ const syncRatingOption = (option, selectedValue, optionValue, readOnly) => {
   const normalizedOptionValue = Number.isFinite(Number(optionValue))
     ? Number(optionValue)
     : optionValue;
-  const isSelected = selectedValue === normalizedOptionValue
-    || String(selectedValue ?? '') === String(optionValue ?? '');
+  const isSelected =
+    selectedValue === normalizedOptionValue ||
+    String(selectedValue ?? '') === String(optionValue ?? '');
 
-  const wasNotSelected = !option.classList.contains('selected')
-    && !option.classList.contains('score-0')
-    && !option.classList.contains('score-1')
-    && !option.classList.contains('score-2')
-    && !option.classList.contains('score-3');
+  const wasNotSelected =
+    !option.classList.contains('selected') &&
+    !option.classList.contains('score-0') &&
+    !option.classList.contains('score-1') &&
+    !option.classList.contains('score-2') &&
+    !option.classList.contains('score-3');
 
   option.classList.toggle('selected', isSelected);
   option.classList.toggle('score-0', isSelected && normalizedOptionValue === 0);
@@ -229,7 +233,7 @@ const syncRatingOption = (option, selectedValue, optionValue, readOnly) => {
     option.classList.add('is-just-selected');
     const removeClass = () => option.classList.remove('is-just-selected');
     option.addEventListener('animationend', removeClass, { once: true });
-    setTimeout(removeClass, 600);
+    setTimeout(removeClass, 200);
   }
 
   const input = option.querySelector('input[type="radio"]');
@@ -292,12 +296,30 @@ const syncSelectControl = (fieldGroup, fieldState, field) => {
     shell.classList.toggle('judgment-pass', judgmentClassName === 'judgment-pass');
     shell.classList.toggle('judgment-conditional', judgmentClassName === 'judgment-conditional');
     shell.classList.toggle('judgment-fail', judgmentClassName === 'judgment-fail');
-    shell.classList.toggle('recommendation-recommended', recommendationClassName === 'recommendation-recommended');
-    shell.classList.toggle('recommendation-recommended-with-caveats', recommendationClassName === 'recommendation-recommended-with-caveats');
-    shell.classList.toggle('recommendation-needs-review-provisional', recommendationClassName === 'recommendation-needs-review-provisional');
-    shell.classList.toggle('recommendation-pilot-only', recommendationClassName === 'recommendation-pilot-only');
-    shell.classList.toggle('recommendation-not-recommended', recommendationClassName === 'recommendation-not-recommended');
-    shell.classList.toggle('recommendation-out-of-scope', recommendationClassName === 'recommendation-out-of-scope');
+    shell.classList.toggle(
+      'recommendation-recommended',
+      recommendationClassName === 'recommendation-recommended',
+    );
+    shell.classList.toggle(
+      'recommendation-recommended-with-caveats',
+      recommendationClassName === 'recommendation-recommended-with-caveats',
+    );
+    shell.classList.toggle(
+      'recommendation-needs-review-provisional',
+      recommendationClassName === 'recommendation-needs-review-provisional',
+    );
+    shell.classList.toggle(
+      'recommendation-pilot-only',
+      recommendationClassName === 'recommendation-pilot-only',
+    );
+    shell.classList.toggle(
+      'recommendation-not-recommended',
+      recommendationClassName === 'recommendation-not-recommended',
+    );
+    shell.classList.toggle(
+      'recommendation-out-of-scope',
+      recommendationClassName === 'recommendation-out-of-scope',
+    );
   }
 };
 
@@ -306,7 +328,9 @@ const syncCheckboxBlock = (fieldGroup, fieldState, field) => {
     serializeFieldValueForControl(field, fieldState.value).map((value) => String(value)),
   );
 
-  toArray(fieldGroup.querySelectorAll(`input[type="checkbox"][data-field-id="${field.id}"]`)).forEach((input) => {
+  toArray(
+    fieldGroup.querySelectorAll(`input[type="checkbox"][data-field-id="${field.id}"]`),
+  ).forEach((input) => {
     if (!(input instanceof HTMLInputElement)) {
       return;
     }
@@ -334,27 +358,70 @@ const syncRatingScale = (fieldGroup, fieldState) => {
       return;
     }
 
-    syncRatingOption(option, fieldState.value, option.dataset.optionValue ?? option.dataset.score, fieldState.readOnly);
+    syncRatingOption(
+      option,
+      fieldState.value,
+      option.dataset.optionValue ?? option.dataset.score,
+      fieldState.readOnly,
+    );
   });
 };
 
 const syncDateRangeControl = (fieldGroup, fieldState, field) => {
   const values = serializeFieldValueForControl(field, fieldState.value);
 
-  toArray(fieldGroup.querySelectorAll(`input[type="date"][data-field-id="${field.id}"]`)).forEach((input) => {
-    if (!(input instanceof HTMLInputElement)) {
-      return;
+  toArray(fieldGroup.querySelectorAll(`input[type="date"][data-field-id="${field.id}"]`)).forEach(
+    (input) => {
+      if (!(input instanceof HTMLInputElement)) {
+        return;
+      }
+
+      const nextValue = input.dataset.fieldPart === 'end' ? values.end : values.start;
+
+      if (input.value !== nextValue) {
+        input.value = nextValue;
+      }
+
+      input.disabled = Boolean(fieldState.readOnly);
+      input.setAttribute('aria-disabled', String(Boolean(fieldState.readOnly)));
+    },
+  );
+};
+
+const syncFieldValidationAccessibility = (fieldGroup, fieldState, fieldId) => {
+  const { validationState, issues } = fieldState;
+  const isErrored = validationState === 'invalid' || validationState === 'blocked';
+  const controlId = getFieldControlId(fieldId);
+  const control = fieldGroup.querySelector(`[id="${controlId}"]`);
+  const targets = control
+    ? [control]
+    : toArray(fieldGroup.querySelectorAll('input, select, textarea'));
+
+  for (const target of targets) {
+    if (isErrored) {
+      target.setAttribute('aria-invalid', 'true');
+    } else {
+      target.removeAttribute('aria-invalid');
     }
+  }
 
-    const nextValue = input.dataset.fieldPart === 'end' ? values.end : values.start;
+  const existing = fieldGroup.querySelector('.validation-message');
 
-    if (input.value !== nextValue) {
-      input.value = nextValue;
+  if (isErrored && Array.isArray(issues) && issues.length > 0) {
+    const text = issues.map((issue) => issue.message).join(' ');
+    if (existing) {
+      existing.textContent = text;
+    } else {
+      const doc = fieldGroup.ownerDocument;
+      const msg = doc.createElement('div');
+      msg.className = 'validation-message';
+      msg.setAttribute('role', 'alert');
+      msg.textContent = text;
+      fieldGroup.appendChild(msg);
     }
-
-    input.disabled = Boolean(fieldState.readOnly);
-    input.setAttribute('aria-disabled', String(Boolean(fieldState.readOnly)));
-  });
+  } else if (existing) {
+    existing.remove();
+  }
 };
 
 const syncFieldGroup = (fieldGroup, state) => {
@@ -386,6 +453,7 @@ const syncFieldGroup = (fieldGroup, state) => {
   setDatasetValue(fieldGroup, 'fieldBlocked', fieldState.blocked);
   setDatasetValue(fieldGroup, 'fieldSuppressedBySkip', fieldState.suppressedBySkip);
   syncFieldTag(fieldGroup, field, fieldState);
+  syncFieldValidationAccessibility(fieldGroup, fieldState, fieldId);
 
   switch (field.control) {
     case 'radio_group':
@@ -444,14 +512,16 @@ const syncCriterionCards = (questionnaireRoot, state) => {
 
     const criterionRecord = state.evaluation.criteria?.[criterionCode] ?? {};
     const pageState = state.derived.pageStates.bySectionId[criterionState.sectionId] ?? null;
-    const localSkipRequested = criterionState.skipState === SKIP_STATES.USER_SKIPPED
-      || criterionState.skipMeta?.requested === true;
+    const localSkipRequested =
+      criterionState.skipState === SKIP_STATES.USER_SKIPPED ||
+      criterionState.skipMeta?.requested === true;
     const inheritedSectionSkip = criterionState.skipState === SKIP_STATES.INHERITED_SECTION_SKIP;
     const systemSkipped = criterionState.skipState === SKIP_STATES.SYSTEM_SKIPPED;
-    const controlsEnabled = Boolean(pageState?.isEditable)
-      && localSkipRequested
-      && !inheritedSectionSkip
-      && !systemSkipped;
+    const controlsEnabled =
+      Boolean(pageState?.isEditable) &&
+      localSkipRequested &&
+      !inheritedSectionSkip &&
+      !systemSkipped;
 
     setDatasetValue(skipFieldGroup, 'criterionSkipRequested', localSkipRequested);
     setDatasetValue(skipFieldGroup, 'criterionSkipInherited', inheritedSectionSkip);
@@ -476,7 +546,9 @@ const syncCriterionCards = (questionnaireRoot, state) => {
       toggleButton.setAttribute('aria-disabled', String(Boolean(toggleDisabled)));
     }
 
-    const reasonControl = skipFieldGroup.querySelector('select[data-criterion-record-key="skipReasonCode"]');
+    const reasonControl = skipFieldGroup.querySelector(
+      'select[data-criterion-record-key="skipReasonCode"]',
+    );
     if (reasonControl instanceof HTMLSelectElement) {
       const nextValue = getCriterionRecordValue(criterionRecord, 'skipReasonCode');
       if (reasonControl.value !== nextValue) {
@@ -487,7 +559,9 @@ const syncCriterionCards = (questionnaireRoot, state) => {
       reasonControl.setAttribute('aria-disabled', String(Boolean(!controlsEnabled)));
     }
 
-    const rationaleControl = skipFieldGroup.querySelector('textarea[data-criterion-record-key="skipRationale"]');
+    const rationaleControl = skipFieldGroup.querySelector(
+      'textarea[data-criterion-record-key="skipRationale"]',
+    );
     if (rationaleControl instanceof HTMLTextAreaElement) {
       const nextValue = getCriterionRecordValue(criterionRecord, 'skipRationale');
       if (rationaleControl.value !== nextValue) {
@@ -524,9 +598,9 @@ const syncPageSections = (questionnaireRoot, state) => {
 const syncSectionMetaControls = (questionnaireRoot, state) => {
   toArray(questionnaireRoot.querySelectorAll('[data-section-record-key]')).forEach((control) => {
     if (
-      !(control instanceof HTMLTextAreaElement)
-      && !(control instanceof HTMLSelectElement)
-      && !(control instanceof HTMLInputElement)
+      !(control instanceof HTMLTextAreaElement) &&
+      !(control instanceof HTMLSelectElement) &&
+      !(control instanceof HTMLInputElement)
     ) {
       return;
     }
@@ -558,24 +632,26 @@ const syncSectionMetaControls = (questionnaireRoot, state) => {
     control.setAttribute('aria-readonly', String(Boolean(!isEditable)));
   });
 
-  toArray(questionnaireRoot.querySelectorAll('[data-section-meta="skip-scaffold"]')).forEach((fieldGroup) => {
-    if (!(fieldGroup instanceof HTMLElement)) {
-      return;
-    }
+  toArray(questionnaireRoot.querySelectorAll('[data-section-meta="skip-scaffold"]')).forEach(
+    (fieldGroup) => {
+      if (!(fieldGroup instanceof HTMLElement)) {
+        return;
+      }
 
-    const sectionId = fieldGroup.dataset.pageId;
+      const sectionId = fieldGroup.dataset.pageId;
 
-    if (!sectionId) {
-      return;
-    }
+      if (!sectionId) {
+        return;
+      }
 
-    const sectionState = state.derived.sectionStates.bySectionId[sectionId] ?? null;
-    const tag = fieldGroup.querySelector('.display-tag, .condition-tag');
+      const sectionState = state.derived.sectionStates.bySectionId[sectionId] ?? null;
+      const tag = fieldGroup.querySelector('.display-tag, .condition-tag');
 
-    if (tag instanceof HTMLElement) {
-      tag.textContent = sectionState?.skipRequested ? 'Active' : 'Optional';
-    }
-  });
+      if (tag instanceof HTMLElement) {
+        tag.textContent = sectionState?.skipRequested ? 'Active' : 'Optional';
+      }
+    },
+  );
 };
 
 const resolveFieldValueFromControl = (control, field) => {
@@ -583,14 +659,20 @@ const resolveFieldValueFromControl = (control, field) => {
     case FIELD_TYPES.MULTI_SELECT:
     case FIELD_TYPES.CHECKLIST: {
       const fieldGroup = control.closest(`.field-group[data-field-id="${field.id}"]`);
-      return toArray(fieldGroup?.querySelectorAll(`input[type="checkbox"][data-field-id="${field.id}"]`))
+      return toArray(
+        fieldGroup?.querySelectorAll(`input[type="checkbox"][data-field-id="${field.id}"]`),
+      )
         .filter((input) => input instanceof HTMLInputElement && input.checked)
         .map((input) => input.value);
     }
     case FIELD_TYPES.DATE_RANGE: {
       const fieldGroup = control.closest(`.field-group[data-field-id="${field.id}"]`);
-      const start = fieldGroup?.querySelector(`input[type="date"][data-field-id="${field.id}"][data-field-part="start"]`);
-      const end = fieldGroup?.querySelector(`input[type="date"][data-field-id="${field.id}"][data-field-part="end"]`);
+      const start = fieldGroup?.querySelector(
+        `input[type="date"][data-field-id="${field.id}"][data-field-part="start"]`,
+      );
+      const end = fieldGroup?.querySelector(
+        `input[type="date"][data-field-id="${field.id}"][data-field-part="end"]`,
+      );
 
       return {
         start: start instanceof HTMLInputElement ? start.value : '',
@@ -682,7 +764,10 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
       return;
     }
 
-    if (control instanceof HTMLInputElement && (control.type === 'checkbox' || control.type === 'radio')) {
+    if (
+      control instanceof HTMLInputElement &&
+      (control.type === 'checkbox' || control.type === 'radio')
+    ) {
       return;
     }
 
@@ -725,9 +810,10 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
   questionnaireRoot.addEventListener('change', handleChange);
 
   const handleClick = (event) => {
-    const actionTarget = event.target instanceof HTMLElement
-      ? event.target.closest('[data-criterion-action="toggle-skip"]')
-      : null;
+    const actionTarget =
+      event.target instanceof HTMLElement
+        ? event.target.closest('[data-criterion-action="toggle-skip"]')
+        : null;
 
     if (!(actionTarget instanceof HTMLButtonElement)) {
       return;
@@ -744,8 +830,9 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
       return;
     }
 
-    const localSkipRequested = criterionState.skipState === SKIP_STATES.USER_SKIPPED
-      || criterionState.skipMeta?.requested === true;
+    const localSkipRequested =
+      criterionState.skipState === SKIP_STATES.USER_SKIPPED ||
+      criterionState.skipMeta?.requested === true;
     const inheritedSectionSkip = criterionState.skipState === SKIP_STATES.INHERITED_SECTION_SKIP;
     const systemSkipped = criterionState.skipState === SKIP_STATES.SYSTEM_SKIPPED;
 
@@ -786,22 +873,25 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
     evidenceUi.destroy();
   });
 
-  const unsubscribe = store.subscribe((state) => {
-    const activePageId = state.ui?.activePageId;
-    const activeSection = activePageId
-      ? questionnaireRoot.querySelector(`[data-page-id="${activePageId}"]`)
-      : null;
-    const scope = activeSection instanceof HTMLElement ? activeSection : questionnaireRoot;
-    toArray(scope.querySelectorAll('.field-group[data-field-id]')).forEach((fieldGroup) => {
-      if (fieldGroup instanceof HTMLElement) {
-        syncFieldGroup(fieldGroup, state);
-      }
-    });
+  const unsubscribe = store.subscribe(
+    (state) => {
+      const activePageId = state.ui?.activePageId;
+      const activeSection = activePageId
+        ? questionnaireRoot.querySelector(`[data-page-id="${activePageId}"]`)
+        : null;
+      const scope = activeSection instanceof HTMLElement ? activeSection : questionnaireRoot;
+      toArray(scope.querySelectorAll('.field-group[data-field-id]')).forEach((fieldGroup) => {
+        if (fieldGroup instanceof HTMLElement) {
+          syncFieldGroup(fieldGroup, state);
+        }
+      });
 
-    syncPageSections(questionnaireRoot, state);
-    syncCriterionCards(questionnaireRoot, state);
-    syncSectionMetaControls(questionnaireRoot, state);
-  }, { immediate: true });
+      syncPageSections(questionnaireRoot, state);
+      syncCriterionCards(questionnaireRoot, state);
+      syncSectionMetaControls(questionnaireRoot, state);
+    },
+    { immediate: true },
+  );
 
   cleanup.push(unsubscribe);
 
