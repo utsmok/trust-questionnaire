@@ -1,0 +1,124 @@
+body {
+  --active-section-accent: var(--section-control-accent);
+  --active-section-accent-strong: var(--section-control-accent-strong);
+  --active-section-tint: var(--section-control-tint);
+  --active-section-border: var(--section-control-border);
+  --active-section-on-accent: var(--section-control-on-accent);
+}
+
+body[data-active-accent-key="control"],
+body[data-active-accent-key="intro"] {
+  --active-section-accent: var(--section-control-accent);
+  --active-section-accent-strong: var(--section-control-accent-strong);
+  --active-section-tint: var(--section-control-tint);
+  --active-section-border: var(--section-control-border);
+  --active-section-on-accent: var(--section-control-on-accent);
+}
+
+body[data-active-accent-key="profile"],
+body[data-active-accent-key="scope"] {
+  --active-section-accent: var(--section-profile-accent);
+  --active-section-accent-strong: var(--section-profile-accent-strong);
+  --active-section-tint: var(--section-profile-tint);
+  --active-section-border: var(--section-profile-border);
+  --active-section-on-accent: var(--section-profile-on-accent);
+}
+
+body[data-active-accent-key="setup"] {
+  --active-section-accent: var(--section-setup-accent);
+  --active-section-accent-strong: var(--section-setup-accent-strong);
+  --active-section-tint: var(--section-setup-tint);
+  --active-section-border: var(--section-setup-border);
+  --active-section-on-accent: var(--section-setup-on-accent);
+}
+
+body[data-active-accent-key="tr"] {
+  --active-section-accent: var(--section-tr-accent);
+  --active-section-accent-strong: var(--section-tr-accent-strong);
+  --active-section-tint: var(--section-tr-tint);
+  --active-section-border: var(--section-tr-border);
+  --active-section-on-accent: var(--section-tr-on-accent);
+}
+
+body[data-active-accent-key="re"] {
+  --active-section-accent: var(--section-re-accent);
+  --active-section-accent-strong: var(--section-re-accent-strong);
+  --active-section-tint: var(--section-re-tint);
+  --active-section-border: var(--section-re-border);
+  --active-section-on-accent: var(--section-re-on-accent);
+}
+
+body[data-active-accent-key="uc"] {
+  --active-section-accent: var(--section-uc-accent);
+  --active-section-accent-strong: var(--section-uc-accent-strong);
+  --active-section-tint: var(--section-uc-tint);
+  --active-section-border: var(--section-uc-border);
+  --active-section-on-accent: var(--section-uc-on-accent);
+}
+
+body[data-active-accent-key="se"] {
+  --active-section-accent: var(--section-se-accent);
+  --active-section-accent-strong: var(--section-se-accent-strong);
+  --active-section-tint: var(--section-se-tint);
+  --active-section-border: var(--section-se-border);
+  --active-section-on-accent: var(--section-se-on-accent);
+}
+
+body[data-active-accent-key="tc"] {
+  --active-section-accent: var(--section-tc-accent);
+  --active-section-accent-strong: var(--section-tc-accent-strong);
+  --active-section-tint: var(--section-tc-tint);
+  --active-section-border: var(--section-tc-border);
+  --active-section-on-accent: var(--section-tc-on-accent);
+}
+
+body[data-active-accent-key="reference"],
+body[data-active-accent-key="scoring"],
+body[data-active-accent-key="evidence"] {
+  --active-section-accent: var(--section-reference-accent);
+  --active-section-accent-strong: var(--section-reference-accent-strong);
+  --active-section-tint: var(--section-reference-tint);
+  --active-section-border: var(--section-reference-border);
+  --active-section-on-accent: var(--section-reference-on-accent);
+}
+
+body[data-active-accent-key="recommendation"] {
+  --active-section-accent: var(--section-recommendation-accent);
+  --active-section-accent-strong: var(--section-recommendation-accent-strong);
+  --active-section-tint: var(--section-recommendation-tint);
+  --active-section-border: var(--section-recommendation-border);
+  --active-section-on-accent: var(--section-recommendation-on-accent);
+}
+
+body[data-active-accent-key="governance"] {
+  --active-section-accent: var(--section-governance-accent);
+  --active-section-accent-strong: var(--section-governance-accent-strong);
+  --active-section-tint: var(--section-governance-tint);
+  --active-section-border: var(--section-governance-border);
+  --active-section-on-accent: var(--section-governance-on-accent);
+}
+
+:where(
+  .doc-section,
+  .form-section,
+  .criterion-card,
+  .nav-button[data-page-id],
+  .page-index-button,
+  .context-route-card,
+  .context-anchor-card,
+  .context-anchor-button,
+  .about-topic-meta,
+  .about-topic-button,
+  .about-topic-page,
+  .context-route-code,
+  .strip-cell,
+  .surface-card[data-accent-key],
+  .panel-title-section[data-accent-key],
+  .help-section-item
+) {
+  --section-accent: var(--active-section-accent);
+  --section-accent-strong: var(--active-section-accent-strong);
+  --section-tint: var(--active-section-tint);
+  --section-border: var(--active-section-border);
+  --section-on-accent: var(--active-section-on-accent);
+}

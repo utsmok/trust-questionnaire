@@ -1,0 +1,73 @@
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+
+  .doc-section,
+  .form-section {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}
+
+@keyframes cellFill {
+  0% {
+    transform: scale(0.85);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes sectionEnter {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes completePulse {
+  0% {
+    border-color: var(--ut-navy);
+  }
+
+  100% {
+    border-color: var(--ut-border);
+  }
+}
+
+@keyframes ratingDotConfirm {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@keyframes evidenceItemEnter {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-option.is-just-selected .rating-dot {
+    animation: none !important;
+  }
+
+  .evidence-item {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}
