@@ -130,8 +130,8 @@ test('supports criterion add, reuse, replace, unlink, and remove-everywhere flow
 	await expect(block.locator('[data-evidence-role="count"]')).toHaveText('1 file');
 	await expect(block.locator('.evidence-item').filter({ hasText: 'evaluation-a.png' })).toHaveCount(0);
 
-	page.once('dialog', (dialog) => dialog.accept());
 	await replacedItem.locator('[data-evidence-action="remove-asset"]').click();
+	await page.locator('.confirm-overlay .confirm-btn[data-primary="true"]').click();
 	await expect(block.locator('[data-evidence-role="count"]')).toHaveText('0 files');
 	await expect(block).toContainText('No criterion-level evidence attached yet.');
 	await expect(evaluationBlock.locator('[data-evidence-role="count"]')).toHaveText('1 file');
