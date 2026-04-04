@@ -91,9 +91,13 @@ export const normalizeDelimitedList = (value, splitter = /[\n,]+/) => {
           ? []
           : [value];
 
-  return [...new Set(values
-    .map((entry) => (typeof entry === 'string' ? entry.trim() : String(entry).trim()))
-    .filter(Boolean))];
+  return [
+    ...new Set(
+      values
+        .map((entry) => (typeof entry === 'string' ? entry.trim() : String(entry).trim()))
+        .filter(Boolean),
+    ),
+  ];
 };
 
 export const isImageMimeType = (mimeType) =>

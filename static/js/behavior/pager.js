@@ -1,7 +1,4 @@
-import {
-  SECTION_WORKFLOW_STATES,
-  getSectionDefinition,
-} from '../config/sections.js';
+import { SECTION_WORKFLOW_STATES, getSectionDefinition } from '../config/sections.js';
 import { getDocumentRef } from '../utils/shared.js';
 
 const WORKFLOW_STATE_LABELS = Object.freeze({
@@ -63,7 +60,7 @@ export const getPagerState = (state) => {
   const pageOrder = getPagerPageIds(state);
   const activePageIndex = pageOrder.indexOf(state.ui.activePageId);
   const previousPageId = activePageIndex > 0 ? pageOrder[activePageIndex - 1] : null;
-  const nextPageId = activePageIndex >= 0 ? pageOrder[activePageIndex + 1] ?? null : null;
+  const nextPageId = activePageIndex >= 0 ? (pageOrder[activePageIndex + 1] ?? null) : null;
   const activePageDefinition = getSectionDefinition(state.ui.activePageId);
   const activePageState = state.derived.pageStates.bySectionId[state.ui.activePageId] ?? null;
 
@@ -77,11 +74,7 @@ export const getPagerState = (state) => {
   };
 };
 
-export const createPagerController = ({
-  root = document,
-  store,
-  navigateToPage,
-}) => {
+export const createPagerController = ({ root = document, store, navigateToPage }) => {
   const documentRef = getDocumentRef(root);
   const mount = documentRef.getElementById('pagerMount');
   const cleanup = [];
@@ -135,18 +128,24 @@ export const createPagerController = ({
     }
 
     if (refs.status) {
-      refs.status.textContent = pagerState.activePageDefinition
-        ? `Page ${pagerState.activePageIndex + 1} of ${pagerState.pageOrder.length} — ${pagerState.activePageDefinition.pageCode} ${pagerState.activePageDefinition.title}${workflowLabel ? ` · ${workflowLabel}` : ''}`
-        : `Page ${Math.max(pagerState.activePageIndex + 1, 1)} of ${pagerState.pageOrder.length}`;
+      const isLastPage = !pagerState.nextPageId;
+      const overallProgress = state.derived.completionProgress?.overall ?? null;
+
+      if (isLastPage && overallProgress?.canonicalState === 'complete') {
+        refs.status.textContent = `Evaluation complete — ${pagerState.pageOrder.length} sections completed`;
+      } else {
+        refs.status.textContent = pagerState.activePageDefinition
+          ? `Page ${pagerState.activePageIndex + 1} of ${pagerState.pageOrder.length} — ${pagerState.activePageDefinition.pageCode} ${pagerState.activePageDefinition.title}${workflowLabel ? ` · ${workflowLabel}` : ''}`
+          : `Page ${Math.max(pagerState.activePageIndex + 1, 1)} of ${pagerState.pageOrder.length}`;
+      }
     }
   };
 
   const navigateRelative = (direction, { focusTarget = true } = {}) => {
     const state = store.getState();
     const pagerState = getPagerState(state);
-    const targetPageId = direction === 'previous'
-      ? pagerState.previousPageId
-      : pagerState.nextPageId;
+    const targetPageId =
+      direction === 'previous' ? pagerState.previousPageId : pagerState.nextPageId;
 
     if (!targetPageId) {
       return false;

@@ -2,20 +2,23 @@ import { getSectionDefinition } from '../config/sections.js';
 import { getDocumentRef } from '../utils/shared.js';
 
 export const resolvePageIdFromHash = (hash, pageOrder) => {
-  const normalizedHash = typeof hash === 'string'
-    ? hash.replace(/^#/, '').trim().toLowerCase()
-    : '';
+  const normalizedHash =
+    typeof hash === 'string' ? hash.replace(/^#/, '').trim().toLowerCase() : '';
 
   if (!normalizedHash) {
     return null;
   }
 
-  return pageOrder.find((pageId) => {
-    const pageDefinition = getSectionDefinition(pageId);
+  return (
+    pageOrder.find((pageId) => {
+      const pageDefinition = getSectionDefinition(pageId);
 
-    return normalizedHash === pageId.toLowerCase()
-      || normalizedHash === pageDefinition?.slug?.toLowerCase();
-  }) ?? null;
+      return (
+        normalizedHash === pageId.toLowerCase() ||
+        normalizedHash === pageDefinition?.slug?.toLowerCase()
+      );
+    }) ?? null
+  );
 };
 
 export const updateHashForPage = (windowRef, pageId) => {
@@ -30,11 +33,7 @@ export const updateHashForPage = (windowRef, pageId) => {
   windowRef.history?.replaceState?.(null, '', nextUrl);
 };
 
-export const createContextTrackingController = ({
-  root = document,
-  store,
-  navigateToPage,
-}) => {
+export const createContextTrackingController = ({ root = document, store, navigateToPage }) => {
   const documentRef = getDocumentRef(root);
   const windowRef = documentRef.defaultView ?? window;
   const questionnaireRenderRoot = documentRef.getElementById('questionnaireRenderRoot');
@@ -108,14 +107,17 @@ export const createContextTrackingController = ({
 
   let lastActivePageId = null;
 
-  const unsubscribe = store.subscribe((state) => {
-    if (state.ui.activePageId === lastActivePageId) {
-      return;
-    }
+  const unsubscribe = store.subscribe(
+    (state) => {
+      if (state.ui.activePageId === lastActivePageId) {
+        return;
+      }
 
-    lastActivePageId = state.ui.activePageId;
-    updateHashForPage(windowRef, state.ui.activePageId);
-  }, { immediate: true });
+      lastActivePageId = state.ui.activePageId;
+      updateHashForPage(windowRef, state.ui.activePageId);
+    },
+    { immediate: true },
+  );
 
   cleanup.push(unsubscribe);
 
