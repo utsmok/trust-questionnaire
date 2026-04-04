@@ -5,20 +5,16 @@ import { createHelpPanelController } from '../render/help-panel.js';
 import { createReferenceDrawersRenderer } from '../render/reference-drawers.js';
 import { createSidebarRenderer } from '../render/sidebar.js';
 import { PROGRESS_STATES } from '../state/derive.js';
-import { selectShellSurfaceState } from '../state/store.js';
+import { selectSidebarOpen, selectSidebarActiveTab } from '../state/store.js';
 import { toArray, getDocumentRef } from '../utils/shared.js';
-import { PRINCIPLE_SECTION_IDS } from '../config/sections.js';
+import { PRINCIPLE_SECTION_IDS, getSectionDefinition } from '../config/sections.js';
 
 const PANEL_NAMES = Object.freeze({
   CONTEXT: 'context',
   QUESTIONNAIRE: 'questionnaire',
 });
 
-const OVERLAY_SURFACE_NAMES = Object.freeze(['aboutSurface', 'helpSurface']);
-const QUESTIONNAIRE_SCROLL_OFFSET = 16;
 const CONTEXT_DRAWER_MEDIA_QUERY = '(max-width: 1160px)';
-
-
 
 const getWindowRef = (root) => getDocumentRef(root).defaultView ?? window;
 
@@ -63,10 +59,7 @@ const getHeadingText = (section) => {
 
   return toArray(heading.childNodes)
     .filter((node) => {
-      return !(
-        node instanceof HTMLElement
-        && node.classList.contains('completion-badge')
-      );
+      return !(node instanceof HTMLElement && node.classList.contains('completion-badge'));
     })
     .map((node) => node.textContent ?? '')
     .join(' ')
@@ -147,12 +140,10 @@ const focusElementWithRetry = ({
   fallbackTarget = null,
   remainingAttempts = 3,
 }) => {
-  const primary = primaryTarget instanceof HTMLElement && primaryTarget.isConnected
-    ? primaryTarget
-    : null;
-  const fallback = fallbackTarget instanceof HTMLElement && fallbackTarget.isConnected
-    ? fallbackTarget
-    : null;
+  const primary =
+    primaryTarget instanceof HTMLElement && primaryTarget.isConnected ? primaryTarget : null;
+  const fallback =
+    fallbackTarget instanceof HTMLElement && fallbackTarget.isConnected ? fallbackTarget : null;
   const target = primary ?? fallback;
 
   if (!(target instanceof HTMLElement) || typeof target.focus !== 'function') {
@@ -197,16 +188,16 @@ const resolveShellDom = (root) => {
     completionStrip: documentRef.querySelector('.completion-strip'),
     contextBackdrop: documentRef.getElementById('contextDrawerBackdrop'),
     contextPanel: documentRef.getElementById('frameworkPanel'),
-    contextFocusReturn: documentRef.getElementById('contextSidebarFocusReturn'),
+    contextFocusReturn: documentRef.getElementById('sidebarFocusReturn'),
     questionnairePanel: documentRef.getElementById('questionnairePanel'),
     questionnaireRenderRoot: documentRef.getElementById('questionnaireRenderRoot'),
     pagerMount: documentRef.getElementById('pagerMount'),
     contextProgressBar: documentRef.getElementById('frameworkProgress'),
     questionnaireProgressBar: documentRef.getElementById('questionnaireProgress'),
-    aboutSurface: documentRef.getElementById('aboutSurfaceMount'),
-    helpSurface: documentRef.getElementById('helpSurfaceMount'),
-    aboutFocusReturn: documentRef.getElementById('aboutSurfaceFocusReturn'),
-    helpFocusReturn: documentRef.getElementById('helpSurfaceFocusReturn'),
+    tabBar: documentRef.querySelector('.sidebar-tab-bar'),
+    tabButtons: documentRef.querySelectorAll('.sidebar-tab[data-sidebar-tab]'),
+    tabPanels: documentRef.querySelectorAll('.sidebar-tab-panel[data-sidebar-panel]'),
+    tabIndicator: documentRef.querySelector('.sidebar-tab-indicator'),
   };
 };
 
@@ -217,7 +208,72 @@ export const initializeNavigation = ({ root = document, store }) => {
   const cleanup = [];
   const lastSurfaceTriggers = new Map();
   const activeTimers = new Set();
+
   if (!dom.questionnairePanel || !dom.questionnaireRenderRoot) {
+    const shellDivider = documentRef.querySelector('.shell-divider');
+    if (shellDivider && dom.shellRoot) {
+      const SIDEBAR_WIDTH_KEY = 'trust-sidebar-width';
+      let isDraggingSidebar = false;
+
+      try {
+        const saved = windowRef.localStorage.getItem(SIDEBAR_WIDTH_KEY);
+        if (saved) {
+          const remSize = parseFloat(getComputedStyle(documentRef.documentElement).fontSize) || 16;
+          const px = parseFloat(saved);
+          const minPx = 20 * remSize;
+          const maxPx = Math.min(36 * remSize, windowRef.innerWidth - 600);
+          const clamped = Math.max(minPx, Math.min(px, maxPx));
+          dom.shellRoot.style.setProperty('--sidebar-width', `${clamped}px`);
+        }
+      } catch (_) {}
+
+      const clampSidebarWidth = (px) => {
+        const remSize = parseFloat(getComputedStyle(documentRef.documentElement).fontSize) || 16;
+        const minPx = 20 * remSize;
+        const maxPx = Math.min(36 * remSize, windowRef.innerWidth - 600);
+        return Math.max(minPx, Math.min(px, maxPx));
+      };
+
+      const onDividerPointerDown = (event) => {
+        if (isContextDrawerMode || event.button !== 0) return;
+        isDraggingSidebar = true;
+        shellDivider.setPointerCapture(event.pointerId);
+        documentRef.body.style.cursor = 'col-resize';
+        documentRef.body.style.userSelect = 'none';
+        event.preventDefault();
+      };
+
+      const onDividerPointerMove = (event) => {
+        if (!isDraggingSidebar) return;
+        const shellRect = dom.shellRoot.getBoundingClientRect();
+        const px = clampSidebarWidth(shellRect.right - event.clientX);
+        dom.shellRoot.style.setProperty('--sidebar-width', `${px}px`);
+      };
+
+      const onDividerPointerUp = (event) => {
+        if (!isDraggingSidebar) return;
+        isDraggingSidebar = false;
+        try {
+          shellDivider.releasePointerCapture(event.pointerId);
+        } catch (_) {}
+        documentRef.body.style.cursor = '';
+        documentRef.body.style.userSelect = '';
+        const raw = dom.shellRoot.style.getPropertyValue('--sidebar-width');
+        try {
+          windowRef.localStorage.setItem(SIDEBAR_WIDTH_KEY, raw);
+        } catch (_) {}
+      };
+
+      shellDivider.addEventListener('pointerdown', onDividerPointerDown);
+      shellDivider.addEventListener('pointermove', onDividerPointerMove);
+      shellDivider.addEventListener('pointerup', onDividerPointerUp);
+      cleanup.push(() => {
+        shellDivider.removeEventListener('pointerdown', onDividerPointerDown);
+        shellDivider.removeEventListener('pointermove', onDividerPointerMove);
+        shellDivider.removeEventListener('pointerup', onDividerPointerUp);
+      });
+    }
+
     return {
       navigateToPage() {
         return false;
@@ -234,13 +290,21 @@ export const initializeNavigation = ({ root = document, store }) => {
   let pager = null;
   let contextTracking = null;
   let progressDecorationFrame = 0;
-  const contextDrawerMediaQuery = typeof windowRef.matchMedia === 'function'
-    ? windowRef.matchMedia(CONTEXT_DRAWER_MEDIA_QUERY)
-    : null;
+  const contextDrawerMediaQuery =
+    typeof windowRef.matchMedia === 'function'
+      ? windowRef.matchMedia(CONTEXT_DRAWER_MEDIA_QUERY)
+      : null;
   let isContextDrawerMode = Boolean(contextDrawerMediaQuery?.matches);
 
-  if (isContextDrawerMode && selectShellSurfaceState(store.getState(), 'contextSidebar')) {
-    store.actions.setSurfaceOpen('contextSidebar', false);
+  if (isContextDrawerMode) {
+    const sidebarBtn = documentRef.getElementById('sidebarToggle');
+    if (sidebarBtn) {
+      sidebarBtn.setAttribute('aria-label', 'Open sidebar drawer');
+    }
+  }
+
+  if (isContextDrawerMode && selectSidebarOpen(store.getState())) {
+    store.actions.setSidebarOpen(false);
   }
 
   const aboutPanel = createAboutPanelController({ root });
@@ -248,52 +312,38 @@ export const initializeNavigation = ({ root = document, store }) => {
   const referenceDrawers = createReferenceDrawersRenderer({ root, store });
 
   const getContextDrawerDismissTarget = () =>
-    dom.contextPanel?.querySelector('[data-surface-dismiss="contextSidebar"]') ?? dom.contextPanel;
+    dom.contextPanel?.querySelector('[data-sidebar-dismiss]') ?? dom.contextPanel;
 
-  const setContextSidebarOpen = (
-    isOpen,
-    {
-      trigger = null,
-      focusAfterClose = true,
-    } = {},
-  ) => {
-    const currentlyOpen = selectShellSurfaceState(store.getState(), 'contextSidebar');
+  const setSidebarOpenState = (isOpen, { trigger = null, focusAfterClose = true } = {}) => {
+    const currentlyOpen = selectSidebarOpen(store.getState());
 
     if (currentlyOpen === isOpen) {
       if (isOpen && trigger instanceof HTMLElement) {
-        lastSurfaceTriggers.set('contextSidebar', trigger.id || null);
+        lastSurfaceTriggers.set('sidebar', trigger.id || null);
       }
       return;
     }
 
     if (isOpen && trigger instanceof HTMLElement) {
-      lastSurfaceTriggers.set('contextSidebar', trigger.id || null);
+      lastSurfaceTriggers.set('sidebar', trigger.id || null);
     }
 
-    if (isOpen && isContextDrawerMode) {
-      OVERLAY_SURFACE_NAMES.forEach((surfaceName) => {
-        if (selectShellSurfaceState(store.getState(), surfaceName)) {
-          store.actions.setSurfaceOpen(surfaceName, false);
-        }
-      });
-    }
-
-    const lastTriggerId = lastSurfaceTriggers.get('contextSidebar');
+    const lastTriggerId = lastSurfaceTriggers.get('sidebar');
     const lastTrigger = lastTriggerId ? documentRef.getElementById(lastTriggerId) : null;
-    const stableContextToggle = documentRef.getElementById('toolbarContextToggle')
-      ?? documentRef.getElementById('quickJumpContextToggle');
+    const stableToggle = documentRef.getElementById('sidebarToggle');
 
     if (!isOpen && focusAfterClose) {
-      const precloseTarget = lastTrigger instanceof HTMLElement && lastTrigger.isConnected
-        ? lastTrigger
-        : dom.contextFocusReturn;
+      const precloseTarget =
+        lastTrigger instanceof HTMLElement && lastTrigger.isConnected
+          ? lastTrigger
+          : dom.contextFocusReturn;
 
       if (precloseTarget instanceof HTMLElement && typeof precloseTarget.focus === 'function') {
         precloseTarget.focus({ preventScroll: true });
       }
     }
 
-    store.actions.setSurfaceOpen('contextSidebar', isOpen);
+    store.actions.setSidebarOpen(isOpen);
 
     if (!isContextDrawerMode) {
       return;
@@ -326,7 +376,7 @@ export const initializeNavigation = ({ root = document, store }) => {
         focusElementWithRetry({
           windowRef,
           documentRef,
-          primaryTarget: stableContextToggle ?? lastTrigger,
+          primaryTarget: stableToggle ?? lastTrigger,
           fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
         });
       };
@@ -337,7 +387,7 @@ export const initializeNavigation = ({ root = document, store }) => {
         focusElementWithRetry({
           windowRef,
           documentRef,
-          primaryTarget: stableContextToggle ?? lastTrigger,
+          primaryTarget: stableToggle ?? lastTrigger,
           fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
         });
       }, 320);
@@ -346,18 +396,18 @@ export const initializeNavigation = ({ root = document, store }) => {
       focusElementWithRetry({
         windowRef,
         documentRef,
-        primaryTarget: stableContextToggle ?? lastTrigger,
+        primaryTarget: stableToggle ?? lastTrigger,
         fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
       });
     }
   };
 
   const ensureContextDrawerClosedForFormFocus = () => {
-    if (!isContextDrawerMode || !selectShellSurfaceState(store.getState(), 'contextSidebar')) {
+    if (!isContextDrawerMode || !selectSidebarOpen(store.getState())) {
       return;
     }
 
-    setContextSidebarOpen(false, { focusAfterClose: false });
+    setSidebarOpenState(false, { focusAfterClose: false });
   };
 
   const focusPageSection = (pageId) => {
@@ -410,7 +460,8 @@ export const initializeNavigation = ({ root = document, store }) => {
           heading.appendChild(badge);
         }
 
-        badge.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
+        badge.dataset.progressState =
+          sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
         badge.classList.toggle(
           'complete',
           sectionProgress?.canonicalState === PROGRESS_STATES.COMPLETE,
@@ -420,7 +471,8 @@ export const initializeNavigation = ({ root = document, store }) => {
       }
 
       if (stripCell instanceof HTMLElement) {
-        stripCell.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
+        stripCell.dataset.progressState =
+          sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
         stripCell.classList.toggle(
           'filled',
           sectionProgress?.canonicalState === PROGRESS_STATES.COMPLETE,
@@ -449,7 +501,6 @@ export const initializeNavigation = ({ root = document, store }) => {
       const prefersReducedMotion = windowRef.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       if (prefersReducedMotion) {
-        // Skip transition classes entirely when reduced motion is preferred
         if (outgoing) {
           outgoing.classList.add('is-page-hidden');
         }
@@ -493,7 +544,10 @@ export const initializeNavigation = ({ root = document, store }) => {
         section.classList.toggle('is-page-hidden', !isActive);
       }
       section.classList.toggle('is-page-read-only', Boolean(pageState?.isReadOnly));
-      section.classList.toggle('is-page-system-skipped', pageState?.workflowState === 'system_skipped');
+      section.classList.toggle(
+        'is-page-system-skipped',
+        pageState?.workflowState === 'system_skipped',
+      );
       section.setAttribute('aria-hidden', String(!isActive));
       section.dataset.workflowState = pageState?.workflowState ?? '';
       section.dataset.pageEditable = String(Boolean(pageState?.isEditable));
@@ -501,8 +555,12 @@ export const initializeNavigation = ({ root = document, store }) => {
       section.dataset.pageStatus = sectionState?.status ?? '';
       section.dataset.pageProgressState = sectionProgress?.canonicalState ?? '';
       section.dataset.pageCompletionPercent = String(sectionProgress?.completionPercent ?? 0);
-      section.dataset.pageRequiredSatisfied = String(sectionProgress?.satisfiedRequiredFieldCount ?? 0);
-      section.dataset.pageRequiredTotal = String(sectionProgress?.applicableRequiredFieldCount ?? 0);
+      section.dataset.pageRequiredSatisfied = String(
+        sectionProgress?.satisfiedRequiredFieldCount ?? 0,
+      );
+      section.dataset.pageRequiredTotal = String(
+        sectionProgress?.applicableRequiredFieldCount ?? 0,
+      );
 
       if (isActive) {
         section.removeAttribute('inert');
@@ -531,36 +589,55 @@ export const initializeNavigation = ({ root = document, store }) => {
     const activePageSection = pageSectionsById.get(state.ui.activePageId) ?? null;
     const activeAccentKey = activePageSection?.dataset.accentKey ?? null;
 
+    let headingText = getHeadingText(activePageSection);
+    if (!headingText) {
+      const sectionDef = getSectionDefinition(state.ui.activePageId);
+      headingText = sectionDef?.title ?? '';
+    }
+
     ensurePanelTitleSuffix(
       dom.questionnairePanel,
       state.ui.activePageId,
-      getHeadingText(activePageSection),
+      headingText,
       documentRef,
       activeAccentKey,
     );
+    const contextHeading = sidebar?.getCurrentContextHeading?.() ?? '';
+    const contextLabel =
+      sidebar?.isPinned?.() && contextHeading ? `${contextHeading} (pinned)` : contextHeading;
     ensurePanelTitleSuffix(
       dom.contextPanel,
       state.ui.activePageId,
-      sidebar?.getCurrentContextHeading?.() ?? '',
+      contextLabel,
       documentRef,
       activeAccentKey,
     );
   };
 
-  const syncShellSurfaces = (state) => {
-    const contextSidebarOpen = selectShellSurfaceState(state, 'contextSidebar');
-    const contextDrawerOpen = isContextDrawerMode && contextSidebarOpen;
-    const surfaceToggles = toArray(documentRef.querySelectorAll('[data-surface-toggle]'));
+  const updateTabIndicator = (activeTab) => {
+    if (!dom.tabIndicator || !dom.tabBar) return;
+
+    const activeButton = dom.tabBar.querySelector(`[data-sidebar-tab="${activeTab}"]`);
+    if (!activeButton) return;
+
+    dom.tabIndicator.style.transform = `translateX(${activeButton.offsetLeft}px)`;
+    dom.tabIndicator.style.width = `${activeButton.offsetWidth}px`;
+  };
+
+  const syncSidebarPanel = (state) => {
+    const sidebarOpen = selectSidebarOpen(state);
+    const activeTab = selectSidebarActiveTab(state);
+    const contextDrawerOpen = isContextDrawerMode && sidebarOpen;
 
     if (dom.shellRoot) {
-      dom.shellRoot.classList.toggle('is-context-collapsed', !isContextDrawerMode && !contextSidebarOpen);
+      dom.shellRoot.classList.toggle('is-sidebar-collapsed', !sidebarOpen);
       dom.shellRoot.classList.toggle('is-context-drawer-mode', isContextDrawerMode);
       dom.shellRoot.classList.toggle('is-context-drawer-open', contextDrawerOpen);
       dom.shellRoot.dataset.contextPresentation = isContextDrawerMode ? 'drawer' : 'sidebar';
     }
 
     if (dom.contextPanel) {
-      dom.contextPanel.hidden = !isContextDrawerMode && !contextSidebarOpen;
+      dom.contextPanel.hidden = !isContextDrawerMode && !sidebarOpen;
       dom.contextPanel.dataset.contextPresentation = isContextDrawerMode ? 'drawer' : 'sidebar';
       dom.contextPanel.dataset.drawerState = contextDrawerOpen ? 'open' : 'closed';
 
@@ -589,29 +666,25 @@ export const initializeNavigation = ({ root = document, store }) => {
       }
     }
 
-    [
-      ['aboutSurface', dom.aboutSurface],
-      ['helpSurface', dom.helpSurface],
-    ].forEach(([surfaceName, element]) => {
-      if (!element) {
-        return;
-      }
-
-      const isOpen = selectShellSurfaceState(state, surfaceName);
-      element.hidden = !isOpen;
-      element.style.display = isOpen ? 'flex' : 'none';
-      element.classList.toggle('is-open', isOpen);
+    dom.tabButtons?.forEach((button) => {
+      const isActive = button.dataset.sidebarTab === activeTab;
+      button.setAttribute('aria-selected', String(isActive));
+      button.tabIndex = isActive ? 0 : -1;
+      button.classList.toggle('is-active', isActive);
     });
 
-    surfaceToggles.forEach((button) => {
-      const surfaceName = button.dataset.surfaceToggle;
-
-      if (!surfaceName) {
-        return;
-      }
-
-      button.setAttribute('aria-expanded', String(selectShellSurfaceState(state, surfaceName)));
+    dom.tabPanels?.forEach((panel) => {
+      const isActive = panel.dataset.sidebarPanel === activeTab;
+      panel.hidden = !isActive;
+      panel.classList.toggle('is-active', isActive);
     });
+
+    updateTabIndicator(activeTab);
+
+    const toggleButton = documentRef.querySelector('[data-sidebar-toggle]');
+    if (toggleButton) {
+      toggleButton.setAttribute('aria-expanded', String(sidebarOpen));
+    }
   };
 
   const syncFromState = (state) => {
@@ -624,14 +697,10 @@ export const initializeNavigation = ({ root = document, store }) => {
     helpPanel.sync(state);
     syncPageVisibility(state);
     syncActiveAccent(state);
-    syncShellSurfaces(state);
+    syncSidebarPanel(state);
     syncShellProgressState(state);
     syncPanelTitles(state);
-    syncPanelMetrics(
-      dom.contextPanel,
-      dom.contextProgressBar,
-      state.ui.panelMetrics.context,
-    );
+    syncPanelMetrics(dom.contextPanel, dom.contextProgressBar, state.ui.panelMetrics.context);
     syncPanelMetrics(
       dom.questionnairePanel,
       dom.questionnaireProgressBar,
@@ -642,9 +711,7 @@ export const initializeNavigation = ({ root = document, store }) => {
 
   const refreshPageSections = () => {
     pageSections = getRenderedPageSections(dom.questionnaireRenderRoot);
-    pageSectionsById = new Map(
-      pageSections.map((section) => [section.dataset.pageId, section]),
-    );
+    pageSectionsById = new Map(pageSections.map((section) => [section.dataset.pageId, section]));
 
     pageSections.forEach((section) => {
       section.tabIndex = -1;
@@ -662,9 +729,7 @@ export const initializeNavigation = ({ root = document, store }) => {
 
     const panelRect = dom.questionnairePanel.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
-    const nextScrollTop = dom.questionnairePanel.scrollTop
-      + (targetRect.top - panelRect.top)
-      - QUESTIONNAIRE_SCROLL_OFFSET;
+    const nextScrollTop = dom.questionnairePanel.scrollTop + (targetRect.top - panelRect.top) - 16;
 
     dom.questionnairePanel.scrollTo({
       top: Math.max(nextScrollTop, 0),
@@ -714,7 +779,6 @@ export const initializeNavigation = ({ root = document, store }) => {
       focusPageSection(pageId);
     }
 
-    syncPanelTitles(store.getState());
     return true;
   }
 
@@ -725,8 +789,30 @@ export const initializeNavigation = ({ root = document, store }) => {
 
     ensureContextDrawerClosedForFormFocus();
 
-    if (store.getState().ui.activePageId !== descriptor.pageId) {
-      navigateToPage(descriptor.pageId, { resetSubAnchor: false });
+    const needsPageChange = store.getState().ui.activePageId !== descriptor.pageId;
+
+    if (needsPageChange) {
+      if (!pageSectionsById.has(descriptor.pageId)) {
+        refreshPageSections();
+      }
+      if (!pageSectionsById.has(descriptor.pageId)) {
+        return false;
+      }
+      const pageState = store.getState().derived.pageStates.bySectionId[descriptor.pageId];
+      if (pageState?.isAccessible === false) {
+        return false;
+      }
+    }
+
+    store.actions.setActivePageWithAnchor(descriptor.pageId, descriptor.id);
+
+    if (needsPageChange) {
+      dom.questionnairePanel.scrollTo({ top: 0, behavior: 'auto' });
+      updatePanelMetricsFromDom(PANEL_NAMES.QUESTIONNAIRE, dom.questionnairePanel);
+      if (dom.contextPanel && !sidebar?.isPinned?.()) {
+        dom.contextPanel.scrollTo({ top: 0, behavior: 'auto' });
+        updatePanelMetricsFromDom(PANEL_NAMES.CONTEXT, dom.contextPanel);
+      }
     }
 
     const resolvedDescriptor = sidebar?.getSubAnchorTargetById?.(descriptor.id) ?? descriptor;
@@ -735,63 +821,9 @@ export const initializeNavigation = ({ root = document, store }) => {
       return false;
     }
 
-    contextTracking?.setActiveSubAnchorById?.(resolvedDescriptor.id);
     scrollQuestionnaireTarget(resolvedDescriptor.element, { focusTarget: true });
     syncPanelTitles(store.getState());
     return true;
-  };
-
-  const setOverlaySurfaceOpen = (surfaceName, isOpen, trigger) => {
-    if (!OVERLAY_SURFACE_NAMES.includes(surfaceName)) {
-      store.actions.setSurfaceOpen(surfaceName, isOpen);
-      return;
-    }
-
-    if (isOpen && isContextDrawerMode && selectShellSurfaceState(store.getState(), 'contextSidebar')) {
-      setContextSidebarOpen(false, { focusAfterClose: false });
-    }
-
-    if (isOpen) {
-      lastSurfaceTriggers.set(surfaceName, (trigger instanceof HTMLElement ? trigger.id : null)
-        ?? (documentRef.activeElement instanceof HTMLElement ? documentRef.activeElement.id : null));
-
-      OVERLAY_SURFACE_NAMES
-        .filter((candidate) => candidate !== surfaceName)
-        .forEach((candidate) => {
-          store.actions.setSurfaceOpen(candidate, false);
-        });
-    }
-
-    store.actions.setSurfaceOpen(surfaceName, isOpen);
-
-    if (isOpen) {
-      const surface = surfaceName === 'aboutSurface' ? dom.aboutSurface : dom.helpSurface;
-      const dismissButton = surface?.querySelector(`[data-surface-dismiss="${surfaceName}"]`);
-
-      windowRef.requestAnimationFrame(() => {
-        focusElementWithRetry({
-          windowRef,
-          documentRef,
-          primaryTarget: dismissButton,
-        });
-      });
-      return;
-    }
-
-    const focusReturnAnchor = surfaceName === 'aboutSurface'
-      ? dom.aboutFocusReturn
-      : dom.helpFocusReturn;
-    const storedId = lastSurfaceTriggers.get(surfaceName);
-    const returnTarget = storedId ? documentRef.getElementById(storedId) : null;
-
-    windowRef.requestAnimationFrame(() => {
-      focusElementWithRetry({
-        windowRef,
-        documentRef,
-        primaryTarget: returnTarget,
-        fallbackTarget: focusReturnAnchor,
-      });
-    });
   };
 
   sidebar = createSidebarRenderer({
@@ -805,14 +837,15 @@ export const initializeNavigation = ({ root = document, store }) => {
       }
 
       store.actions.setReferenceDrawerOpen(drawerId, true);
+      store.actions.setSidebarActiveTab('reference');
     },
     openAboutTopic(topicId, trigger) {
       if (!topicId) {
         return;
       }
 
+      store.actions.setSidebarActiveTab('about');
       aboutPanel.openTopic(topicId);
-      setOverlaySurfaceOpen('aboutSurface', true, trigger);
     },
   });
   pager = createPagerController({ root, store, navigateToPage });
@@ -823,75 +856,76 @@ export const initializeNavigation = ({ root = document, store }) => {
   });
   refreshPageSections();
 
-  const surfaceToggleButtons = toArray(documentRef.querySelectorAll('[data-surface-toggle]'));
-  const surfaceDismissButtons = toArray(documentRef.querySelectorAll('[data-surface-dismiss]'));
+  const handleSidebarToggle = () => {
+    const isCurrentlyOpen = selectSidebarOpen(store.getState());
+    setSidebarOpenState(!isCurrentlyOpen, {
+      trigger: documentRef.getElementById('sidebarToggle'),
+    });
+  };
 
-  const unsubscribe = store.subscribe((state) => {
-    syncFromState(state);
-  }, { immediate: true });
+  const handleSidebarDismiss = () => {
+    setSidebarOpenState(false);
+  };
+
+  const handleTabClick = (event) => {
+    const tab = event.target.closest('[data-sidebar-tab]');
+    if (!(tab instanceof HTMLButtonElement)) return;
+
+    store.actions.setSidebarActiveTab(tab.dataset.sidebarTab);
+  };
+
+  const handleTabKeydown = (event) => {
+    const tab = event.target.closest('[data-sidebar-tab]');
+    if (!(tab instanceof HTMLButtonElement)) return;
+
+    const tabs = Array.from(dom.tabButtons ?? []);
+    const currentIndex = tabs.indexOf(tab);
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      const next = tabs[(currentIndex + 1) % tabs.length];
+      next?.focus();
+      store.actions.setSidebarActiveTab(next.dataset.sidebarTab);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const prev = tabs[(currentIndex - 1 + tabs.length) % tabs.length];
+      prev?.focus();
+      store.actions.setSidebarActiveTab(prev.dataset.sidebarTab);
+      return;
+    }
+  };
+
+  const unsubscribe = store.subscribe(
+    (state) => {
+      syncFromState(state);
+    },
+    { immediate: true },
+  );
   cleanup.push(unsubscribe);
 
-  surfaceToggleButtons.forEach((button) => {
-    const handleClick = () => {
-      const surfaceName = button.dataset.surfaceToggle;
+  const toggleButton = documentRef.querySelector('[data-sidebar-toggle]');
+  if (toggleButton) {
+    toggleButton.addEventListener('click', handleSidebarToggle);
+    cleanup.push(() => toggleButton.removeEventListener('click', handleSidebarToggle));
+  }
 
-      if (!surfaceName) {
-        return;
-      }
-
-      if (surfaceName === 'contextSidebar') {
-        const isCurrentlyOpen = selectShellSurfaceState(store.getState(), surfaceName);
-        setContextSidebarOpen(!isCurrentlyOpen, { trigger: button });
-        return;
-      }
-
-      if (surfaceName === 'aboutSurface') {
-        const isCurrentlyOpen = selectShellSurfaceState(store.getState(), surfaceName);
-
-        if (!isCurrentlyOpen) {
-          aboutPanel.openSuggestedTopicForPage(store.getState().ui.activePageId);
-        }
-
-        setOverlaySurfaceOpen(surfaceName, !isCurrentlyOpen, button);
-        return;
-      }
-
-      if (OVERLAY_SURFACE_NAMES.includes(surfaceName)) {
-        const isCurrentlyOpen = selectShellSurfaceState(store.getState(), surfaceName);
-        setOverlaySurfaceOpen(surfaceName, !isCurrentlyOpen, button);
-        return;
-      }
-
-      store.actions.toggleSurface(surfaceName);
-    };
-
-    button.addEventListener('click', handleClick);
-    cleanup.push(() => {
-      button.removeEventListener('click', handleClick);
-    });
+  const dismissButtons = toArray(documentRef.querySelectorAll('[data-sidebar-dismiss]'));
+  dismissButtons.forEach((button) => {
+    button.addEventListener('click', handleSidebarDismiss);
+    cleanup.push(() => button.removeEventListener('click', handleSidebarDismiss));
   });
 
-  surfaceDismissButtons.forEach((button) => {
-    const handleClick = () => {
-      const surfaceName = button.dataset.surfaceDismiss;
-
-      if (!surfaceName) {
-        return;
-      }
-
-      if (surfaceName === 'contextSidebar') {
-        setContextSidebarOpen(false);
-        return;
-      }
-
-      setOverlaySurfaceOpen(surfaceName, false);
-    };
-
-    button.addEventListener('click', handleClick);
+  if (dom.tabBar) {
+    dom.tabBar.addEventListener('click', handleTabClick);
+    dom.tabBar.addEventListener('keydown', handleTabKeydown);
     cleanup.push(() => {
-      button.removeEventListener('click', handleClick);
+      dom.tabBar.removeEventListener('click', handleTabClick);
+      dom.tabBar.removeEventListener('keydown', handleTabKeydown);
     });
-  });
+  }
 
   if (dom.contextPanel) {
     const handleContextScroll = () => {
@@ -903,6 +937,19 @@ export const initializeNavigation = ({ root = document, store }) => {
       dom.contextPanel.removeEventListener('scroll', handleContextScroll);
     });
     handleContextScroll();
+  }
+
+  if (dom.contextBackdrop) {
+    const handleBackdropClick = () => {
+      if (isContextDrawerMode && selectSidebarOpen(store.getState())) {
+        setSidebarOpenState(false);
+      }
+    };
+
+    dom.contextBackdrop.addEventListener('click', handleBackdropClick);
+    cleanup.push(() => {
+      dom.contextBackdrop.removeEventListener('click', handleBackdropClick);
+    });
   }
 
   const handleQuestionnaireScroll = () => {
@@ -920,23 +967,9 @@ export const initializeNavigation = ({ root = document, store }) => {
       return;
     }
 
-    const state = store.getState();
-
-    if (selectShellSurfaceState(state, 'helpSurface')) {
+    if (isContextDrawerMode && selectSidebarOpen(store.getState())) {
       event.preventDefault();
-      setOverlaySurfaceOpen('helpSurface', false);
-      return;
-    }
-
-    if (selectShellSurfaceState(state, 'aboutSurface')) {
-      event.preventDefault();
-      setOverlaySurfaceOpen('aboutSurface', false);
-      return;
-    }
-
-    if (isContextDrawerMode && selectShellSurfaceState(state, 'contextSidebar')) {
-      event.preventDefault();
-      setContextSidebarOpen(false);
+      setSidebarOpenState(false);
     }
   };
 
@@ -950,18 +983,26 @@ export const initializeNavigation = ({ root = document, store }) => {
       const nextMatches = typeof event === 'boolean' ? event : Boolean(event.matches);
 
       if (nextMatches === isContextDrawerMode) {
-        syncShellSurfaces(store.getState());
+        syncSidebarPanel(store.getState());
         return;
       }
 
       isContextDrawerMode = nextMatches;
 
-      if (isContextDrawerMode && selectShellSurfaceState(store.getState(), 'contextSidebar')) {
-        setContextSidebarOpen(false, { focusAfterClose: false });
+      const sidebarBtn = documentRef.getElementById('sidebarToggle');
+      if (sidebarBtn) {
+        sidebarBtn.setAttribute(
+          'aria-label',
+          isContextDrawerMode ? 'Open sidebar drawer' : 'Toggle sidebar panel',
+        );
+      }
+
+      if (isContextDrawerMode && selectSidebarOpen(store.getState())) {
+        setSidebarOpenState(false, { focusAfterClose: false });
         return;
       }
 
-      syncShellSurfaces(store.getState());
+      syncSidebarPanel(store.getState());
     };
 
     if (typeof contextDrawerMediaQuery.addEventListener === 'function') {
@@ -985,7 +1026,7 @@ export const initializeNavigation = ({ root = document, store }) => {
       windowRef.requestAnimationFrame(() => {
         observerPending = false;
         refreshPageSections();
-        syncFromState(store.getState());
+        syncPageVisibility(store.getState());
       });
     });
 

@@ -6,7 +6,7 @@
   <title>TRUST Framework</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="static/css/tokens.css" />
   <link rel="stylesheet" href="static/css/base.css" />
   <link rel="stylesheet" href="static/css/layout.css" />
@@ -17,13 +17,13 @@
   <link rel="stylesheet" href="static/css/print.css" />
   <noscript>
     <style>
-      /* Allow scrolling when JS is disabled since the shell grid will not initialize. */
       body { overflow: auto !important; }
     </style>
   </noscript>
 </head>
 <body>
-  <a href="#questionnairePanel" class="skip-link">Skip to questionnaire</a>
+      <a href="#questionnairePanel" class="skip-link">Skip to questionnaire</a>
+      <a href="#contextPanelTitle" class="skip-link">Skip to context panel</a>
   <div class="top-accent"></div>
   <header class="site-header">
     <div class="header-inner">
@@ -39,23 +39,21 @@
           </div>
         </div>
       </div>
-      <p id="completionStripLabel" class="visually-hidden">Canonical page progress strip</p>
-      <ul class="completion-strip" aria-labelledby="completionStripLabel"></ul>
-      <nav class="top-nav" id="quickJumpMount" aria-label="TRUST principle quick jump" data-shell-mount="quick-jump">
-        <button id="quickJumpContextToggle" class="nav-button shell-action-button" type="button" data-surface-toggle="contextSidebar" aria-controls="frameworkPanel" aria-expanded="false">Context</button>
-        <button class="nav-button shell-action-button" type="button" data-surface-toggle="aboutSurface" aria-controls="aboutSurfaceMount" aria-expanded="false">Info</button>
-        <button class="nav-button shell-action-button" type="button" data-surface-toggle="helpSurface" aria-controls="helpSurfaceMount" aria-expanded="false">Help</button>
-        <div class="nav-indicator" id="navIndicator"></div>
+      <nav class="header-bar" id="headerBar" aria-label="Questionnaire navigation">
+        <p id="completionStripLabel" class="visually-hidden">Questionnaire progress strip</p>
+        <ul class="completion-strip" aria-labelledby="completionStripLabel"></ul>
+        <div class="header-bar-divider" aria-hidden="true"></div>
+        <div class="header-bar-toggles" id="headerBarToggles">
+          <button id="sidebarToggle" class="nav-button shell-action-button" type="button" data-sidebar-toggle aria-controls="frameworkPanel" aria-expanded="true">Sidebar</button>
+        </div>
       </nav>
     </div>
   </header>
 
-  <div id="contextSidebarFocusReturn" class="shell-focus-anchor" tabindex="-1"></div>
-  <div id="aboutSurfaceFocusReturn" class="shell-focus-anchor" tabindex="-1"></div>
-  <div id="helpSurfaceFocusReturn" class="shell-focus-anchor" tabindex="-1"></div>
+  <div id="sidebarFocusReturn" class="shell-focus-anchor" tabindex="-1"></div>
 
   <main class="shell-layout" id="trustShell" data-shell-architecture="page-based">
-    <div id="contextDrawerBackdrop" class="context-drawer-backdrop" data-surface-dismiss="contextSidebar" hidden aria-hidden="true"></div>
+    <div id="contextDrawerBackdrop" class="context-drawer-backdrop" data-sidebar-dismiss hidden aria-hidden="true"></div>
 
     <section class="panel questionnaire-panel" id="questionnairePanel" aria-labelledby="questionnairePanelTitle" tabindex="-1">
       <div class="panel-progress"><div class="panel-progress-bar" id="questionnaireProgress"></div></div>
@@ -66,207 +64,10 @@
           <div class="questionnaire-panel-header">
             <h1 class="panel-title" id="questionnairePanelTitle">Questionnaire</h1>
             <div class="shell-toolbar">
-              <button id="toolbarContextToggle" class="nav-button shell-action-button" type="button" data-surface-toggle="contextSidebar" aria-controls="frameworkPanel" aria-expanded="false">Context</button>
+
             </div>
           </div>
-          <p class="panel-caption">The questionnaire is the primary surface. The page index and pager govern movement, reference drawers stay above the form, and framework background remains in the Info surface.</p>
-
-          <h2 id="referenceDrawerHeading" class="panel-title-section">Quick Reference</h2>
-          <section id="referenceDrawerMount" data-shell-mount="reference-drawers" aria-labelledby="referenceDrawerHeading">
-            <details class="reference-drawer" data-drawer-id="answer-sets">
-              <summary>Standard answer sets</summary>
-              <div class="reference-drawer-panel">
-                <section class="mini-card">
-                  <h3>Criterion rating scale</h3>
-                  <table class="score-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Score</th>
-                        <th scope="col">Label</th>
-                        <th scope="col">Meaning</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td><strong>0</strong></td>
-                        <td>Fails</td>
-                        <td>The criterion is not met, or evidence directly contradicts it.</td>
-                      </tr>
-                      <tr>
-                        <td><strong>1</strong></td>
-                        <td>Partial / unclear</td>
-                        <td>Some evidence exists, but it is incomplete or inconsistent.</td>
-                      </tr>
-                      <tr>
-                        <td><strong>2</strong></td>
-                        <td>Meets baseline</td>
-                        <td>The criterion is satisfactorily met with adequate evidence.</td>
-                      </tr>
-                      <tr>
-                        <td><strong>3</strong></td>
-                        <td>Strong</td>
-                        <td>The criterion is exceeded with clear and well-documented evidence.</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </section>
-                <section class="mini-card">
-                  <h3>Recommendation vocabulary</h3>
-                  <div class="chips">
-                    <span class="chip">Recommended</span>
-                    <span class="chip">Recommended with caveats</span>
-                    <span class="chip">Needs review / provisional</span>
-                    <span class="chip">Pilot only</span>
-                    <span class="chip">Not recommended</span>
-                    <span class="chip">Out of scope</span>
-                  </div>
-                  <p>Use the canonical recommendation labels exactly; do not invent softer variants for publication or governance notes.</p>
-                </section>
-                <section class="mini-card">
-                  <h3>Confidence levels</h3>
-                  <div class="chips">
-                    <span class="chip">High</span>
-                    <span class="chip">Medium</span>
-                    <span class="chip">Low</span>
-                  </div>
-                  <p>Confidence expresses how well-supported the evaluation is. It does not mean the tool performed well.</p>
-                </section>
-                <section class="mini-card">
-                  <h3>Critical-fail flags</h3>
-                  <ul>
-                    <li>Fabricated or unverifiable citation found</li>
-                    <li>Materially unfaithful synthesis found</li>
-                    <li>Major claim not traceable to a primary source</li>
-                    <li>Provenance path not inspectable enough for academic use</li>
-                    <li>Privacy/data-use terms unclear or unacceptable</li>
-                    <li>Serious security/compliance concern</li>
-                    <li>Serious bias/fairness concern without credible mitigation</li>
-                  </ul>
-                </section>
-              </div>
-            </details>
-
-            <details class="reference-drawer" data-drawer-id="scoring-model">
-              <summary>Evaluation scoring model</summary>
-              <div class="reference-drawer-panel">
-                <section class="mini-card">
-                  <h3>Per-principle judgment</h3>
-                  <table class="score-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Judgment</th>
-                        <th scope="col">When to assign</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td><strong>Pass</strong></td>
-                        <td>All criteria score 2 or above, with no significant unresolved concerns.</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Conditional pass</strong></td>
-                        <td>One or more criteria score 1, but the principle is substantially met overall.</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Fail</strong></td>
-                        <td>One or more criteria score 0, or the principle as a whole is not met.</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </section>
-                <section class="mini-card">
-                  <h3>Final recommendation categories</h3>
-                  <table class="score-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Category</th>
-                        <th scope="col">Meaning</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td><span class="chip">Recommended</span></td>
-                        <td>Suitable for recommendation to the UT community.</td>
-                      </tr>
-                      <tr>
-                        <td><span class="chip">Recommended with caveats</span></td>
-                        <td>Suitable, but specific limits or conditions must be communicated.</td>
-                      </tr>
-                      <tr>
-                        <td><span class="chip">Needs review / provisional</span></td>
-                        <td>Promising, but unresolved issues block full recommendation.</td>
-                      </tr>
-                      <tr>
-                        <td><span class="chip">Pilot only</span></td>
-                        <td>Allowed only in a controlled pilot setting.</td>
-                      </tr>
-                      <tr>
-                        <td><span class="chip">Not recommended</span></td>
-                        <td>Fails one or more core TRUST standards.</td>
-                      </tr>
-                      <tr>
-                        <td><span class="chip">Out of scope</span></td>
-                        <td>Does not meet the framework definition of an AI-based search tool.</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </section>
-                <section class="mini-card">
-                  <h3>Decision rules</h3>
-                  <p>A tool may receive a negative recommendation with high confidence, or a positive recommendation with low confidence. Keep recommendation state, confidence, and workflow escalation distinct.</p>
-                  <div class="notice">Any critical-fail flag triggers a mandatory team review. An evaluation with an unresolved critical fail cannot be finalized as <strong>Recommended</strong> or <strong>Recommended with caveats</strong>.</div>
-                </section>
-              </div>
-            </details>
-
-            <details class="reference-drawer" data-drawer-id="evidence-requirements">
-              <summary>Minimum evidence requirements</summary>
-              <div class="reference-drawer-panel">
-                <div class="reference-cards">
-                  <section class="mini-card">
-                    <h3>Desk review</h3>
-                    <ul>
-                      <li>Vendor methodology or architecture documentation</li>
-                      <li>Privacy policy and terms of service</li>
-                      <li>White papers, model cards, or equivalent technical statements</li>
-                    </ul>
-                  </section>
-                  <section class="mini-card">
-                    <h3>Hands-on testing</h3>
-                    <ul>
-                      <li>Known-item query</li>
-                      <li>Exploratory literature search</li>
-                      <li>Answer or synthesis query with source verification</li>
-                    </ul>
-                  </section>
-                  <section class="mini-card">
-                    <h3>Repeated-query test</h3>
-                    <ul>
-                      <li>Run at least one query three times</li>
-                      <li>Record whether the core conclusion stays substantively aligned</li>
-                      <li>Note meaningful variation in sources or claims</li>
-                    </ul>
-                  </section>
-                  <section class="mini-card">
-                    <h3>Manual source verification</h3>
-                    <ul>
-                      <li>Check at least five claims or citations</li>
-                      <li>Verify that sources exist</li>
-                      <li>Confirm that sources actually support the tool’s claim</li>
-                    </ul>
-                  </section>
-                  <section class="mini-card">
-                    <h3>Evidence bundle</h3>
-                    <ul>
-                      <li>Screenshots of outputs, disclosures, and interface states</li>
-                      <li>Saved policy excerpts and supporting documents</li>
-                      <li>Reviewer notes, metadata, and SharePoint linkage</li>
-                    </ul>
-                  </section>
-                </div>
-              </div>
-            </details>
-          </section>
+          <p class="panel-caption">Navigate pages using the pager below or the sidebar index.</p>
 
           <div class="workspace-layout">
             <div class="page-index-column">
@@ -282,286 +83,484 @@
       </div>
     </section>
 
+    <div class="shell-divider" role="separator"></div>
+
     <aside class="panel framework-panel" id="frameworkPanel" aria-labelledby="contextPanelTitle" tabindex="-1">
       <div class="panel-progress"><div class="panel-progress-bar" id="frameworkProgress"></div></div>
       <div class="panel-inner">
         <div class="panel-title-row">
           <h2 class="panel-title" id="contextPanelTitle">Context</h2>
-          <button class="nav-button shell-action-button context-drawer-dismiss" type="button" data-surface-dismiss="contextSidebar">Close context</button>
+          <button class="nav-button shell-action-button context-drawer-dismiss" type="button" data-sidebar-dismiss>Close</button>
         </div>
-        <p class="panel-caption">Active-page guidance lives here. Generic scoring and evidence references stay in drawers; framework background and governance stay in the Info surface. On narrow screens this panel becomes a dismissible drawer.</p>
 
-        <div id="contextSidebarMount" data-shell-mount="context-sidebar" data-shell-fallback="literal-framework-content">
-          <section class="doc-section context-empty-state" data-section="control" id="contextSidebarFallback" aria-labelledby="contextSidebarFallbackTitle">
-            <h2 id="contextSidebarFallbackTitle">Context route ready</h2>
-            <p>Route cards, page anchors, and literal topic blocks are driven from the section and content registries. If a page lacks bespoke context prose, the generated route summary remains authoritative.</p>
-          </section>
+        <div class="sidebar-tab-bar" role="tablist" aria-label="Sidebar sections">
+          <button type="button" class="sidebar-tab" role="tab" id="sidebarTabGuidance" data-sidebar-tab="guidance" aria-selected="true" aria-controls="sidebarPanelGuidance" tabindex="0">Guidance</button>
+          <button type="button" class="sidebar-tab" role="tab" id="sidebarTabReference" data-sidebar-tab="reference" aria-selected="false" aria-controls="sidebarPanelReference" tabindex="-1">Reference</button>
+          <button type="button" class="sidebar-tab" role="tab" id="sidebarTabAbout" data-sidebar-tab="about" aria-selected="false" aria-controls="sidebarPanelAbout" tabindex="-1">About</button>
+          <div class="sidebar-tab-indicator" aria-hidden="true"></div>
+        </div>
 
-          <section class="doc-section" data-section="control" data-topic-area="context" data-topic-ids="context.workflow-control" aria-labelledby="contextWorkflowTitle">
-            <div class="section-kicker">S0 · Workflow</div>
-            <h2 id="contextWorkflowTitle">Workflow control guidance</h2>
-            <p>This opening page defines which pages are accessible and whether they are editable, read-only, or system-skipped. Treat it as the control plane for the rest of the questionnaire.</p>
-            <ul>
-              <li><strong>Submission type</strong> determines whether the flow is nomination, primary evaluation, second review, final team decision, or re-evaluation.</li>
-              <li><strong>Tool name</strong> and <strong>tool URL</strong> provide the stable identity used by later review and governance pages.</li>
-              <li>Nomination-only rationale belongs here; do not smear nomination context across later evidence fields.</li>
-            </ul>
-          </section>
+        <div class="sidebar-tab-panels">
+          <div class="sidebar-tab-panel" role="tabpanel" id="sidebarPanelGuidance" data-sidebar-panel="guidance" aria-labelledby="sidebarTabGuidance">
+            <div id="contextSidebarMount" data-shell-mount="context-sidebar" data-shell-fallback="literal-framework-content">
+              <section class="doc-section context-empty-state" data-section="control" id="contextSidebarFallback" aria-labelledby="contextSidebarFallbackTitle">
+                <h2 id="contextSidebarFallbackTitle">Context route ready</h2>
+                <p>Select a page to see context guidance.</p>
+              </section>
 
-          <section class="doc-section" data-section="profile" data-topic-area="context" data-topic-ids="context.tool-profile" aria-labelledby="contextProfileTitle">
-            <div class="section-kicker">S1 · Profile</div>
-            <h2 id="contextProfileTitle">Tool profile and scope guidance</h2>
-            <p>This page establishes what the tool is, who provides it, how it is accessed, and whether it belongs inside the TRUST evaluation scope before deeper scoring begins.</p>
-            <ul>
-              <li>Record vendor, category, deployment type, and access model as factual baseline data.</li>
-              <li>Use the in-scope check and rationale fields to distinguish full scope, partial scope, and out-of-scope cases explicitly.</li>
-              <li>Account and sign-in details matter later for privacy, security, and institutional deployment interpretation.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="control" data-topic-area="context" data-topic-ids="context.workflow-control" aria-labelledby="contextWorkflowTitle">
+                <div class="section-kicker">S0 · Workflow</div>
+                <h2 id="contextWorkflowTitle">Workflow control guidance</h2>
+                <p>This opening page defines which pages are accessible and whether they are editable, read-only, or system-skipped. Treat it as the control plane for the rest of the questionnaire.</p>
+                <ul>
+                  <li><strong>Submission type</strong> determines whether the flow is nomination, primary evaluation, second review, final team decision, or re-evaluation.</li>
+                  <li><strong>Tool name</strong> and <strong>tool URL</strong> provide the stable identity used by later review and governance pages.</li>
+                  <li>Nomination-only rationale belongs here; do not smear nomination context across later evidence fields.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="setup" data-topic-area="context" data-topic-ids="context.evaluation-setup" aria-labelledby="contextSetupTitle">
-            <div class="section-kicker">S2 · Setup</div>
-            <h2 id="contextSetupTitle">Evaluation setup and evidence expectations</h2>
-            <p>This page makes the evaluation reproducible. Testing dates, pricing tier, sample queries, repeated-query design, and evidence boundaries should be complete before principle scoring is trusted.</p>
-            <ul>
-              <li>Document the exact scenarios used for known-item retrieval, exploratory search, and synthesis verification.</li>
-              <li>Record repeated-query and benchmark setups in enough detail that another reviewer could rerun them.</li>
-              <li>Keep the evidence folder link stable; later criterion-level evidence associations depend on this boundary.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="profile" data-topic-area="context" data-topic-ids="context.tool-profile" aria-labelledby="contextProfileTitle">
+                <div class="section-kicker">S1 · Profile</div>
+                <h2 id="contextProfileTitle">Tool profile and scope guidance</h2>
+                <p>This page establishes what the tool is, who provides it, how it is accessed, and whether it belongs inside the TRUST evaluation scope before deeper scoring begins.</p>
+                <ul>
+                  <li>Record vendor, category, deployment type, and access model as factual baseline data.</li>
+                  <li>Use the in-scope check and rationale fields to distinguish full scope, partial scope, and out-of-scope cases explicitly.</li>
+                  <li>Account and sign-in details matter later for privacy, security, and institutional deployment interpretation.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="tr" data-topic-area="context" data-topic-ids="context.transparent" aria-labelledby="contextTrTitle">
-            <div class="section-kicker">TR · Transparent</div>
-            <h2 id="contextTrTitle">Transparent principle context</h2>
-            <p>Transparency asks whether the tool reveals its data sources, methodology, scope, and limitations clearly enough that evaluators do not need to rely on faith.</p>
-            <ul>
-              <li><strong>TR1</strong> — Document primary data sources, indexed coverage, disciplines, languages, date ranges, and update cadence.</li>
-              <li><strong>TR2</strong> — Document model family or version, retrieval and generation approach, source base, and inspectability of provenance.</li>
-              <li><strong>TR3</strong> — Record acknowledged limitations, indexing gaps, and update-frequency caveats explicitly.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="setup" data-topic-area="context" data-topic-ids="context.evaluation-setup" aria-labelledby="contextSetupTitle">
+                <div class="section-kicker">S2 · Setup</div>
+                <h2 id="contextSetupTitle">Evaluation setup and evidence expectations</h2>
+                <p>This page makes the evaluation reproducible. Testing dates, pricing tier, sample queries, repeated-query design, and evidence boundaries should be complete before principle scoring is trusted.</p>
+                <ul>
+                  <li>Document the exact scenarios used for known-item retrieval, exploratory search, and synthesis verification.</li>
+                  <li>Record repeated-query and benchmark setups in enough detail that another reviewer could rerun them.</li>
+                  <li>Keep the evidence folder link stable; later criterion-level evidence associations depend on this boundary.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="re" data-topic-area="context" data-topic-ids="context.reliable" aria-labelledby="contextReTitle">
-            <div class="section-kicker">RE · Reliable</div>
-            <h2 id="contextReTitle">Reliable principle context</h2>
-            <p>Reliability is about factual accuracy, consistency of consensus across repeated runs, and faithfulness to source material. Convenience does not excuse hallucinations or unsupported synthesis.</p>
-            <ul>
-              <li><strong>RE1</strong> — Verify factual accuracy and guard against fabricated citations.</li>
-              <li><strong>RE2</strong> — Run repeated-query tests and judge whether core conclusions remain substantively aligned.</li>
-              <li><strong>RE3</strong> — Confirm that synthesis stays faithful to retrieved evidence and does not over-claim.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="tr" data-topic-area="context" data-topic-ids="context.transparent" aria-labelledby="contextTrTitle">
+                <div class="section-kicker">TR · Transparent</div>
+                <h2 id="contextTrTitle">Transparent principle context</h2>
+                <p>Transparency asks whether the tool reveals its data sources, methodology, scope, and limitations clearly enough that evaluators do not need to rely on faith.</p>
+                <ul>
+                  <li><strong>TR1</strong> — Document primary data sources, indexed coverage, disciplines, languages, date ranges, and update cadence.</li>
+                  <li><strong>TR2</strong> — Document model family or version, retrieval and generation approach, source base, and inspectability of provenance.</li>
+                  <li><strong>TR3</strong> — Record acknowledged limitations, indexing gaps, and update-frequency caveats explicitly.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="uc" data-topic-area="context" data-topic-ids="context.user-centric" aria-labelledby="contextUcTitle">
-            <div class="section-kicker">UC · User-centric</div>
-            <h2 id="contextUcTitle">User-centric principle context</h2>
-            <p>User-centric scoring covers fitness for purpose, workflow integration, usability, accessibility, and explicit communication that the interface is AI-assisted.</p>
-            <ul>
-              <li><strong>UC1</strong> — Assess fit with the research and teaching needs of the University of Twente community.</li>
-              <li><strong>UC2</strong> — Record export options, reference-manager compatibility, persistent links, and citation portability.</li>
-              <li><strong>UC3</strong> — Evaluate practical usability and accessibility for the intended audience.</li>
-              <li><strong>UC4</strong> — Look for uncertainty cues, AI-assistance disclosure, and prompts that encourage source verification.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="re" data-topic-area="context" data-topic-ids="context.reliable" aria-labelledby="contextReTitle">
+                <div class="section-kicker">RE · Reliable</div>
+                <h2 id="contextReTitle">Reliable principle context</h2>
+                <p>Reliability is about factual accuracy, consistency of consensus across repeated runs, and faithfulness to source material. Convenience does not excuse hallucinations or unsupported synthesis.</p>
+                <ul>
+                  <li><strong>RE1</strong> — Verify factual accuracy and guard against fabricated citations.</li>
+                  <li><strong>RE2</strong> — Run repeated-query tests and judge whether core conclusions remain substantively aligned.</li>
+                  <li><strong>RE3</strong> — Confirm that synthesis stays faithful to retrieved evidence and does not over-claim.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="se" data-topic-area="context" data-topic-ids="context.secure" aria-labelledby="contextSeTitle">
-            <div class="section-kicker">SE · Secure</div>
-            <h2 id="contextSeTitle">Secure principle context</h2>
-            <p>Security covers privacy, data handling, institutional compatibility, and the visibility of bias or fairness risks. It is a compliance and ethics question, not only a technical checkbox.</p>
-            <ul>
-              <li><strong>SE1</strong> — Assess data protection by design and by default under GDPR-oriented review.</li>
-              <li><strong>SE2</strong> — Verify how prompts and queries are stored, retained, reused, and controlled by users.</li>
-              <li><strong>SE3</strong> — Check alignment with institutional policy, national guidance, and sector frameworks.</li>
-              <li><strong>SE4</strong> — Record disciplinary, geographic, language, or algorithmic bias risks and any credible mitigation.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="uc" data-topic-area="context" data-topic-ids="context.user-centric" aria-labelledby="contextUcTitle">
+                <div class="section-kicker">UC · User-centric</div>
+                <h2 id="contextUcTitle">User-centric principle context</h2>
+                <p>User-centric scoring covers fitness for purpose, workflow integration, usability, accessibility, and explicit communication that the interface is AI-assisted.</p>
+                <ul>
+                  <li><strong>UC1</strong> — Assess fit with the research and teaching needs of the University of Twente community.</li>
+                  <li><strong>UC2</strong> — Record export options, reference-manager compatibility, persistent links, and citation portability.</li>
+                  <li><strong>UC3</strong> — Evaluate practical usability and accessibility for the intended audience.</li>
+                  <li><strong>UC4</strong> — Look for uncertainty cues, AI-assistance disclosure, and prompts that encourage source verification.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="tc" data-topic-area="context" data-topic-ids="context.traceable" aria-labelledby="contextTcTitle">
-            <div class="section-kicker">TC · Traceable</div>
-            <h2 id="contextTcTitle">Traceable principle context</h2>
-            <p>Traceability is the academic accountability core of the framework. Users and reviewers must be able to inspect which sources support an answer and how generated synthesis is separated from evidence.</p>
-            <ul>
-              <li><strong>TC1</strong> — Check source attribution quality, persistence, and any source-quality cues surfaced with citations.</li>
-              <li><strong>TC2</strong> — Check whether the provenance path is inspectable enough for scholarly use.</li>
-              <li>Do not treat plausible prose as traceability; every substantive claim must connect back to verifiable source material.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="se" data-topic-area="context" data-topic-ids="context.secure" aria-labelledby="contextSeTitle">
+                <div class="section-kicker">SE · Secure</div>
+                <h2 id="contextSeTitle">Secure principle context</h2>
+                <p>Security covers privacy, data handling, institutional compatibility, and the visibility of bias or fairness risks. It is a compliance and ethics question, not only a technical checkbox.</p>
+                <ul>
+                  <li><strong>SE1</strong> — Assess data protection by design and by default under GDPR-oriented review.</li>
+                  <li><strong>SE2</strong> — Verify how prompts and queries are stored, retained, reused, and controlled by users.</li>
+                  <li><strong>SE3</strong> — Check alignment with institutional policy, national guidance, and sector frameworks.</li>
+                  <li><strong>SE4</strong> — Record disciplinary, geographic, language, or algorithmic bias risks and any credible mitigation.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="reference" data-topic-area="context" data-topic-ids="context.critical-fails-and-confidence" aria-labelledby="contextReferenceTitle">
-            <div class="section-kicker">S8 · Control</div>
-            <h2 id="contextReferenceTitle">Critical fail and confidence guidance</h2>
-            <p>Critical fails and confidence are evaluation-wide controls. They do not replace criterion scoring, but they can override what recommendation states are defensible.</p>
-            <ul>
-              <li>Check every applicable critical-fail flag explicitly; a single unresolved flag forces team review.</li>
-              <li>Use the completion checklist to confirm that evidence, uncertainty fields, privacy review, and query documentation are in place.</li>
-              <li>Confidence should describe evidence strength and testing coverage, not optimism about the tool.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="tc" data-topic-area="context" data-topic-ids="context.traceable" aria-labelledby="contextTcTitle">
+                <div class="section-kicker">TC · Traceable</div>
+                <h2 id="contextTcTitle">Traceable principle context</h2>
+                <p>Traceability is the academic accountability core of the framework. Users and reviewers must be able to inspect which sources support an answer and how generated synthesis is separated from evidence.</p>
+                <ul>
+                  <li><strong>TC1</strong> — Check source attribution quality, persistence, and any source-quality cues surfaced with citations.</li>
+                  <li><strong>TC2</strong> — Check whether the provenance path is inspectable enough for scholarly use.</li>
+                  <li>Do not treat plausible prose as traceability; every substantive claim must connect back to verifiable source material.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="recommendation" data-topic-area="context" data-topic-ids="context.overall-recommendation" aria-labelledby="contextRecommendationTitle">
-            <div class="section-kicker">S9 · Recommendation</div>
-            <h2 id="contextRecommendationTitle">Overall recommendation guidance</h2>
-            <p>This page translates the principle-level evidence into an institutional recommendation, a caveat set, and a public-facing summary that another team member can defend later.</p>
-            <ul>
-              <li>Keep recommendation status aligned with principle judgments and any unresolved critical-fail flags.</li>
-              <li>State suitable and unsuitable use cases explicitly; do not rely on implication or tone.</li>
-              <li>Set a realistic next review date based on tool risk, update cadence, and access conditions.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="reference" data-topic-area="context" data-topic-ids="context.critical-fails-and-confidence" aria-labelledby="contextReferenceTitle">
+                <div class="section-kicker">S8 · Control</div>
+                <h2 id="contextReferenceTitle">Critical fail and confidence guidance</h2>
+                <p>Critical fails and confidence are evaluation-wide controls. They do not replace criterion scoring, but they can override what recommendation states are defensible.</p>
+                <ul>
+                  <li>Check every applicable critical-fail flag explicitly; a single unresolved flag forces team review.</li>
+                  <li>Use the completion checklist to confirm that evidence, uncertainty fields, privacy review, and query documentation are in place.</li>
+                  <li>Confidence should describe evidence strength and testing coverage, not optimism about the tool.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.primary-evaluation-handoff" aria-labelledby="contextHandoffTitle">
-            <div class="section-kicker">S10A · Handoff</div>
-            <h2 id="contextHandoffTitle">Primary evaluation handoff guidance</h2>
-            <p>The handoff is not a victory lap. It packages the primary evaluation for a second reviewer and should expose the weakest parts of the evidence set clearly.</p>
-            <ul>
-              <li>Flag key concerns that deserve targeted second-review attention.</li>
-              <li>List uncertainty areas in plain language, with criterion codes where possible.</li>
-              <li>Assume the second reviewer was not present during the original testing session.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="recommendation" data-topic-area="context" data-topic-ids="context.overall-recommendation" aria-labelledby="contextRecommendationTitle">
+                <div class="section-kicker">S9 · Recommendation</div>
+                <h2 id="contextRecommendationTitle">Overall recommendation guidance</h2>
+                <p>This page translates the principle-level evidence into an institutional recommendation, a caveat set, and a public-facing summary that another team member can defend later.</p>
+                <ul>
+                  <li>Keep recommendation status aligned with principle judgments and any unresolved critical-fail flags.</li>
+                  <li>State suitable and unsuitable use cases explicitly; do not rely on implication or tone.</li>
+                  <li>Set a realistic next review date based on tool risk, update cadence, and access conditions.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.second-review" aria-labelledby="contextSecondReviewTitle">
-            <div class="section-kicker">S10B · Review</div>
-            <h2 id="contextSecondReviewTitle">Second review guidance</h2>
-            <p>The second review step exists to challenge scoring drift, identify conflicting interpretations, and record disagreement before a team decision is made.</p>
-            <ul>
-              <li>Use the agreement field precisely: full agreement, partial agreement, or disagreement.</li>
-              <li>If criteria need revisiting, list them explicitly and explain why the scores or evidence differ.</li>
-              <li>Disagreement should travel forward as documented rationale, not be patched over informally.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.primary-evaluation-handoff" aria-labelledby="contextHandoffTitle">
+                <div class="section-kicker">S10A · Handoff</div>
+                <h2 id="contextHandoffTitle">Primary evaluation handoff guidance</h2>
+                <p>The handoff is not a victory lap. It packages the primary evaluation for a second reviewer and should expose the weakest parts of the evidence set clearly.</p>
+                <ul>
+                  <li>Flag key concerns that deserve targeted second-review attention.</li>
+                  <li>List uncertainty areas in plain language, with criterion codes where possible.</li>
+                  <li>Assume the second reviewer was not present during the original testing session.</li>
+                </ul>
+              </section>
 
-          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.final-team-decision" aria-labelledby="contextFinalDecisionTitle">
-            <div class="section-kicker">S10C · Decision</div>
-            <h2 id="contextFinalDecisionTitle">Final team decision guidance</h2>
-            <p>The final decision records what the team approved, under which publication conditions, and when re-evaluation is due. It closes the workflow without erasing the evidence trail.</p>
-            <ul>
-              <li>At least two EIS-IS team members must have reviewed the tool before a final recommendation is assigned.</li>
-              <li>Publication status, final status rationale, and review cycle frequency belong together as one governance decision.</li>
-              <li>Use the final rationale field to explain conditions, deferrals, escalations, or rejection clearly.</li>
-            </ul>
-          </section>
+              <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.second-review" aria-labelledby="contextSecondReviewTitle">
+                <div class="section-kicker">S10B · Review</div>
+                <h2 id="contextSecondReviewTitle">Second review guidance</h2>
+                <p>The second review step exists to challenge scoring drift, identify conflicting interpretations, and record disagreement before a team decision is made.</p>
+                <ul>
+                  <li>Use the agreement field precisely: full agreement, partial agreement, or disagreement.</li>
+                  <li>If criteria need revisiting, list them explicitly and explain why the scores or evidence differ.</li>
+                  <li>Disagreement should travel forward as documented rationale, not be patched over informally.</li>
+                </ul>
+              </section>
+
+              <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.final-team-decision" aria-labelledby="contextFinalDecisionTitle">
+                <div class="section-kicker">S10C · Decision</div>
+                <h2 id="contextFinalDecisionTitle">Final team decision guidance</h2>
+                <p>The final decision records what the team approved, under which publication conditions, and when re-evaluation is due. It closes the workflow without erasing the evidence trail.</p>
+                <ul>
+                  <li>At least two EIS-IS team members must have reviewed the tool before a final recommendation is assigned.</li>
+                  <li>Publication status, final status rationale, and review cycle frequency belong together as one governance decision.</li>
+                  <li>Use the final rationale field to explain conditions, deferrals, escalations, or rejection clearly.</li>
+                </ul>
+              </section>
+            </div>
+
+            <details class="reference-drawer sidebar-help-drawer" data-drawer-id="help-legend">
+              <summary class="reference-drawer-summary">
+                <span class="reference-drawer-summary-main">
+                  <span class="reference-drawer-code">HELP</span>
+                  <span class="reference-drawer-title">Interaction legend &amp; shortcuts</span>
+                </span>
+              </summary>
+              <div class="reference-drawer-panel" id="helpLegendMount" data-shell-mount="help-legend"></div>
+            </details>
+          </div>
+
+          <div class="sidebar-tab-panel" role="tabpanel" id="sidebarPanelReference" data-sidebar-panel="reference" aria-labelledby="sidebarTabReference" hidden>
+            <section id="referenceDrawerMount" data-shell-mount="reference-drawers" aria-labelledby="referenceDrawerHeading">
+              <details class="reference-drawer" data-drawer-id="answer-sets">
+                <summary>Standard answer sets</summary>
+                <div class="reference-drawer-panel">
+                  <section class="mini-card">
+                    <h3>Criterion rating scale</h3>
+                    <table class="score-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Score</th>
+                          <th scope="col">Label</th>
+                          <th scope="col">Meaning</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong>0</strong></td>
+                          <td>Fails</td>
+                          <td>The criterion is not met, or evidence directly contradicts it.</td>
+                        </tr>
+                        <tr>
+                          <td><strong>1</strong></td>
+                          <td>Partial / unclear</td>
+                          <td>Some evidence exists, but it is incomplete or inconsistent.</td>
+                        </tr>
+                        <tr>
+                          <td><strong>2</strong></td>
+                          <td>Meets baseline</td>
+                          <td>The criterion is satisfactorily met with adequate evidence.</td>
+                        </tr>
+                        <tr>
+                          <td><strong>3</strong></td>
+                          <td>Strong</td>
+                          <td>The criterion is exceeded with clear and well-documented evidence.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Recommendation vocabulary</h3>
+                    <div class="chips">
+                      <span class="chip">Recommended</span>
+                      <span class="chip">Recommended with caveats</span>
+                      <span class="chip">Needs review / provisional</span>
+                      <span class="chip">Pilot only</span>
+                      <span class="chip">Not recommended</span>
+                      <span class="chip">Out of scope</span>
+                    </div>
+                    <p>Use the canonical recommendation labels exactly; do not invent softer variants for publication or governance notes.</p>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Confidence levels</h3>
+                    <div class="chips">
+                      <span class="chip">High</span>
+                      <span class="chip">Medium</span>
+                      <span class="chip">Low</span>
+                    </div>
+                    <p>Confidence expresses how well-supported the evaluation is. It does not mean the tool performed well.</p>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Critical-fail flags</h3>
+                    <ul>
+                      <li>Fabricated or unverifiable citation found</li>
+                      <li>Materially unfaithful synthesis found</li>
+                      <li>Major claim not traceable to a primary source</li>
+                      <li>Provenance path not inspectable enough for academic use</li>
+                      <li>Privacy/data-use terms unclear or unacceptable</li>
+                      <li>Serious security/compliance concern</li>
+                      <li>Serious bias/fairness concern without credible mitigation</li>
+                    </ul>
+                  </section>
+                </div>
+              </details>
+
+              <details class="reference-drawer" data-drawer-id="scoring-model">
+                <summary>Evaluation scoring model</summary>
+                <div class="reference-drawer-panel">
+                  <section class="mini-card">
+                    <h3>Per-principle judgment</h3>
+                    <table class="score-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Judgment</th>
+                          <th scope="col">When to assign</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong>Pass</strong></td>
+                          <td>All criteria score 2 or above, with no significant unresolved concerns.</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Conditional pass</strong></td>
+                          <td>One or more criteria score 1, but the principle is substantially met overall.</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Fail</strong></td>
+                          <td>One or more criteria score 0, or the principle as a whole is not met.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Final recommendation categories</h3>
+                    <table class="score-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Category</th>
+                          <th scope="col">Meaning</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><span class="chip">Recommended</span></td>
+                          <td>Suitable for recommendation to the UT community.</td>
+                        </tr>
+                        <tr>
+                          <td><span class="chip">Recommended with caveats</span></td>
+                          <td>Suitable, but specific limits or conditions must be communicated.</td>
+                        </tr>
+                        <tr>
+                          <td><span class="chip">Needs review / provisional</span></td>
+                          <td>Promising, but unresolved issues block full recommendation.</td>
+                        </tr>
+                        <tr>
+                          <td><span class="chip">Pilot only</span></td>
+                          <td>Allowed only in a controlled pilot setting.</td>
+                        </tr>
+                        <tr>
+                          <td><span class="chip">Not recommended</span></td>
+                          <td>Fails one or more core TRUST standards.</td>
+                        </tr>
+                        <tr>
+                          <td><span class="chip">Out of scope</span></td>
+                          <td>Does not meet the framework definition of an AI-based search tool.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Decision rules</h3>
+                    <p>A tool may receive a negative recommendation with high confidence, or a positive recommendation with low confidence. Keep recommendation state, confidence, and workflow escalation distinct.</p>
+                    <div class="notice">Any critical-fail flag triggers a mandatory team review. An evaluation with an unresolved critical fail cannot be finalized as <strong>Recommended</strong> or <strong>Recommended with caveats</strong>.</div>
+                  </section>
+                </div>
+              </details>
+
+              <details class="reference-drawer" data-drawer-id="evidence-requirements">
+                <summary>Minimum evidence requirements</summary>
+                <div class="reference-drawer-panel">
+                  <div class="reference-cards">
+                    <section class="mini-card">
+                      <h3>Desk review</h3>
+                      <ul>
+                        <li>Vendor methodology or architecture documentation</li>
+                        <li>Privacy policy and terms of service</li>
+                        <li>White papers, model cards, or equivalent technical statements</li>
+                      </ul>
+                    </section>
+                    <section class="mini-card">
+                      <h3>Hands-on testing</h3>
+                      <ul>
+                        <li>Known-item query</li>
+                        <li>Exploratory literature search</li>
+                        <li>Answer or synthesis query with source verification</li>
+                      </ul>
+                    </section>
+                    <section class="mini-card">
+                      <h3>Repeated-query test</h3>
+                      <ul>
+                        <li>Run at least one query three times</li>
+                        <li>Record whether the core conclusion stays substantively aligned</li>
+                        <li>Note meaningful variation in sources or claims</li>
+                      </ul>
+                    </section>
+                    <section class="mini-card">
+                      <h3>Manual source verification</h3>
+                      <ul>
+                        <li>Check at least five claims or citations</li>
+                        <li>Verify that sources exist</li>
+                        <li>Confirm that sources actually support the tool's claim</li>
+                      </ul>
+                    </section>
+                    <section class="mini-card">
+                      <h3>Evidence bundle</h3>
+                      <ul>
+                        <li>Screenshots of outputs, disclosures, and interface states</li>
+                        <li>Saved policy excerpts and supporting documents</li>
+                        <li>Reviewer notes, metadata, and SharePoint linkage</li>
+                      </ul>
+                    </section>
+                  </div>
+                </div>
+              </details>
+            </section>
+          </div>
+
+          <div class="sidebar-tab-panel" role="tabpanel" id="sidebarPanelAbout" data-sidebar-panel="about" aria-labelledby="sidebarTabAbout" hidden>
+            <div id="aboutPanelMount" data-shell-mount="about-panel">
+              <section class="doc-section" data-section="control" data-topic-area="about" data-topic-ids="about.framework-overview" aria-labelledby="aboutOverviewTitle">
+                <div class="section-kicker">Version 2</div>
+                <h2 id="aboutOverviewTitle">Framework overview</h2>
+                <p>TRUST is the EIS-IS team's structured evaluation framework for AI-based information search tools used in academic contexts. Version 2 keeps the static, auditable evaluation workflow while tightening reliability standards, adding cognitive guardrails, and formalizing scoring, evidence, and governance.</p>
+                <p>The framework is intentionally stricter than generic AI checklists because academic recommendation requires verifiable provenance, faithful synthesis, explicit limitations, and a defensible institutional review trail.</p>
+                <div class="principle-list">
+                  <div class="principle-item">
+                    <strong>Transparent</strong>
+                    Clear documentation of sources, methods, and limitations.
+                  </div>
+                  <div class="principle-item">
+                    <strong>Reliable</strong>
+                    Accurate, verifiable outputs with stable core conclusions and faithful synthesis.
+                  </div>
+                  <div class="principle-item">
+                    <strong>User-centric</strong>
+                    Fit for academic workflows, usable by the target audience, and explicit about AI assistance.
+                  </div>
+                  <div class="principle-item">
+                    <strong>Secure</strong>
+                    Acceptable privacy, security, compliance, and bias-mitigation posture.
+                  </div>
+                  <div class="principle-item">
+                    <strong>Traceable</strong>
+                    Inspectable provenance from generated answers back to original sources.
+                  </div>
+                </div>
+                <div class="notice">Operational additions in version 2 include the scoring model, minimum evidence requirements, critical-fail flags, confidence levels, and a formal governance workflow.</div>
+              </section>
+
+              <section class="doc-section" data-section="profile" data-topic-area="about" data-topic-ids="about.scope-and-definitions" aria-labelledby="aboutScopeTitle">
+                <div class="section-kicker">Scope</div>
+                <h2 id="aboutScopeTitle">Scope and definitions</h2>
+                <p>Within this framework, an AI-based search tool is a system that relies on non-deterministic generative models to produce outputs. Identical queries may yield non-identical results, and the system performs generative synthesis or conversational interaction beyond deterministic retrieval.</p>
+                <div class="reference-cards">
+                  <section class="mini-card">
+                    <h3>Covered cases</h3>
+                    <ul>
+                      <li>Standalone AI search tools</li>
+                      <li>AI features layered onto existing scholarly platforms</li>
+                      <li>General-purpose LLM interfaces assessed for scholarly search use</li>
+                    </ul>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Exclusions</h3>
+                    <ul>
+                      <li>Deterministic search tools without generative capability</li>
+                      <li>AI tools used only for writing, coding, or image generation</li>
+                      <li>Internal research prototypes not available to end users</li>
+                    </ul>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Examples</h3>
+                    <ul>
+                      <li><strong>Out of scope:</strong> Google Scholar, when used only as deterministic search.</li>
+                      <li><strong>In scope:</strong> Semantic Scholar features that use LLMs to summarize or synthesize results.</li>
+                    </ul>
+                  </section>
+                </div>
+              </section>
+
+              <section class="doc-section" data-section="governance" data-topic-area="about" data-topic-ids="about.governance-workflow" aria-labelledby="aboutGovernanceTitle">
+                <div class="section-kicker">Governance</div>
+                <h2 id="aboutGovernanceTitle">Governance and review workflow</h2>
+                <p>The evaluation cycle is structured so that results remain defensible after handoff. A tool moves from nomination through primary evaluation and second review into a final team decision with recorded publication status and next review date.</p>
+                <ol>
+                  <li><strong>Nomination</strong> — record tool identity, vendor, URL, and reason for review.</li>
+                  <li><strong>Primary evaluation</strong> — run desk review, hands-on testing, repeated-query checks, and manual verification.</li>
+                  <li><strong>Second review</strong> — confirm, qualify, or challenge the primary evaluation.</li>
+                  <li><strong>Final team decision</strong> — assign final status, publication handling, and review cycle.</li>
+                </ol>
+                <div class="reference-cards">
+                  <section class="mini-card">
+                    <h3>Two-person review</h3>
+                    <p>No tool may receive a final recommendation without review by at least two EIS-IS team members.</p>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Disagreement handling</h3>
+                    <p>Disputed criteria are documented, both reviewers justify their position, and the team resolves the issue in the decision log.</p>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Re-evaluation triggers</h3>
+                    <p>Major vendor changes, reported issues, scheduled review dates, or claimed fixes for prior critical fails all trigger re-evaluation.</p>
+                  </section>
+                  <section class="mini-card">
+                    <h3>Decision attributes</h3>
+                    <p>Publication status, suitable and unsuitable use cases, and review frequency are recorded alongside the recommendation itself.</p>
+                  </section>
+                </div>
+              </section>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
   </main>
-
-  <aside class="shell-surface" id="aboutSurfaceMount" hidden role="dialog" aria-modal="true" aria-labelledby="aboutSurfaceHeading">
-    <div class="surface-card">
-      <div class="surface-header">
-        <div>
-          <p class="surface-kicker">Info surface</p>
-          <h2 id="aboutSurfaceHeading">Framework background</h2>
-        </div>
-        <button class="nav-button shell-action-button" type="button" data-surface-dismiss="aboutSurface">Close</button>
-      </div>
-      <div class="surface-body">
-        <section class="doc-section" data-section="control" data-topic-area="about" data-topic-ids="about.framework-overview" aria-labelledby="aboutOverviewTitle">
-          <div class="section-kicker">Version 2</div>
-          <h2 id="aboutOverviewTitle">Framework overview</h2>
-          <p>TRUST is the EIS-IS team’s structured evaluation framework for AI-based information search tools used in academic contexts. Version 2 keeps the static, auditable evaluation workflow while tightening reliability standards, adding cognitive guardrails, and formalizing scoring, evidence, and governance.</p>
-          <p>The framework is intentionally stricter than generic AI checklists because academic recommendation requires verifiable provenance, faithful synthesis, explicit limitations, and a defensible institutional review trail.</p>
-          <div class="principle-list">
-            <div class="principle-item">
-              <strong>Transparent</strong>
-              Clear documentation of sources, methods, and limitations.
-            </div>
-            <div class="principle-item">
-              <strong>Reliable</strong>
-              Accurate, verifiable outputs with stable core conclusions and faithful synthesis.
-            </div>
-            <div class="principle-item">
-              <strong>User-centric</strong>
-              Fit for academic workflows, usable by the target audience, and explicit about AI assistance.
-            </div>
-            <div class="principle-item">
-              <strong>Secure</strong>
-              Acceptable privacy, security, compliance, and bias-mitigation posture.
-            </div>
-            <div class="principle-item">
-              <strong>Traceable</strong>
-              Inspectable provenance from generated answers back to original sources.
-            </div>
-          </div>
-          <div class="notice">Operational additions in version 2 include the scoring model, minimum evidence requirements, critical-fail flags, confidence levels, and a formal governance workflow.</div>
-        </section>
-
-        <section class="doc-section" data-section="profile" data-topic-area="about" data-topic-ids="about.scope-and-definitions" aria-labelledby="aboutScopeTitle">
-          <div class="section-kicker">Scope</div>
-          <h2 id="aboutScopeTitle">Scope and definitions</h2>
-          <p>Within this framework, an AI-based search tool is a system that relies on non-deterministic generative models to produce outputs. Identical queries may yield non-identical results, and the system performs generative synthesis or conversational interaction beyond deterministic retrieval.</p>
-          <div class="reference-cards">
-            <section class="mini-card">
-              <h3>Covered cases</h3>
-              <ul>
-                <li>Standalone AI search tools</li>
-                <li>AI features layered onto existing scholarly platforms</li>
-                <li>General-purpose LLM interfaces assessed for scholarly search use</li>
-              </ul>
-            </section>
-            <section class="mini-card">
-              <h3>Exclusions</h3>
-              <ul>
-                <li>Deterministic search tools without generative capability</li>
-                <li>AI tools used only for writing, coding, or image generation</li>
-                <li>Internal research prototypes not available to end users</li>
-              </ul>
-            </section>
-            <section class="mini-card">
-              <h3>Examples</h3>
-              <ul>
-                <li><strong>Out of scope:</strong> Google Scholar, when used only as deterministic search.</li>
-                <li><strong>In scope:</strong> Semantic Scholar features that use LLMs to summarize or synthesize results.</li>
-              </ul>
-            </section>
-          </div>
-        </section>
-
-        <section class="doc-section" data-section="governance" data-topic-area="about" data-topic-ids="about.governance-workflow" aria-labelledby="aboutGovernanceTitle">
-          <div class="section-kicker">Governance</div>
-          <h2 id="aboutGovernanceTitle">Governance and review workflow</h2>
-          <p>The evaluation cycle is structured so that results remain defensible after handoff. A tool moves from nomination through primary evaluation and second review into a final team decision with recorded publication status and next review date.</p>
-          <ol>
-            <li><strong>Nomination</strong> — record tool identity, vendor, URL, and reason for review.</li>
-            <li><strong>Primary evaluation</strong> — run desk review, hands-on testing, repeated-query checks, and manual verification.</li>
-            <li><strong>Second review</strong> — confirm, qualify, or challenge the primary evaluation.</li>
-            <li><strong>Final team decision</strong> — assign final status, publication handling, and review cycle.</li>
-          </ol>
-          <div class="reference-cards">
-            <section class="mini-card">
-              <h3>Two-person review</h3>
-              <p>No tool may receive a final recommendation without review by at least two EIS-IS team members.</p>
-            </section>
-            <section class="mini-card">
-              <h3>Disagreement handling</h3>
-              <p>Disputed criteria are documented, both reviewers justify their position, and the team resolves the issue in the decision log.</p>
-            </section>
-            <section class="mini-card">
-              <h3>Re-evaluation triggers</h3>
-              <p>Major vendor changes, reported issues, scheduled review dates, or claimed fixes for prior critical fails all trigger re-evaluation.</p>
-            </section>
-            <section class="mini-card">
-              <h3>Decision attributes</h3>
-              <p>Publication status, suitable and unsuitable use cases, and review frequency are recorded alongside the recommendation itself.</p>
-            </section>
-          </div>
-        </section>
-      </div>
-    </div>
-  </aside>
-
-  <aside class="shell-surface" id="helpSurfaceMount" hidden role="dialog" aria-modal="true" aria-labelledby="helpSurfaceHeading">
-    <div class="surface-card">
-      <div class="surface-header">
-        <div>
-          <p class="surface-kicker">Help surface</p>
-          <h2 id="helpSurfaceHeading">Interaction legend</h2>
-        </div>
-        <button class="nav-button shell-action-button" type="button" data-surface-dismiss="helpSurface">Close</button>
-      </div>
-      <div class="surface-body"></div>
-    </div>
-  </aside>
 
   <script type="module" src="static/js/app.js"></script>
 </body>

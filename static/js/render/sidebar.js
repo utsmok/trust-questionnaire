@@ -4,14 +4,20 @@ import {
   getContentTopicDefinition,
   getSectionDefinition,
 } from '../config/sections.js';
-import {
-  CRITERIA_BY_CODE,
-  QUESTIONNAIRE_FIELDS_BY_ID,
-  SECTION_FIELD_IDS,
-} from '../config/questionnaire-schema.js';
+import { CRITERIA_BY_CODE } from '../config/questionnaire-schema.js';
 import { PROGRESS_STATES } from '../state/derive.js';
-import { selectQuickJumpPageIds } from '../state/store.js';
-import { toArray, getDocumentRef, clearChildren, joinTokens, setAccentKey, createInfoRow, getCompletionGroupLabel, formatProgressStateLabel, formatSectionProgressCompact, createSourceList } from '../utils/shared.js';
+import {
+  toArray,
+  getDocumentRef,
+  clearChildren,
+  joinTokens,
+  setAccentKey,
+  createInfoRow,
+  getCompletionGroupLabel,
+  formatProgressStateLabel,
+  formatSectionProgressCompact,
+  createSourceList,
+} from '../utils/shared.js';
 import { REFERENCE_DRAWER_BY_TOPIC_ID } from './reference-drawers.js';
 
 export const CONTEXT_ROUTE_KINDS = Object.freeze({
@@ -95,14 +101,6 @@ const PAGE_FALLBACK_COPY = Object.freeze({
   }),
 });
 
-const QUICK_JUMP_COLOR_BY_KEY = Object.freeze({
-  tr: 'var(--tr)',
-  re: 'var(--re)',
-  uc: 'var(--uc)',
-  se: 'var(--se-dark)',
-  tc: 'var(--tc-dark)',
-});
-
 const SUMMARY_ANCHOR_LABELS = Object.freeze({
   criteria: 'Criteria overview',
   primary: 'Primary fields',
@@ -127,14 +125,7 @@ const PROGRESS_STATE_LABELS = Object.freeze({
 });
 
 const parseTopicIds = (rawValue) =>
-  typeof rawValue === 'string'
-    ? rawValue.trim().split(/\s+/).filter(Boolean)
-    : [];
-
-const toPrincipleKey = (pageId) => {
-  const normalized = typeof pageId === 'string' ? pageId.toLowerCase() : '';
-  return QUICK_JUMP_COLOR_BY_KEY[normalized] ? normalized : null;
-};
+  typeof rawValue === 'string' ? rawValue.trim().split(/\s+/).filter(Boolean) : [];
 
 const getSectionHeadingText = (section) => {
   const heading = section?.querySelector('h2');
@@ -143,9 +134,7 @@ const getSectionHeadingText = (section) => {
 
 const getCriterionAnchorLabel = (criterionCode) => {
   const criterion = CRITERIA_BY_CODE[criterionCode];
-  return criterion
-    ? `${criterion.code} — ${criterion.title}`
-    : criterionCode;
+  return criterion ? `${criterion.code} — ${criterion.title}` : criterionCode;
 };
 
 const formatStateLabel = (value, fallback = 'Unknown') => {
@@ -188,11 +177,12 @@ const formatGroupProgressSummary = (groupProgress) => {
     return 'Progress unavailable';
   }
 
-  const base = groupProgress.applicableRequiredFieldCount > 0
-    ? `${groupProgress.satisfiedRequiredFieldCount}/${groupProgress.applicableRequiredFieldCount} req`
-    : groupProgress.activeSectionCount > 0
-      ? `${groupProgress.resolvedActiveSectionCount}/${groupProgress.activeSectionCount} pages`
-      : 'No active pages';
+  const base =
+    groupProgress.applicableRequiredFieldCount > 0
+      ? `${groupProgress.satisfiedRequiredFieldCount}/${groupProgress.applicableRequiredFieldCount} req`
+      : groupProgress.activeSectionCount > 0
+        ? `${groupProgress.resolvedActiveSectionCount}/${groupProgress.activeSectionCount} pages`
+        : 'No active pages';
 
   return joinTokens([
     base,
@@ -201,13 +191,11 @@ const formatGroupProgressSummary = (groupProgress) => {
       ? `${groupProgress.unresolvedEscalationCount} escalated`
       : groupProgress.blockedEscalatedSectionCount > 0
         ? `${groupProgress.blockedEscalatedSectionCount} blocked`
-      : null,
+        : null,
     groupProgress.invalidAttentionSectionCount > 0
       ? `${groupProgress.invalidAttentionSectionCount} attention`
       : null,
-    groupProgress.skippedSectionCount > 0
-      ? `${groupProgress.skippedSectionCount} skipped`
-      : null,
+    groupProgress.skippedSectionCount > 0 ? `${groupProgress.skippedSectionCount} skipped` : null,
   ]);
 };
 
@@ -245,7 +233,7 @@ const formatOverallProgressMetaSummary = (overallProgress) => {
       ? `${overallProgress.unresolvedEscalationCount} escalated`
       : overallProgress.blockedEscalatedSectionCount > 0
         ? `${overallProgress.blockedEscalatedSectionCount} blocked`
-      : null,
+        : null,
     overallProgress.skippedSectionCount > 0
       ? `${overallProgress.skippedSectionCount} skipped`
       : null,
@@ -261,7 +249,9 @@ const buildSectionNavigationLabel = ({ pageDefinition, pageState, sectionProgres
     sectionProgress?.escalationReasons?.length
       ? `${sectionProgress.escalationReasons.length} unresolved escalation ${sectionProgress.escalationReasons.length === 1 ? 'rule' : 'rules'}.`
       : null,
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 };
 
 const buildCompletionStripItemLabel = ({ pageDefinition, pageState, sectionProgress }) => {
@@ -270,18 +260,19 @@ const buildCompletionStripItemLabel = ({ pageDefinition, pageState, sectionProgr
     `${formatProgressStateLabel(sectionProgress?.canonicalState)}.`,
     formatSectionProgressDetail(sectionProgress),
     `${WORKFLOW_STATE_LABELS[pageState?.workflowState] ?? 'Unavailable'} workflow state.`,
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 };
 
 const getSummaryAnchorLabel = (pageDefinition, summaryKind) => {
-  const baseLabel = SUMMARY_ANCHOR_LABELS[summaryKind] ?? `${formatStateLabel(summaryKind, 'Summary')} block`;
+  const baseLabel =
+    SUMMARY_ANCHOR_LABELS[summaryKind] ?? `${formatStateLabel(summaryKind, 'Summary')} block`;
   return pageDefinition ? `${pageDefinition.title} — ${baseLabel}` : baseLabel;
 };
 
 const getSummaryAnchorShortLabel = (summaryKind) =>
-  summaryKind === 'criteria'
-    ? 'CRITERIA'
-    : formatStateLabel(summaryKind, 'SUMMARY').toUpperCase();
+  summaryKind === 'criteria' ? 'CRITERIA' : formatStateLabel(summaryKind, 'SUMMARY').toUpperCase();
 
 const createSectionTag = (documentRef, pageDefinition) => {
   const tag = documentRef.createElement('span');
@@ -295,15 +286,17 @@ const extractContextSources = (mount) => {
   const contextSectionsByTopicId = new Map();
   const fallback = mount?.querySelector('#contextSidebarFallback') ?? null;
 
-  toArray(mount?.querySelectorAll('[data-topic-area="context"][data-topic-ids]')).forEach((section) => {
-    parseTopicIds(section.dataset.topicIds)
-      .filter((topicId) => topicId.startsWith('context.'))
-      .forEach((topicId) => {
-        const list = contextSectionsByTopicId.get(topicId) ?? [];
-        list.push(section);
-        contextSectionsByTopicId.set(topicId, list);
-      });
-  });
+  toArray(mount?.querySelectorAll('[data-topic-area="context"][data-topic-ids]')).forEach(
+    (section) => {
+      parseTopicIds(section.dataset.topicIds)
+        .filter((topicId) => topicId.startsWith('context.'))
+        .forEach((topicId) => {
+          const list = contextSectionsByTopicId.get(topicId) ?? [];
+          list.push(section);
+          contextSectionsByTopicId.set(topicId, list);
+        });
+    },
+  );
 
   return {
     fallback,
@@ -322,6 +315,7 @@ const buildContextShell = (mount, documentRef) => {
 
   shell.className = 'context-sidebar-shell';
   routeCard.className = 'context-route-card';
+  routeCard.setAttribute('aria-live', 'polite');
   anchorCard.className = 'context-anchor-card';
   generatedSlot.className = 'context-generated-slot';
   topicStack.className = 'context-topic-stack';
@@ -338,66 +332,7 @@ const buildContextShell = (mount, documentRef) => {
   };
 };
 
-const ensureHeaderProgressSummary = (documentRef, quickJumpMount) => {
-  const headerInner = quickJumpMount?.closest('.header-inner');
-
-  if (!(headerInner instanceof HTMLElement)) {
-    return null;
-  }
-
-  let summary = headerInner.querySelector('.header-progress-summary');
-
-  if (!(summary instanceof HTMLElement)) {
-    summary = documentRef.createElement('div');
-    summary.className = 'header-progress-summary';
-    summary.id = 'headerProgressSummary';
-    summary.setAttribute('role', 'status');
-    summary.setAttribute('aria-live', 'polite');
-    summary.setAttribute('aria-atomic', 'true');
-
-    const title = documentRef.createElement('p');
-    const body = documentRef.createElement('p');
-    const meta = documentRef.createElement('p');
-
-    title.className = 'header-progress-title';
-    title.textContent = 'Questionnaire progress';
-
-    body.className = 'header-progress-body';
-    meta.className = 'header-progress-meta';
-
-    summary.append(title, body, meta);
-
-    const completionStrip = headerInner.querySelector('.completion-strip');
-
-    if (completionStrip?.nextSibling) {
-      headerInner.insertBefore(summary, completionStrip.nextSibling);
-    } else if (completionStrip) {
-      completionStrip.insertAdjacentElement('afterend', summary);
-    } else {
-      headerInner.insertBefore(summary, quickJumpMount);
-    }
-  }
-
-  if (!summary.id) {
-    summary.id = 'headerProgressSummary';
-  }
-
-  return {
-    root: summary,
-    title: summary.querySelector('.header-progress-title'),
-    body: summary.querySelector('.header-progress-body'),
-    meta: summary.querySelector('.header-progress-meta'),
-  };
-};
-
-const createLinkButton = ({
-  documentRef,
-  className,
-  text,
-  dataName,
-  dataValue,
-  ariaLabel,
-}) => {
+const createLinkButton = ({ documentRef, className, text, dataName, dataValue, ariaLabel }) => {
   const button = documentRef.createElement('button');
   button.type = 'button';
   button.className = className;
@@ -424,8 +359,6 @@ const buildCriterionCompanion = (documentRef, route) => {
   const kicker = documentRef.createElement('div');
   const heading = documentRef.createElement('h2');
   const statement = documentRef.createElement('p');
-  const listLabel = documentRef.createElement('p');
-  const list = documentRef.createElement('ul');
 
   section.className = 'doc-section context-generated-section';
   section.dataset.section = route.pageDefinition?.accentKey ?? 'control';
@@ -436,26 +369,7 @@ const buildCriterionCompanion = (documentRef, route) => {
   heading.textContent = `${criterion.code} — ${criterion.title}`;
   statement.textContent = criterion.statement;
 
-  listLabel.className = 'context-block-label';
-  listLabel.textContent = 'Field obligations';
-
-  [
-    criterion.fieldIds.score,
-    criterion.fieldIds.evidenceSummary,
-    criterion.fieldIds.evidenceLinks,
-    criterion.fieldIds.uncertaintyOrBlockers,
-  ]
-    .map((fieldId) => QUESTIONNAIRE_FIELDS_BY_ID[fieldId])
-    .filter(Boolean)
-    .forEach((field) => {
-      const item = documentRef.createElement('li');
-      item.textContent = field.requiredPolicy === 'conditional'
-        ? `${field.label} — conditionally required when the criterion is blocked or unclear.`
-        : field.label;
-      list.appendChild(item);
-    });
-
-  section.append(kicker, heading, statement, listLabel, list);
+  section.append(kicker, heading, statement);
   return section;
 };
 
@@ -464,9 +378,6 @@ const buildSummaryCompanion = (documentRef, route) => {
   const kicker = documentRef.createElement('div');
   const heading = documentRef.createElement('h2');
   const summary = documentRef.createElement('p');
-  const listLabel = documentRef.createElement('p');
-  const list = documentRef.createElement('ul');
-  const sectionFieldIds = SECTION_FIELD_IDS[route.pageId] ?? [];
 
   section.className = 'doc-section context-generated-section';
   section.dataset.section = route.pageDefinition?.accentKey ?? 'control';
@@ -475,23 +386,9 @@ const buildSummaryCompanion = (documentRef, route) => {
   kicker.textContent = 'Summary focus';
 
   heading.textContent = `${route.pageDefinition?.title ?? route.pageId} summary guidance`;
-  summary.textContent = 'Use the section-level summary fields to translate criterion evidence into a page-level judgment and handoff-ready rationale.';
+  summary.textContent = 'Translate criterion scores into a section judgment.';
 
-  listLabel.className = 'context-block-label';
-  listLabel.textContent = 'Section-level fields';
-
-  sectionFieldIds
-    .map((fieldId) => QUESTIONNAIRE_FIELDS_BY_ID[fieldId])
-    .filter((field) => field && !field.criterionCode)
-    .forEach((field) => {
-      const item = documentRef.createElement('li');
-      item.textContent = field.requiredPolicy === 'conditional'
-        ? `${field.label} — conditionally required.`
-        : field.label;
-      list.appendChild(item);
-    });
-
-  section.append(kicker, heading, summary, listLabel, list);
+  section.append(kicker, heading, summary);
   return section;
 };
 
@@ -506,11 +403,11 @@ const buildPageFallback = (documentRef, route) => {
   section.dataset.section = route.pageDefinition?.accentKey ?? 'control';
 
   kicker.className = 'section-kicker';
-  kicker.textContent = 'Generated guidance';
+  kicker.textContent = 'Page guidance';
 
-  heading.textContent = route.topicDefinition?.title ?? route.pageDefinition?.title ?? 'Context guidance';
-  summary.textContent = fallbackCopy?.summary
-    ?? 'This page currently uses registry-driven guidance rather than a dedicated literal context block in the shell.';
+  heading.textContent =
+    route.topicDefinition?.title ?? route.pageDefinition?.title ?? 'Context guidance';
+  summary.textContent = fallbackCopy?.summary ?? '';
 
   section.append(kicker, heading, summary);
 
@@ -538,9 +435,7 @@ const createAnchorDescriptor = ({
   summaryKind = null,
 }) => {
   const slug = pageDefinition?.slug ?? pageId.toLowerCase();
-  const idSuffix = kind === CONTEXT_ROUTE_KINDS.CRITERION
-    ? criterionCode?.toLowerCase()
-    : kind;
+  const idSuffix = kind === CONTEXT_ROUTE_KINDS.CRITERION ? criterionCode?.toLowerCase() : kind;
   const elementId = element.id || `${slug}-${idSuffix}`;
 
   element.id = elementId;
@@ -580,13 +475,13 @@ export const createSidebarRenderer = ({
 }) => {
   const documentRef = getDocumentRef(root);
   const windowRef = documentRef.defaultView ?? window;
-  const quickJumpMount = documentRef.getElementById('quickJumpMount');
+  const headerBarToggles = documentRef.getElementById('headerBarToggles');
   const pageSidebarMount = documentRef.getElementById('pageSidebarMount');
   const contextSidebarMount = documentRef.getElementById('contextSidebarMount');
   const questionnaireRenderRoot = documentRef.getElementById('questionnaireRenderRoot');
   const completionStrip = documentRef.querySelector('.completion-strip');
 
-  if (!quickJumpMount || !pageSidebarMount || !contextSidebarMount) {
+  if (!headerBarToggles || !pageSidebarMount || !contextSidebarMount) {
     return {
       sync() {},
       refreshPageAnchors() {},
@@ -607,19 +502,14 @@ export const createSidebarRenderer = ({
 
   const cleanup = [];
   const contextSources = extractContextSources(contextSidebarMount);
-  const actionNodes = toArray(quickJumpMount.querySelectorAll('[data-surface-toggle]'));
-  const navIndicator = quickJumpMount.querySelector('#navIndicator') ?? documentRef.createElement('div');
   const contextShell = buildContextShell(contextSidebarMount, documentRef);
-  const headerProgressSummary = ensureHeaderProgressSummary(documentRef, quickJumpMount);
 
   let pageAnchorsByPageId = new Map();
   let anchorById = new Map();
   let pinnedRoute = null;
   let currentRoute = null;
-  let indicatorFrame = 0;
-
-  navIndicator.id = 'navIndicator';
-  navIndicator.className = 'nav-indicator';
+  let completionStripCache = new Map();
+  let completionStripCachedKeys = '';
 
   const refreshPageAnchors = () => {
     const nextAnchorsByPageId = new Map();
@@ -630,7 +520,9 @@ export const createSidebarRenderer = ({
       const pageDefinition = getSectionDefinition(pageId);
       const anchors = [];
 
-      const criteriaOverviewElement = pageSection.querySelector('.criteria-stack[data-summary-anchor]');
+      const criteriaOverviewElement = pageSection.querySelector(
+        '.criteria-stack[data-summary-anchor]',
+      );
 
       if (criteriaOverviewElement) {
         const descriptor = createAnchorDescriptor({
@@ -647,21 +539,23 @@ export const createSidebarRenderer = ({
         nextAnchorById.set(descriptor.id, descriptor);
       }
 
-      toArray(pageSection.querySelectorAll('.criterion-card[data-criterion]')).forEach((criterionElement) => {
-        const criterionCode = criterionElement.dataset.criterion;
-        const descriptor = createAnchorDescriptor({
-          pageId,
-          pageDefinition,
-          element: criterionElement,
-          kind: CONTEXT_ROUTE_KINDS.CRITERION,
-          label: getCriterionAnchorLabel(criterionCode),
-          shortLabel: criterionCode,
-          criterionCode,
-        });
+      toArray(pageSection.querySelectorAll('.criterion-card[data-criterion]')).forEach(
+        (criterionElement) => {
+          const criterionCode = criterionElement.dataset.criterion;
+          const descriptor = createAnchorDescriptor({
+            pageId,
+            pageDefinition,
+            element: criterionElement,
+            kind: CONTEXT_ROUTE_KINDS.CRITERION,
+            label: getCriterionAnchorLabel(criterionCode),
+            shortLabel: criterionCode,
+            criterionCode,
+          });
 
-        anchors.push(descriptor);
-        nextAnchorById.set(descriptor.id, descriptor);
-      });
+          anchors.push(descriptor);
+          nextAnchorById.set(descriptor.id, descriptor);
+        },
+      );
 
       toArray(pageSection.querySelectorAll('[data-summary-kind]')).forEach((summaryElement) => {
         const summaryKind = summaryElement.dataset.summaryKind ?? 'summary';
@@ -697,9 +591,9 @@ export const createSidebarRenderer = ({
     const pageDefinition = getSectionDefinition(pageId);
     const topicId = pageDefinition?.contextTopicId ?? null;
     const topicDefinition = getContentTopicDefinition(topicId);
-    const activeAnchor = subAnchorId ? anchorById.get(subAnchorId) ?? null : null;
+    const activeAnchor = subAnchorId ? (anchorById.get(subAnchorId) ?? null) : null;
     const literalSections = topicId
-      ? contextSources.contextSectionsByTopicId.get(topicId) ?? []
+      ? (contextSources.contextSectionsByTopicId.get(topicId) ?? [])
       : [];
     const pageState = state.derived.pageStates.bySectionId[pageId] ?? null;
     const sectionState = state.derived.sectionStates.bySectionId[pageId] ?? null;
@@ -740,25 +634,7 @@ export const createSidebarRenderer = ({
     };
   };
 
-  const renderHeaderProgress = (state) => {
-    const overallProgress = state.derived.completionProgress?.overall ?? null;
-
-    if (!headerProgressSummary || !overallProgress) {
-      return;
-    }
-
-    headerProgressSummary.root.dataset.progressState = overallProgress.canonicalState ?? '';
-    headerProgressSummary.body.textContent = formatOverallProgressRequirementSummary(overallProgress);
-    headerProgressSummary.meta.textContent = formatOverallProgressMetaSummary(overallProgress);
-    headerProgressSummary.root.setAttribute(
-      'aria-label',
-      [
-        `Questionnaire progress: ${formatProgressStateLabel(overallProgress.canonicalState)}.`,
-        `${formatOverallProgressRequirementSummary(overallProgress)}.`,
-        `${formatOverallProgressMetaSummary(overallProgress)}.`,
-      ].join(' '),
-    );
-  };
+  const renderHeaderProgress = () => {};
 
   const renderCompletionStrip = (state) => {
     const overallProgress = state.derived.completionProgress?.overall ?? null;
@@ -767,114 +643,90 @@ export const createSidebarRenderer = ({
       return;
     }
 
-    clearChildren(completionStrip);
     completionStrip.dataset.progressState = overallProgress.canonicalState ?? '';
     completionStrip.setAttribute('aria-labelledby', 'completionStripLabel');
 
-    if (headerProgressSummary?.root?.id) {
-      completionStrip.setAttribute('aria-describedby', headerProgressSummary.root.id);
-    }
+    const currentKeys = state.ui.pageOrder.join(',');
 
-    state.ui.pageOrder.forEach((pageId) => {
-      const pageDefinition = getSectionDefinition(pageId);
-      const pageState = state.derived.pageStates.bySectionId[pageId] ?? null;
-      const sectionProgress = state.derived.completionProgress?.bySectionId?.[pageId] ?? null;
-      const cell = documentRef.createElement('li');
-      const code = documentRef.createElement('span');
-      const description = documentRef.createElement('span');
+    if (currentKeys !== completionStripCachedKeys) {
+      clearChildren(completionStrip);
+      completionStripCache.clear();
 
-      cell.className = 'strip-cell';
-      cell.setAttribute('aria-hidden', 'true');
-      cell.setAttribute('role', 'presentation');
-      cell.dataset.pageId = pageId;
-      cell.dataset.pageCode = pageDefinition?.pageCode ?? pageId;
-      cell.dataset.accentKey = pageDefinition?.accentKey ?? 'control';
-      cell.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
-      cell.dataset.workflowState = pageState?.workflowState ?? '';
-      cell.classList.toggle(
-        'filled',
-        sectionProgress?.canonicalState === PROGRESS_STATES.COMPLETE,
-      );
-      cell.classList.toggle('is-active', state.ui.activePageId === pageId);
-      code.className = 'strip-cell-code';
-      code.textContent = pageDefinition?.pageCode ?? pageId;
-      description.className = 'strip-cell-description visually-hidden';
-      description.textContent = buildCompletionStripItemLabel({
-        pageDefinition,
-        pageState,
-        sectionProgress,
+      state.ui.pageOrder.forEach((pageId) => {
+        const pageDefinition = getSectionDefinition(pageId);
+        const pageState = state.derived.pageStates.bySectionId[pageId] ?? null;
+        const sectionProgress = state.derived.completionProgress?.bySectionId?.[pageId] ?? null;
+        const cell = documentRef.createElement('button');
+        const code = documentRef.createElement('span');
+
+        cell.type = 'button';
+        cell.className = 'strip-cell';
+        cell.dataset.pageId = pageId;
+        cell.dataset.pageCode = pageDefinition?.pageCode ?? pageId;
+        cell.dataset.accentKey = pageDefinition?.accentKey ?? 'control';
+        cell.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
+        cell.dataset.workflowState = pageState?.workflowState ?? '';
+        cell.classList.toggle(
+          'filled',
+          sectionProgress?.canonicalState === PROGRESS_STATES.COMPLETE,
+        );
+        cell.classList.toggle('is-active', state.ui.activePageId === pageId);
+        cell.disabled = !pageState?.isAccessible;
+        cell.setAttribute(
+          'aria-label',
+          buildCompletionStripItemLabel({
+            pageDefinition,
+            pageState,
+            sectionProgress,
+          }),
+        );
+        if (state.ui.activePageId === pageId) {
+          cell.setAttribute('aria-current', 'page');
+        }
+        code.className = 'strip-cell-code';
+        code.setAttribute('aria-hidden', 'true');
+        code.textContent = pageDefinition?.pageCode ?? pageId;
+        cell.appendChild(code);
+        completionStrip.appendChild(cell);
+        completionStripCache.set(pageId, cell);
       });
-      cell.append(code, description);
-      completionStrip.appendChild(cell);
-    });
+
+      completionStripCachedKeys = currentKeys;
+    } else {
+      state.ui.pageOrder.forEach((pageId) => {
+        const cell = completionStripCache.get(pageId);
+        if (!cell) return;
+        const pageDefinition = getSectionDefinition(pageId);
+        const pageState = state.derived.pageStates.bySectionId[pageId] ?? null;
+        const sectionProgress = state.derived.completionProgress?.bySectionId?.[pageId] ?? null;
+
+        cell.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
+        cell.dataset.workflowState = pageState?.workflowState ?? '';
+        cell.classList.toggle(
+          'filled',
+          sectionProgress?.canonicalState === PROGRESS_STATES.COMPLETE,
+        );
+        cell.classList.toggle('is-active', state.ui.activePageId === pageId);
+        cell.disabled = !pageState?.isAccessible;
+        cell.setAttribute(
+          'aria-label',
+          buildCompletionStripItemLabel({
+            pageDefinition,
+            pageState,
+            sectionProgress,
+          }),
+        );
+        if (state.ui.activePageId === pageId) {
+          cell.setAttribute('aria-current', 'page');
+        } else {
+          cell.removeAttribute('aria-current');
+        }
+      });
+    }
   };
 
   const renderQuickJump = (state) => {
-    const activePageId = state.ui.activePageId;
-    const availableQuickJumpPageIds = new Set(
-      selectQuickJumpPageIds(state).filter(
-        (pageId) => state.derived.pageStates.bySectionId[pageId]?.isAccessible,
-      ),
-    );
-
-    clearChildren(quickJumpMount);
-
-    selectQuickJumpPageIds(state).forEach((pageId) => {
-      const pageDefinition = getSectionDefinition(pageId);
-      const pageState = state.derived.pageStates.bySectionId[pageId] ?? null;
-      const sectionProgress = state.derived.completionProgress?.bySectionId?.[pageId] ?? null;
-      const button = documentRef.createElement('button');
-      const isActive = activePageId === pageId;
-
-      button.type = 'button';
-      button.className = 'nav-button';
-      button.dataset.pageId = pageId;
-      button.dataset.accentKey = pageDefinition?.accentKey ?? 'control';
-      button.dataset.target = pageDefinition?.principleKey?.toLowerCase() ?? pageId.toLowerCase();
-      button.dataset.workflowState = pageState?.workflowState ?? '';
-      button.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
-      button.textContent = pageDefinition?.shortLabel ?? pageId;
-      button.setAttribute('aria-label', buildSectionNavigationLabel({
-        pageDefinition,
-        pageState,
-        sectionProgress,
-      }));
-
-      button.disabled = !availableQuickJumpPageIds.has(pageId);
-      button.classList.toggle('active', isActive);
-
-      if (isActive) {
-        button.setAttribute('aria-current', 'page');
-      }
-
-      quickJumpMount.appendChild(button);
-    });
-
-    actionNodes.forEach((node) => {
-      quickJumpMount.appendChild(node);
-    });
-    quickJumpMount.appendChild(navIndicator);
-
-    windowRef.cancelAnimationFrame(indicatorFrame);
-    indicatorFrame = windowRef.requestAnimationFrame(() => {
-      const principleKey = toPrincipleKey(activePageId);
-      const activeButton = quickJumpMount.querySelector(`.nav-button[data-page-id="${activePageId}"]`);
-
-      if (!(activeButton instanceof HTMLButtonElement) || !principleKey) {
-        navIndicator.style.width = '0px';
-        return;
-      }
-
-      const navRect = quickJumpMount.getBoundingClientRect();
-      const buttonRect = activeButton.getBoundingClientRect();
-
-      navIndicator.style.left = `${buttonRect.left - navRect.left}px`;
-      navIndicator.style.width = `${buttonRect.width}px`;
-      navIndicator.style.background = QUICK_JUMP_COLOR_BY_KEY[principleKey];
-    });
-
     renderCompletionStrip(state);
-    renderHeaderProgress(state);
   };
 
   const renderPageIndex = (state) => {
@@ -886,7 +738,7 @@ export const createSidebarRenderer = ({
     clearChildren(pageSidebarMount);
 
     heading.className = 'workspace-title';
-    heading.textContent = 'Canonical page index';
+    heading.textContent = 'Page index';
 
     list.className = 'page-index-list';
 
@@ -898,17 +750,24 @@ export const createSidebarRenderer = ({
       const isActive = state.ui.activePageId === pageId;
 
       if (pageDefinition?.completionGroupId !== lastCompletionGroupId) {
-        const groupProgress = state.derived.completionProgress?.byCompletionGroupId?.[pageDefinition?.completionGroupId] ?? null;
+        const groupProgress =
+          state.derived.completionProgress?.byCompletionGroupId?.[
+            pageDefinition?.completionGroupId
+          ] ?? null;
         const groupItem = documentRef.createElement('li');
         const groupHeader = documentRef.createElement('div');
         const groupLabel = documentRef.createElement('p');
         const groupSummary = documentRef.createElement('p');
 
         groupItem.className = 'page-index-group';
-        groupItem.dataset.progressState = groupProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
+        groupItem.dataset.progressState =
+          groupProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
         groupHeader.className = 'page-index-group-header';
         groupLabel.className = 'page-index-group-label';
-        groupLabel.textContent = getCompletionGroupLabel(pageDefinition?.completionGroupId, COMPLETION_GROUPS);
+        groupLabel.textContent = getCompletionGroupLabel(
+          pageDefinition?.completionGroupId,
+          COMPLETION_GROUPS,
+        );
         groupSummary.className = 'page-index-group-summary';
         groupSummary.textContent = formatGroupProgressSummary(groupProgress);
 
@@ -937,11 +796,14 @@ export const createSidebarRenderer = ({
       button.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
       button.classList.toggle('is-active', isActive);
       button.disabled = pageState?.isAccessible === false;
-      button.setAttribute('aria-label', buildSectionNavigationLabel({
-        pageDefinition,
-        pageState,
-        sectionProgress,
-      }));
+      button.setAttribute(
+        'aria-label',
+        buildSectionNavigationLabel({
+          pageDefinition,
+          pageState,
+          sectionProgress,
+        }),
+      );
 
       if (isActive) {
         button.setAttribute('aria-current', 'page');
@@ -962,14 +824,16 @@ export const createSidebarRenderer = ({
 
       statusState.className = 'page-index-status';
       statusState.dataset.sectionStatus = sectionState?.status ?? '';
-      statusState.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
+      statusState.dataset.progressState =
+        sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
       statusState.textContent = formatProgressStateLabel(
         sectionProgress?.canonicalState,
         formatStateLabel(sectionState?.status, 'Not started'),
       );
 
       progressState.className = 'page-index-state page-index-progress';
-      progressState.dataset.progressState = sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
+      progressState.dataset.progressState =
+        sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
       progressState.textContent = formatSectionProgressCompact(sectionProgress);
 
       meta.append(workflowState, statusState, progressState);
@@ -1052,7 +916,7 @@ export const createSidebarRenderer = ({
     header.className = 'context-route-header';
     titleBlock.className = 'context-route-title-block';
     kicker.className = 'workspace-title';
-    kicker.textContent = 'Context route';
+    kicker.textContent = 'Current page';
 
     title.className = 'context-route-title';
     title.append(
@@ -1065,36 +929,23 @@ export const createSidebarRenderer = ({
     pinButton.dataset.contextPinToggle = 'true';
     pinButton.textContent = route.isPinned ? 'UNPIN' : 'PIN';
     pinButton.setAttribute('aria-pressed', String(route.isPinned));
-    pinButton.setAttribute('aria-label', `${route.isPinned ? 'Unpin' : 'Pin'} current context route`);
+    pinButton.setAttribute(
+      'aria-label',
+      `${route.isPinned ? 'Unpin' : 'Pin'} current context route`,
+    );
 
     infoGrid.className = 'context-route-grid';
     infoGrid.append(
       createInfoRow(documentRef, 'Mode', route.isPinned ? 'Pinned route' : 'Live route'),
-      createInfoRow(documentRef, 'Topic', route.topicDefinition?.title ?? 'No registered context topic'),
+      createInfoRow(
+        documentRef,
+        'Topic',
+        route.topicDefinition?.title ?? 'No registered context topic',
+      ),
       createInfoRow(
         documentRef,
         'Focus',
-        route.activeAnchor
-          ? route.activeAnchor.label
-          : 'Page-level overview',
-      ),
-      createInfoRow(
-        documentRef,
-        'Workflow',
-        WORKFLOW_STATE_LABELS[route.pageState?.workflowState] ?? 'Unavailable',
-      ),
-      createInfoRow(
-        documentRef,
-        'Status',
-        formatProgressStateLabel(
-          route.sectionProgress?.canonicalState,
-          formatStateLabel(route.sectionState?.status, 'Not started'),
-        ),
-      ),
-      createInfoRow(
-        documentRef,
-        'Required',
-        formatSectionProgressCompact(route.sectionProgress),
+        route.activeAnchor ? route.activeAnchor.label : 'Page-level overview',
       ),
     );
 
@@ -1134,14 +985,16 @@ export const createSidebarRenderer = ({
             return;
           }
 
-          list.appendChild(createLinkButton({
-            documentRef,
-            className: 'context-link-button',
-            text: `${drawerDefinition.code} ${drawerDefinition.title}`,
-            dataName: 'contextDrawerId',
-            dataValue: drawerDefinition.drawerId,
-            ariaLabel: `Open ${drawerDefinition.title}`,
-          }));
+          list.appendChild(
+            createLinkButton({
+              documentRef,
+              className: 'context-link-button',
+              text: `${drawerDefinition.code} ${drawerDefinition.title}`,
+              dataName: 'contextDrawerId',
+              dataValue: drawerDefinition.drawerId,
+              ariaLabel: `Open ${drawerDefinition.title}`,
+            }),
+          );
         });
 
         group.append(label, list);
@@ -1165,14 +1018,16 @@ export const createSidebarRenderer = ({
             return;
           }
 
-          list.appendChild(createLinkButton({
-            documentRef,
-            className: 'context-link-button',
-            text: topicDefinition.title,
-            dataName: 'contextAboutTopicId',
-            dataValue: topicId,
-            ariaLabel: `Open info topic ${topicDefinition.title}`,
-          }));
+          list.appendChild(
+            createLinkButton({
+              documentRef,
+              className: 'context-link-button',
+              text: topicDefinition.title,
+              dataName: 'contextAboutTopicId',
+              dataValue: topicId,
+              ariaLabel: `Open info topic ${topicDefinition.title}`,
+            }),
+          );
         });
 
         group.append(label, list);
@@ -1191,13 +1046,14 @@ export const createSidebarRenderer = ({
     clearChildren(contextShell.generatedSlot);
     clearChildren(contextShell.topicStack);
 
-    const generatedSection = route.kind === CONTEXT_ROUTE_KINDS.CRITERION
-      ? buildCriterionCompanion(documentRef, route)
-      : route.kind === CONTEXT_ROUTE_KINDS.SUMMARY
-        ? buildSummaryCompanion(documentRef, route)
-        : route.literalSections.length === 0
-          ? buildPageFallback(documentRef, route)
-          : null;
+    const generatedSection =
+      route.kind === CONTEXT_ROUTE_KINDS.CRITERION
+        ? buildCriterionCompanion(documentRef, route)
+        : route.kind === CONTEXT_ROUTE_KINDS.SUMMARY
+          ? buildSummaryCompanion(documentRef, route)
+          : route.literalSections.length === 0
+            ? buildPageFallback(documentRef, route)
+            : null;
 
     if (generatedSection) {
       contextShell.generatedSlot.appendChild(generatedSection);
@@ -1220,18 +1076,70 @@ export const createSidebarRenderer = ({
   };
 
   const sync = (state) => {
-    refreshPageAnchors();
-    renderQuickJump(state);
-    renderPageIndex(state);
+    try {
+      renderQuickJump(state);
+    } catch (err) {
+      console.error('Failed to render quick jump:', err);
+    }
+
+    try {
+      renderPageIndex(state);
+    } catch (err) {
+      console.error('Failed to render page index:', err);
+      try {
+        clearChildren(pageSidebarMount);
+        const msg = documentRef.createElement('p');
+        msg.textContent = 'Unable to render page index.';
+        msg.className = 'sidebar-error-fallback';
+        pageSidebarMount.append(msg);
+      } catch (_) {}
+    }
 
     currentRoute = resolveDisplayedRoute(state);
-    renderRouteCard(currentRoute);
-    renderAnchorCard(currentRoute);
-    renderContextContent(currentRoute);
+
+    try {
+      renderRouteCard(currentRoute);
+    } catch (err) {
+      console.error('Failed to render route card:', err);
+      try {
+        clearChildren(contextShell.routeCard);
+        const msg = documentRef.createElement('p');
+        msg.textContent = 'Unable to render route card.';
+        msg.className = 'sidebar-error-fallback';
+        contextShell.routeCard.append(msg);
+      } catch (_) {}
+    }
+
+    try {
+      renderAnchorCard(currentRoute);
+    } catch (err) {
+      console.error('Failed to render anchor card:', err);
+      try {
+        clearChildren(contextShell.anchorCard);
+        const msg = documentRef.createElement('p');
+        msg.textContent = 'Unable to render anchor card.';
+        msg.className = 'sidebar-error-fallback';
+        contextShell.anchorCard.append(msg);
+      } catch (_) {}
+    }
+
+    try {
+      renderContextContent(currentRoute);
+    } catch (err) {
+      console.error('Failed to render context content:', err);
+      try {
+        clearChildren(contextShell.generatedSlot);
+        clearChildren(contextShell.topicStack);
+        const msg = documentRef.createElement('p');
+        msg.textContent = 'Unable to render context content.';
+        msg.className = 'sidebar-error-fallback';
+        contextShell.topicStack.append(msg);
+      } catch (_) {}
+    }
   };
 
-  const handleQuickJumpClick = (event) => {
-    const button = event.target.closest('.nav-button[data-page-id]');
+  const handleCompletionStripClick = (event) => {
+    const button = event.target.closest('.strip-cell[data-page-id]');
 
     if (!(button instanceof HTMLButtonElement) || button.disabled) {
       return;
@@ -1266,6 +1174,13 @@ export const createSidebarRenderer = ({
     const drawerButton = event.target.closest('[data-context-drawer-id]');
     if (drawerButton instanceof HTMLButtonElement) {
       openReferenceDrawer?.(drawerButton.dataset.contextDrawerId, drawerButton);
+      const panelInner = contextSidebarMount.parentElement;
+      const drawerEl = panelInner?.querySelector(
+        `.reference-drawer[data-drawer-id="${drawerButton.dataset.contextDrawerId}"]`,
+      );
+      if (drawerEl) {
+        drawerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
       return;
     }
 
@@ -1293,15 +1208,14 @@ export const createSidebarRenderer = ({
     }
   };
 
-  quickJumpMount.addEventListener('click', handleQuickJumpClick);
+  completionStrip.addEventListener('click', handleCompletionStripClick);
   pageSidebarMount.addEventListener('click', handlePageIndexClick);
   contextSidebarMount.addEventListener('click', handleContextClick);
 
   cleanup.push(() => {
-    quickJumpMount.removeEventListener('click', handleQuickJumpClick);
+    completionStrip.removeEventListener('click', handleCompletionStripClick);
     pageSidebarMount.removeEventListener('click', handlePageIndexClick);
     contextSidebarMount.removeEventListener('click', handleContextClick);
-    windowRef.cancelAnimationFrame(indicatorFrame);
   });
 
   sync(store.getState());
@@ -1335,7 +1249,9 @@ export const createSidebarRenderer = ({
       }
 
       if (activeAnchor?.kind === CONTEXT_ROUTE_KINDS.SUMMARY) {
-        return activeAnchor?.label ?? `${route.pageDefinition?.title ?? route.pageId} summary guidance`;
+        return (
+          activeAnchor?.label ?? `${route.pageDefinition?.title ?? route.pageId} summary guidance`
+        );
       }
 
       const literalHeading = getSectionHeadingText(route.literalSections[0]);
