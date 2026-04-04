@@ -121,4 +121,36 @@
   .form-section[data-section="uc"] .section-kicker::before { content: "UC "; }
   .form-section[data-section="se"] .section-kicker::before { content: "SE "; }
   .form-section[data-section="tc"] .section-kicker::before { content: "TC "; }
+
+  body {
+    color: #000;
+    background: #fff;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  .rating-option.score-0,
+  .rating-option.score-1,
+  .rating-option.score-2,
+  .rating-option.score-3,
+  .recommendation-badge,
+  .recommendation-status,
+  [data-recommendation-state],
+  [data-judgment] {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .form-section[data-section="tr"],
+  .form-section[data-section="re"],
+  .form-section[data-section="uc"],
+  .form-section[data-section="se"],
+  .form-section[data-section="tc"] {
+    page-break-before: always;
+  }
+
+  .lightbox-mount,
+  .evidence-lightbox {
+    display: none !important;
+  }
 }
