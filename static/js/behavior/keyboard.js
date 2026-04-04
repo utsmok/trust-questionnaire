@@ -21,9 +21,8 @@ export const initializeKeyboardBehavior = ({
 }) => {
   const documentRef = getDocumentRef(root);
   const cleanup = [];
-  const ratingScales = Array.from(documentRef.querySelectorAll('.rating-scale'));
 
-  ratingScales.forEach((scale) => {
+  const attachRatingKeydown = (scale) => {
     const handleKeydown = (event) => {
       const options = Array.from(scale.querySelectorAll('.rating-option'));
       const currentIndex = options.indexOf(event.target);
@@ -51,10 +50,35 @@ export const initializeKeyboardBehavior = ({
     };
 
     scale.addEventListener('keydown', handleKeydown);
-    cleanup.push(() => {
-      scale.removeEventListener('keydown', handleKeydown);
-    });
+    return () => scale.removeEventListener('keydown', handleKeydown);
+  };
+
+  const initialScales = Array.from(documentRef.querySelectorAll('.rating-scale'));
+  initialScales.forEach((scale) => {
+    cleanup.push(attachRatingKeydown(scale));
   });
+
+  const observedRoot = root instanceof HTMLElement ? root : documentRef.body;
+  if (typeof MutationObserver !== 'undefined') {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          const scales = node.matches('.rating-scale')
+            ? [node]
+            : Array.from(node.querySelectorAll('.rating-scale'));
+          scales.forEach((scale) => {
+            if (!scale.dataset.keyboardBound) {
+              scale.dataset.keyboardBound = 'true';
+              cleanup.push(attachRatingKeydown(scale));
+            }
+          });
+        }
+      }
+    });
+    observer.observe(observedRoot, { childList: true, subtree: true });
+    cleanup.push(() => observer.disconnect());
+  }
 
   const handleDocumentKeydown = (event) => {
     if (!event.altKey || event.ctrlKey || event.metaKey) {
