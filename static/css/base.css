@@ -14,10 +14,9 @@ body {
   margin: 0;
   font-family: var(--ff-body);
   font-kerning: normal;
-  text-rendering: optimizeSpeed;
   color: var(--ut-text);
   background: var(--ut-canvas);
-  overflow: hidden;
+  overflow: auto;
 }
 
 .skip-link {
@@ -25,7 +24,7 @@ body {
   top: -100%;
   left: 0;
   background: var(--ut-darkblue);
-  color: #fff;
+  color: var(--section-on-accent, #fff);
   padding: 8px 16px;
   z-index: 50;
   font-weight: 700;

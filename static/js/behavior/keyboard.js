@@ -1,3 +1,5 @@
+import { getDocumentRef } from '../utils/shared.js';
+
 const QUICK_JUMP_SHORTCUTS = Object.freeze({
   '1': 'TR',
   '2': 'RE',
@@ -10,8 +12,6 @@ const QUICK_JUMP_SHORTCUTS = Object.freeze({
   s: 'SE',
   c: 'TC',
 });
-
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
 
 const isActivationKey = (key) => key === 'Enter' || key === ' ';
 

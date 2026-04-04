@@ -40,8 +40,8 @@ import {
   createEvidenceBlockElement,
   createEvidenceScope,
 } from './evidence.js';
+import { EMPTY_ARRAY, freezeArray, isPlainObject } from '../utils/shared.js';
 
-const EMPTY_ARRAY = Object.freeze([]);
 const EMPTY_OBJECT = Object.freeze({});
 const SECTION_NOTE_HELP_TEXT = 'Optional section-level note for observations not captured elsewhere. This does not satisfy required summary, blocker, or rationale fields.';
 const SECTION_SKIP_SCAFFOLD_HELP_TEXT = 'Section skip overrides child field dependencies and requiredness for this page, but both a skip reason and a substantive rationale are required.';
@@ -52,8 +52,6 @@ const assertInvariant = (condition, message) => {
     throw new Error(`[questionnaire-pages] ${message}`);
   }
 };
-
-const freezeArray = (items) => Object.freeze([...items]);
 
 const createFieldGroupLayout = ({
   anchor,
@@ -374,9 +372,6 @@ const sanitizeHookToken = (value) =>
 
 const uniqueText = (items) =>
   [...new Set(items.filter(Boolean).map((item) => item.trim()).filter(Boolean))];
-
-const isPlainObject = (value) =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
 
 const normalizeListValue = (value, splitter = /[\n,]+/) => {
   if (Array.isArray(value)) {

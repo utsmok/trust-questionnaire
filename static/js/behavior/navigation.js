@@ -6,6 +6,8 @@ import { createReferenceDrawersRenderer } from '../render/reference-drawers.js';
 import { createSidebarRenderer } from '../render/sidebar.js';
 import { PROGRESS_STATES } from '../state/derive.js';
 import { selectShellSurfaceState } from '../state/store.js';
+import { toArray, getDocumentRef } from '../utils/shared.js';
+import { PRINCIPLE_SECTION_IDS } from '../config/sections.js';
 
 const PANEL_NAMES = Object.freeze({
   CONTEXT: 'context',
@@ -14,12 +16,9 @@ const PANEL_NAMES = Object.freeze({
 
 const OVERLAY_SURFACE_NAMES = Object.freeze(['aboutSurface', 'helpSurface']);
 const QUESTIONNAIRE_SCROLL_OFFSET = 16;
-const PRINCIPLE_PAGE_IDS = Object.freeze(['TR', 'RE', 'UC', 'SE', 'TC']);
 const CONTEXT_DRAWER_MEDIA_QUERY = '(max-width: 1160px)';
 
-const toArray = (value) => Array.from(value ?? []);
 
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
 
 const getWindowRef = (root) => getDocumentRef(root).defaultView ?? window;
 
@@ -119,7 +118,7 @@ const measurePanel = (panel) => {
 
 const syncPanelMetrics = (panel, progressBar, metrics) => {
   if (progressBar) {
-    progressBar.style.width = `${metrics.progressPercent}%`;
+    progressBar.style.transform = `scaleX(${metrics.progressPercent / 100})`;
   }
 
   if (!panel) {
@@ -217,6 +216,7 @@ export const initializeNavigation = ({ root = document, store }) => {
   const windowRef = getWindowRef(root);
   const cleanup = [];
   const lastSurfaceTriggers = new Map();
+  const activeTimers = new Set();
   if (!dom.questionnairePanel || !dom.questionnaireRenderRoot) {
     return {
       navigateToPage() {
@@ -261,13 +261,13 @@ export const initializeNavigation = ({ root = document, store }) => {
 
     if (currentlyOpen === isOpen) {
       if (isOpen && trigger instanceof HTMLElement) {
-        lastSurfaceTriggers.set('contextSidebar', trigger.id || trigger);
+        lastSurfaceTriggers.set('contextSidebar', trigger.id || null);
       }
       return;
     }
 
     if (isOpen && trigger instanceof HTMLElement) {
-      lastSurfaceTriggers.set('contextSidebar', trigger.id || trigger);
+      lastSurfaceTriggers.set('contextSidebar', trigger.id || null);
     }
 
     if (isOpen && isContextDrawerMode) {
@@ -278,10 +278,8 @@ export const initializeNavigation = ({ root = document, store }) => {
       });
     }
 
-    const lastTriggerRef = lastSurfaceTriggers.get('contextSidebar');
-    const lastTrigger = typeof lastTriggerRef === 'string'
-      ? documentRef.getElementById(lastTriggerRef)
-      : lastTriggerRef;
+    const lastTriggerId = lastSurfaceTriggers.get('contextSidebar');
+    const lastTrigger = lastTriggerId ? documentRef.getElementById(lastTriggerId) : null;
     const stableContextToggle = documentRef.getElementById('toolbarContextToggle')
       ?? documentRef.getElementById('quickJumpContextToggle');
 
@@ -317,14 +315,41 @@ export const initializeNavigation = ({ root = document, store }) => {
       return;
     }
 
-    windowRef.setTimeout(() => {
+    const drawerPanel = dom.contextPanel;
+    if (drawerPanel instanceof HTMLElement) {
+      const handleTransitionEnd = (event) => {
+        if (event.target !== drawerPanel) {
+          return;
+        }
+        drawerPanel.removeEventListener('transitionend', handleTransitionEnd);
+        clearTimeout(fallbackTimer);
+        focusElementWithRetry({
+          windowRef,
+          documentRef,
+          primaryTarget: stableContextToggle ?? lastTrigger,
+          fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
+        });
+      };
+      drawerPanel.addEventListener('transitionend', handleTransitionEnd);
+      const fallbackTimer = windowRef.setTimeout(() => {
+        activeTimers.delete(fallbackTimer);
+        drawerPanel.removeEventListener('transitionend', handleTransitionEnd);
+        focusElementWithRetry({
+          windowRef,
+          documentRef,
+          primaryTarget: stableContextToggle ?? lastTrigger,
+          fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
+        });
+      }, 320);
+      activeTimers.add(fallbackTimer);
+    } else {
       focusElementWithRetry({
         windowRef,
         documentRef,
         primaryTarget: stableContextToggle ?? lastTrigger,
         fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
       });
-    }, 220);
+    }
   };
 
   const ensureContextDrawerClosedForFormFocus = () => {
@@ -369,7 +394,7 @@ export const initializeNavigation = ({ root = document, store }) => {
   };
 
   const syncCanonicalProgressDecorations = (state) => {
-    PRINCIPLE_PAGE_IDS.forEach((pageId) => {
+    PRINCIPLE_SECTION_IDS.forEach((pageId) => {
       const section = pageSectionsById.get(pageId);
       const heading = section?.querySelector('h2');
       const sectionProgress = state.derived.completionProgress?.bySectionId?.[pageId] ?? null;
@@ -421,24 +446,39 @@ export const initializeNavigation = ({ root = document, store }) => {
     if (isPageChange) {
       const outgoing = outgoingId ? pageSectionsById.get(outgoingId) : null;
       const incoming = incomingId ? pageSectionsById.get(incomingId) : null;
+      const prefersReducedMotion = windowRef.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      if (outgoing) {
-        outgoing.classList.add('is-page-transitioning-out');
-      }
-
-      setTimeout(() => {
+      if (prefersReducedMotion) {
+        // Skip transition classes entirely when reduced motion is preferred
         if (outgoing) {
           outgoing.classList.add('is-page-hidden');
-          outgoing.classList.remove('is-page-transitioning-out');
         }
         if (incoming) {
           incoming.classList.remove('is-page-hidden');
-          incoming.classList.add('is-page-transitioning-in');
-          // Force reflow so the browser registers the starting opacity
-          void incoming.offsetHeight;
-          incoming.classList.remove('is-page-transitioning-in');
         }
-      }, 150);
+      } else {
+        if (outgoing) {
+          outgoing.classList.add('is-page-transitioning-out');
+        }
+
+        const transitionTimer = windowRef.setTimeout(() => {
+          activeTimers.delete(transitionTimer);
+          if (outgoing) {
+            outgoing.classList.add('is-page-hidden');
+            outgoing.classList.remove('is-page-transitioning-out');
+          }
+          if (incoming) {
+            incoming.classList.remove('is-page-hidden');
+            incoming.classList.add('is-page-transitioning-in');
+            windowRef.requestAnimationFrame(() => {
+              windowRef.requestAnimationFrame(() => {
+                incoming.classList.remove('is-page-transitioning-in');
+              });
+            });
+          }
+        }, 150);
+        activeTimers.add(transitionTimer);
+      }
     }
 
     pageSections.forEach((section) => {
@@ -712,7 +752,8 @@ export const initializeNavigation = ({ root = document, store }) => {
     }
 
     if (isOpen) {
-      lastSurfaceTriggers.set(surfaceName, trigger ?? documentRef.activeElement ?? null);
+      lastSurfaceTriggers.set(surfaceName, (trigger instanceof HTMLElement ? trigger.id : null)
+        ?? (documentRef.activeElement instanceof HTMLElement ? documentRef.activeElement.id : null));
 
       OVERLAY_SURFACE_NAMES
         .filter((candidate) => candidate !== surfaceName)
@@ -740,13 +781,14 @@ export const initializeNavigation = ({ root = document, store }) => {
     const focusReturnAnchor = surfaceName === 'aboutSurface'
       ? dom.aboutFocusReturn
       : dom.helpFocusReturn;
-    const lastTrigger = lastSurfaceTriggers.get(surfaceName);
+    const storedId = lastSurfaceTriggers.get(surfaceName);
+    const returnTarget = storedId ? documentRef.getElementById(storedId) : null;
 
     windowRef.requestAnimationFrame(() => {
       focusElementWithRetry({
         windowRef,
         documentRef,
-        primaryTarget: lastTrigger,
+        primaryTarget: returnTarget,
         fallbackTarget: focusReturnAnchor,
       });
     });
@@ -936,14 +978,19 @@ export const initializeNavigation = ({ root = document, store }) => {
   }
 
   if ('MutationObserver' in windowRef) {
+    let observerPending = false;
     questionnaireMutationObserver = new windowRef.MutationObserver(() => {
-      refreshPageSections();
-      syncFromState(store.getState());
+      if (observerPending) return;
+      observerPending = true;
+      windowRef.requestAnimationFrame(() => {
+        observerPending = false;
+        refreshPageSections();
+        syncFromState(store.getState());
+      });
     });
 
     questionnaireMutationObserver.observe(dom.questionnaireRenderRoot, {
       childList: true,
-      subtree: true,
     });
 
     cleanup.push(() => {
@@ -955,6 +1002,9 @@ export const initializeNavigation = ({ root = document, store }) => {
     navigateToPage,
     destroy() {
       windowRef.cancelAnimationFrame(progressDecorationFrame);
+      activeTimers.forEach((timer) => windowRef.clearTimeout(timer));
+      activeTimers.clear();
+      lastSurfaceTriggers.clear();
       cleanup.splice(0).forEach((dispose) => {
         dispose();
       });

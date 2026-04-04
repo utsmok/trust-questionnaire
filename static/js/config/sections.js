@@ -34,7 +34,7 @@ export const CONTENT_TOPIC_AREAS = Object.freeze({
 	ABOUT: 'about',
 });
 
-const freezeArray = (items) => Object.freeze([...items]);
+import { freezeArray } from '../utils/shared.js';
 
 const indexBy = (items, key = 'id') =>
 	Object.freeze(Object.fromEntries(items.map((item) => [item[key], item])));
@@ -526,3 +526,5 @@ export const SECTIONS_BY_COMPLETION_GROUP = Object.freeze(
 export const getSectionDefinition = (sectionId) => SECTION_REGISTRY_BY_ID[sectionId] ?? null;
 
 export const getContentTopicDefinition = (topicId) => CONTENT_TOPIC_REGISTRY_BY_ID[topicId] ?? null;
+
+export const PRINCIPLE_SECTION_IDS = freezeArray([SECTION_IDS.TR, SECTION_IDS.RE, SECTION_IDS.UC, SECTION_IDS.SE, SECTION_IDS.TC]);

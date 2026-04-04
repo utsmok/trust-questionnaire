@@ -10,8 +10,19 @@ const getQuestionnaireRenderRoot = (root) =>
   getDocumentRef(root).getElementById('questionnaireRenderRoot');
 
 export const bootstrapApp = (root = document) => {
+  window.addEventListener('error', (event) => {
+    console.error('[app] uncaught error:', event.error);
+  });
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('[app] unhandled promise rejection:', event.reason);
+  });
+
   const store = createAppStore();
   const questionnaireRenderRoot = getQuestionnaireRenderRoot(root);
+
+  // Lock body scroll now that the shell grid is initialized.
+  // Without JS, <noscript> styles allow scrolling as a fallback.
+  document.body.style.overflow = 'hidden';
 
   if (questionnaireRenderRoot) {
     mountQuestionnairePages(questionnaireRenderRoot, {

@@ -1,28 +1,8 @@
 import { CRITERIA, CRITERIA_BY_CODE } from '../config/questionnaire-schema.js';
-import { SECTION_IDS } from '../config/sections.js';
+import { PRINCIPLE_SECTION_IDS, SECTION_IDS } from '../config/sections.js';
+import { EMPTY_ARRAY, isPlainObject, normalizeTextValue, extractEvidenceItems, inferMimeTypeFromName, isImageMimeType } from '../utils/shared.js';
 
 export const EVIDENCE_MANIFEST_VERSION = 1;
-
-const EMPTY_ARRAY = Object.freeze([]);
-const PRINCIPLE_SECTION_IDS = Object.freeze([
-  SECTION_IDS.TR,
-  SECTION_IDS.RE,
-  SECTION_IDS.UC,
-  SECTION_IDS.SE,
-  SECTION_IDS.TC,
-]);
-
-const isPlainObject = (value) =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const normalizeTextValue = (value) => {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  const nextValue = String(value).trim();
-  return nextValue === '' ? null : nextValue;
-};
 
 const normalizeNumberValue = (value) => {
   if (value === null || value === undefined || value === '') {
@@ -32,65 +12,6 @@ const normalizeNumberValue = (value) => {
   const nextValue = Number(value);
   return Number.isFinite(nextValue) ? nextValue : null;
 };
-
-const extractEvidenceItems = (value) => {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (isPlainObject(value)) {
-    if (Array.isArray(value.items)) {
-      return value.items;
-    }
-
-    if (Array.isArray(value.files)) {
-      return value.files;
-    }
-  }
-
-  return EMPTY_ARRAY;
-};
-
-const inferMimeTypeFromName = (name) => {
-  const normalizedName = normalizeTextValue(name);
-
-  if (!normalizedName || !normalizedName.includes('.')) {
-    return null;
-  }
-
-  const extension = normalizedName.split('.').pop()?.toLowerCase();
-
-  switch (extension) {
-    case 'png':
-      return 'image/png';
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'svg':
-      return 'image/svg+xml';
-    case 'pdf':
-      return 'application/pdf';
-    case 'json':
-      return 'application/json';
-    case 'csv':
-      return 'text/csv';
-    case 'txt':
-      return 'text/plain';
-    case 'md':
-      return 'text/markdown';
-    case 'html':
-      return 'text/html';
-    default:
-      return null;
-  }
-};
-
-const isImageMimeType = (mimeType) =>
-  typeof mimeType === 'string' && mimeType.startsWith('image/');
 
 export const serializeEvidenceItem = (
   item,

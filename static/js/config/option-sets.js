@@ -1,4 +1,4 @@
-const freezeArray = (items) => Object.freeze([...items]);
+import { freezeArray } from '../utils/shared.js';
 
 const createOption = (value, label, extra = {}) => Object.freeze({ value, label, ...extra });
 

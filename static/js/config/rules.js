@@ -13,7 +13,7 @@ import {
   FIELD_IDS,
 } from './questionnaire-schema.js';
 
-const freezeArray = (items) => Object.freeze([...items]);
+import { freezeArray } from '../utils/shared.js';
 
 const indexRulesByTarget = (rules) =>
   Object.freeze(

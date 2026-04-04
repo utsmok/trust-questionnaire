@@ -1,24 +1,5 @@
 import { expect, test } from '@playwright/test';
-
-async function gotoApp(page) {
-	await page.goto('/trust-framework.html');
-	await expect(page.locator('#questionnaireRenderRoot')).toHaveAttribute('data-rendered-source', 'schema');
-}
-
-async function setWorkflow(page, workflowValue) {
-	await page.locator('select[data-field-id="s0.submissionType"]').selectOption(workflowValue);
-}
-
-async function dispatchClick(locator) {
-	await locator.dispatchEvent('click');
-}
-
-async function openPage(page, pageId) {
-	const button = page.locator(`.page-index-button[data-page-id="${pageId}"]`);
-	await expect(button).toBeEnabled();
-	await dispatchClick(button);
-	await expect(page.locator(`#questionnaireRenderRoot > [data-page-id="${pageId}"]`)).toHaveClass(/is-active/);
-}
+import { gotoApp, setWorkflow, clickElement, openPage } from './helpers.js';
 
 test('switches workflow-dependent fields between nomination and review paths', async ({ page }) => {
 	await gotoApp(page);
@@ -78,7 +59,7 @@ test('flags typed validation issues and low-score blocker rules', async ({ page 
 	await expect(page.locator('.page-index-button[data-page-id="S0"]')).toHaveAttribute('data-progress-state', 'invalid_attention');
 
 	await setWorkflow(page, 'primary_evaluation');
-	await dispatchClick(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id="TR"]')).toHaveClass(/is-active/);
 
 	const blockerGroup = page.locator('.field-group[data-field-id="tr1.uncertaintyOrBlockers"]');

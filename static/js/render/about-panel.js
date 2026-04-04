@@ -5,22 +5,13 @@ import {
   SECTION_REGISTRY,
   getSectionDefinition,
 } from '../config/sections.js';
+import { toArray, getDocumentRef, clearChildren } from '../utils/shared.js';
 
 const ABOUT_TOPIC_IDS = Object.freeze(
   CONTENT_TOPIC_REGISTRY
     .filter((topic) => topic.area === CONTENT_TOPIC_AREAS.ABOUT)
     .map((topic) => topic.id),
 );
-
-const toArray = (value) => Array.from(value ?? []);
-
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
-
-const clearChildren = (element) => {
-  while (element?.firstChild) {
-    element.removeChild(element.firstChild);
-  }
-};
 
 const parseTopicIds = (rawValue) =>
   typeof rawValue === 'string'

@@ -400,12 +400,60 @@ export const createHelpPanelController = ({ root = document }) => {
 
     usageSection.append(usageKicker, usageList);
 
-    shell.append(currentSection, mapSection, legendSection, usageSection);
+    /* Keyboard shortcuts section */
+    const shortcutsSection = documentRef.createElement('section');
+    const shortcutsKicker = documentRef.createElement('p');
+    const shortcutsTable = documentRef.createElement('table');
+
+    shortcutsSection.className = 'help-panel-section';
+    shortcutsKicker.className = 'workspace-title';
+    shortcutsKicker.textContent = 'Keyboard shortcuts';
+
+    shortcutsTable.style.cssText = 'width:100%;border-collapse:collapse;font-size:var(--text-body);';
+    shortcutsTable.setAttribute('role', 'table');
+
+    const shortcutRows = [
+      ['Alt + 1', 'Jump to Transparent (TR)'],
+      ['Alt + 2', 'Jump to Responsible (RE)'],
+      ['Alt + 3', 'Jump to Understandable (UC)'],
+      ['Alt + 4', 'Jump to Sustainable (SE)'],
+      ['Alt + 5', 'Jump to Trustworthy Computing (TC)'],
+      ['Alt + t', 'Jump to page with code starting with T'],
+      ['Alt + r', 'Jump to page with code starting with R'],
+      ['Alt + u', 'Jump to page with code starting with U'],
+      ['Alt + s', 'Jump to page with code starting with S'],
+      ['Alt + c', 'Jump to page with code starting with C'],
+      ['Escape', 'Close active surface or drawer'],
+    ];
+
+    shortcutRows.forEach(([key, action]) => {
+      const row = documentRef.createElement('tr');
+      row.style.cssText = 'border-bottom:1px solid var(--ut-border);';
+
+      const keyCell = documentRef.createElement('td');
+      keyCell.style.cssText = 'padding:6px 10px;white-space:nowrap;font-family:var(--ff-mono);font-size:var(--text-sm);font-weight:700;color:var(--ut-navy);vertical-align:top;';
+      keyCell.textContent = key;
+
+      const actionCell = documentRef.createElement('td');
+      actionCell.style.cssText = 'padding:6px 10px;color:var(--ut-text);line-height:var(--lh-body);';
+      actionCell.textContent = action;
+
+      row.appendChild(keyCell);
+      row.appendChild(actionCell);
+      shortcutsTable.appendChild(row);
+    });
+
+    shortcutsSection.append(shortcutsKicker, shortcutsTable);
+
+    shell.append(currentSection, mapSection, legendSection, usageSection, shortcutsSection);
     surfaceBody.appendChild(shell);
   };
 
   return {
     sync(state) {
+      const surfaceEl = documentRef.querySelector('[data-surface="help"]');
+      const isOpen = surfaceEl?.classList.contains('is-open') || surfaceEl?.getAttribute('aria-hidden') === 'false';
+      if (!isOpen) return;
       render(state);
     },
     destroy() {},

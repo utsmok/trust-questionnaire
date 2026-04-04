@@ -8,8 +8,8 @@ import {
   createEvidenceManifest,
   serializeEvidenceManifest,
 } from '../adapters/evidence-storage.js';
+import { EMPTY_ARRAY, isPlainObject, toArray, inferMimeTypeFromName, extractEvidenceItems, normalizeTextValue, isImageMimeType } from '../utils/shared.js';
 
-const EMPTY_ARRAY = Object.freeze([]);
 const EVIDENCE_BLOCK_SELECTOR = '[data-evidence-block="true"]';
 const LIGHTBOX_ELEMENT_ID = 'questionnaire-evidence-lightbox';
 const MANIFEST_DOWNLOAD_NAME = 'trust-evidence-manifest.json';
@@ -27,81 +27,8 @@ const EVIDENCE_TYPE_LABELS = Object.freeze(
   Object.fromEntries(EVIDENCE_TYPE_OPTIONS.map((option) => [option.value, option.label])),
 );
 
-const isPlainObject = (value) =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const toArray = (value) => Array.from(value ?? []);
-
 const hasMeaningfulText = (value) =>
   typeof value === 'string' && value.trim().length > 0;
-
-const normalizeTextValue = (value) => {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  const nextValue = String(value).trim();
-  return nextValue === '' ? null : nextValue;
-};
-
-const extractEvidenceItems = (value) => {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (isPlainObject(value)) {
-    if (Array.isArray(value.items)) {
-      return value.items;
-    }
-
-    if (Array.isArray(value.files)) {
-      return value.files;
-    }
-  }
-
-  return EMPTY_ARRAY;
-};
-
-const inferMimeTypeFromName = (name) => {
-  const normalizedName = normalizeTextValue(name);
-
-  if (!normalizedName || !normalizedName.includes('.')) {
-    return null;
-  }
-
-  const extension = normalizedName.split('.').pop()?.toLowerCase();
-
-  switch (extension) {
-    case 'png':
-      return 'image/png';
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'svg':
-      return 'image/svg+xml';
-    case 'pdf':
-      return 'application/pdf';
-    case 'json':
-      return 'application/json';
-    case 'csv':
-      return 'text/csv';
-    case 'txt':
-      return 'text/plain';
-    case 'md':
-      return 'text/markdown';
-    case 'html':
-      return 'text/html';
-    default:
-      return null;
-  }
-};
-
-const isImageMimeType = (mimeType) =>
-  typeof mimeType === 'string' && mimeType.startsWith('image/');
 
 const formatFileSize = (value) => {
   const size = Number(value);

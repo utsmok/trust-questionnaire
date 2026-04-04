@@ -1,29 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { gotoApp, setWorkflow, clickElement, openPage } from './helpers.js';
 
 const PNG_BUFFER = Buffer.from(
 	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4//8/AwAI/AL+X2HFNwAAAABJRU5ErkJggg==',
 	'base64',
 );
-
-async function gotoApp(page) {
-	await page.goto('/trust-framework.html');
-	await expect(page.locator('#questionnaireRenderRoot')).toHaveAttribute('data-rendered-source', 'schema');
-}
-
-async function setWorkflow(page, workflowValue) {
-	await page.locator('select[data-field-id="s0.submissionType"]').selectOption(workflowValue);
-}
-
-async function dispatchClick(locator) {
-	await locator.dispatchEvent('click');
-}
-
-async function openPage(page, pageId) {
-	const button = page.locator(`.page-index-button[data-page-id="${pageId}"]`);
-	await expect(button).toBeEnabled();
-	await dispatchClick(button);
-	await expect(page.locator(`#questionnaireRenderRoot > [data-page-id="${pageId}"]`)).toHaveClass(/is-active/);
-}
 
 async function selectEvidenceOptionContainingText(locator, text) {
 	await locator.evaluate((select, optionText) => {
@@ -105,7 +86,7 @@ test('supports criterion add, reuse, replace, unlink, and remove-everywhere flow
 	await evaluationBlock.locator('[data-evidence-action="add-files"]').click();
 	await expect(evaluationBlock.locator('[data-evidence-role="count"]')).toHaveText('2 files');
 
-	await dispatchClick(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id="TR"]')).toHaveClass(/is-active/);
 
 	const block = page.locator('[data-evidence-level="criterion"][data-evidence-criterion-code="TR1"]');

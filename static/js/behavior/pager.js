@@ -2,14 +2,13 @@ import {
   SECTION_WORKFLOW_STATES,
   getSectionDefinition,
 } from '../config/sections.js';
+import { getDocumentRef } from '../utils/shared.js';
 
 const WORKFLOW_STATE_LABELS = Object.freeze({
   [SECTION_WORKFLOW_STATES.EDITABLE]: 'Editable',
   [SECTION_WORKFLOW_STATES.READ_ONLY]: 'Read-only',
   [SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED]: 'System-skipped',
 });
-
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
 
 const ensurePagerShell = (mount, documentRef) => {
   const existingShell = mount.querySelector('.pager-shell');

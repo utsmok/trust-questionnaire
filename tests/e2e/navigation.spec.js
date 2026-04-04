@@ -1,20 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { gotoApp, setWorkflow, clickElement } from './helpers.js';
 
 const ACTIVE_PAGE_SELECTOR = '#questionnaireRenderRoot > [data-page-id]';
-
-async function gotoApp(page) {
-	await page.goto('/trust-framework.html');
-	await expect(page.locator('#questionnaireRenderRoot')).toHaveAttribute('data-rendered-source', 'schema');
-	await expect(page.locator('#questionnaireRenderRoot')).toHaveAttribute('data-rendered-page-count', '13');
-}
-
-async function setWorkflow(page, workflowValue) {
-	await page.locator('select[data-field-id="s0.submissionType"]').selectOption(workflowValue);
-}
-
-async function dispatchClick(locator) {
-	await locator.dispatchEvent('click');
-}
 
 async function expectActivePage(page, pageId) {
 	await expect(page.locator(`${ACTIVE_PAGE_SELECTOR}[data-page-id="${pageId}"]`)).toHaveClass(/is-active/);
@@ -33,7 +20,7 @@ test('starts in nomination flow with pager constraints and disabled principle qu
 	await expect(page.locator('#pagerMount [data-page-direction="previous"]')).toBeDisabled();
 	await expect(page.locator('#pagerMount [data-page-direction="next"]')).toBeEnabled();
 
-	await dispatchClick(page.locator('#pagerMount [data-page-direction="next"]'));
+	await clickElement(page.locator('#pagerMount [data-page-direction="next"]'));
 
 	await expectActivePage(page, 'S1');
 	await expect(page.locator('#pagerMount .pager-status')).toContainText('Page 2 of 2');
@@ -49,21 +36,21 @@ test('enables quick jumps and context anchor routing in primary evaluation mode'
 	const transparentQuickJump = page.locator('#quickJumpMount .nav-button[data-page-id="TR"]');
 	await expect(transparentQuickJump).toBeEnabled();
 
-	await dispatchClick(transparentQuickJump);
+	await clickElement(transparentQuickJump);
 
 	await expectActivePage(page, 'TR');
 	await expect(page.locator('#contextSidebarMount .context-route-card')).toContainText('Transparent');
 
 	const anchorButton = page.locator('#contextSidebarMount .context-anchor-button', { hasText: 'TR2' });
-	await dispatchClick(anchorButton);
+	await clickElement(anchorButton);
 
 	await expect(page.locator('#questionnaire-criterion-tr2')).toBeFocused();
 	await expect(page.locator('#contextSidebarMount .context-anchor-button.is-active')).toContainText('TR2');
 
 	const contextToggle = page.locator('[data-surface-toggle="contextSidebar"]').first();
-	await dispatchClick(contextToggle);
+	await clickElement(contextToggle);
 	await expect(page.locator('#trustShell')).toHaveClass(/is-context-collapsed/);
-	await dispatchClick(contextToggle);
+	await clickElement(contextToggle);
 	await expect(page.locator('#trustShell')).not.toHaveClass(/is-context-collapsed/);
 });
 
@@ -103,7 +90,7 @@ test('uses a dismissible context drawer on narrow screens and restores focus', a
 	await expect(contextPanel).toHaveAttribute('data-drawer-state', 'closed');
 	await expect(contextBackdrop).toBeHidden();
 
-	await dispatchClick(contextToggle);
+	await clickElement(contextToggle);
 
 	await expect(trustShell).toHaveClass(/is-context-drawer-open/);
 	await expect(contextPanel).toHaveAttribute('data-drawer-state', 'open');
@@ -123,14 +110,14 @@ test('uses a dismissible context drawer on narrow screens and restores focus', a
 	const activeElementId = await page.evaluate(() => document.activeElement?.id ?? null);
 	expect(['quickJumpContextToggle', 'toolbarContextToggle']).toContain(activeElementId);
 
-	await dispatchClick(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
 	await expectActivePage(page, 'TR');
 
-	await dispatchClick(contextToggle);
+	await clickElement(contextToggle);
 	await expect(trustShell).toHaveClass(/is-context-drawer-open/);
 
 	const anchorButton = page.locator('#contextSidebarMount .context-anchor-button', { hasText: 'TR2' });
-	await dispatchClick(anchorButton);
+	await clickElement(anchorButton);
 
 	await expect(trustShell).not.toHaveClass(/is-context-drawer-open/);
 	await expect(page.locator('#questionnaire-criterion-tr2')).toBeFocused();

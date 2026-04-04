@@ -11,6 +11,7 @@ import {
 } from '../config/questionnaire-schema.js';
 import { PROGRESS_STATES } from '../state/derive.js';
 import { selectQuickJumpPageIds } from '../state/store.js';
+import { toArray, getDocumentRef, clearChildren } from '../utils/shared.js';
 import { REFERENCE_DRAWER_BY_TOPIC_ID } from './reference-drawers.js';
 
 export const CONTEXT_ROUTE_KINDS = Object.freeze({
@@ -125,17 +126,7 @@ const PROGRESS_STATE_LABELS = Object.freeze({
   [PROGRESS_STATES.BLOCKED_ESCALATED]: 'Blocked / escalated',
 });
 
-const toArray = (value) => Array.from(value ?? []);
-
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
-
 const joinTokens = (items) => items.filter(Boolean).join(' · ');
-
-const clearChildren = (element) => {
-  while (element?.firstChild) {
-    element.removeChild(element.firstChild);
-  }
-};
 
 const setAccentKey = (element, accentKey) => {
   if (!(element instanceof HTMLElement)) {
@@ -869,6 +860,8 @@ export const createSidebarRenderer = ({
       const description = documentRef.createElement('span');
 
       cell.className = 'strip-cell';
+      cell.setAttribute('aria-hidden', 'true');
+      cell.setAttribute('role', 'presentation');
       cell.dataset.pageId = pageId;
       cell.dataset.pageCode = pageDefinition?.pageCode ?? pageId;
       cell.dataset.accentKey = pageDefinition?.accentKey ?? 'control';

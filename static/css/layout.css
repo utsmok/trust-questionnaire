@@ -94,11 +94,13 @@
 
 .panel-progress-bar {
   height: 100%;
-  width: 0%;
+  width: 100%;
   background: var(--active-section-accent, var(--ut-blue));
-  will-change: width;
+  transform: scaleX(0);
+  transform-origin: left;
+  will-change: transform;
   transition:
-    width var(--duration-normal) var(--ease-out-quart),
+    transform var(--duration-normal) var(--ease-out-quart),
     background var(--duration-fast) var(--ease-out-quart);
 }
 
@@ -188,21 +190,6 @@
   bottom: 0;
   background: linear-gradient(to top, color-mix(in srgb, var(--ut-navy) 4%, transparent), transparent);
   opacity: 0;
-}
-
-@media (max-width: 1160px) {
-  :root {
-    --header-h: 160px;
-  }
-
-  .panel {
-    height: calc((100vh - var(--header-h)) / 2);
-  }
-
-  .framework-panel {
-    border-right: 0;
-    border-bottom: 3px solid var(--ut-border);
-  }
 }
 
 @media (max-width: 760px) {
@@ -328,7 +315,7 @@
   padding: 18px;
   display: flex;
   justify-content: flex-end;
-  background: color-mix(in srgb, var(--ut-text) 20%, transparent);
+  background: color-mix(in srgb, var(--ut-text) 88%, var(--ut-grey));
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }

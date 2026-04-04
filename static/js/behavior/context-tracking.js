@@ -1,6 +1,5 @@
 import { getSectionDefinition } from '../config/sections.js';
-
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
+import { getDocumentRef } from '../utils/shared.js';
 
 export const resolvePageIdFromHash = (hash, pageOrder) => {
   const normalizedHash = typeof hash === 'string'

@@ -1,7 +1,7 @@
 import { OPTION_SET_IDS } from './option-sets.js';
 import { SECTION_IDS, SECTION_REGISTRY_BY_ID } from './sections.js';
 
-const freezeArray = (items) => Object.freeze([...items]);
+import { freezeArray } from '../utils/shared.js';
 
 const indexBy = (items, key = 'id') =>
   Object.freeze(Object.fromEntries(items.map((item) => [item[key], item])));

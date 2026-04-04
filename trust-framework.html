@@ -13,6 +13,12 @@
   <link rel="stylesheet" href="static/css/components.css" />
   <link rel="stylesheet" href="static/css/states.css" />
   <link rel="stylesheet" href="static/css/print.css" />
+  <noscript>
+    <style>
+      /* Allow scrolling when JS is disabled since the shell grid will not initialize. */
+      body { overflow: auto !important; }
+    </style>
+  </noscript>
 </head>
 <body>
   <a href="#questionnairePanel" class="skip-link">Skip to questionnaire</a>
@@ -34,7 +40,7 @@
       <p id="completionStripLabel" class="visually-hidden">Canonical page progress strip</p>
       <ul class="completion-strip" aria-labelledby="completionStripLabel"></ul>
       <nav class="top-nav" id="quickJumpMount" aria-label="TRUST principle quick jump" data-shell-mount="quick-jump">
-        <button id="quickJumpContextToggle" class="nav-button shell-action-button" type="button" data-surface-toggle="contextSidebar" aria-controls="frameworkPanel" aria-expanded="true">Context</button>
+        <button id="quickJumpContextToggle" class="nav-button shell-action-button" type="button" data-surface-toggle="contextSidebar" aria-controls="frameworkPanel" aria-expanded="false">Context</button>
         <button class="nav-button shell-action-button" type="button" data-surface-toggle="aboutSurface" aria-controls="aboutSurfaceMount" aria-expanded="false">Info</button>
         <button class="nav-button shell-action-button" type="button" data-surface-toggle="helpSurface" aria-controls="helpSurfaceMount" aria-expanded="false">Help</button>
         <div class="nav-indicator" id="navIndicator"></div>
@@ -52,16 +58,19 @@
     <section class="panel questionnaire-panel" id="questionnairePanel" aria-labelledby="questionnairePanelTitle" tabindex="-1">
       <div class="panel-progress"><div class="panel-progress-bar" id="questionnaireProgress"></div></div>
       <div class="panel-inner">
+        <form aria-label="Trust Framework Questionnaire">
+        <button type="submit" class="visually-hidden">Submit questionnaire</button>
         <div class="questionnaire-shell">
           <div class="questionnaire-panel-header">
             <h1 class="panel-title" id="questionnairePanelTitle">Questionnaire</h1>
             <div class="shell-toolbar">
-              <button id="toolbarContextToggle" class="nav-button shell-action-button" type="button" data-surface-toggle="contextSidebar" aria-controls="frameworkPanel" aria-expanded="true">Context</button>
+              <button id="toolbarContextToggle" class="nav-button shell-action-button" type="button" data-surface-toggle="contextSidebar" aria-controls="frameworkPanel" aria-expanded="false">Context</button>
             </div>
           </div>
           <p class="panel-caption">The questionnaire is the primary surface. The page index and pager govern movement, reference drawers stay above the form, and framework background remains in the Info surface.</p>
 
-          <section id="referenceDrawerMount" data-shell-mount="reference-drawers" aria-label="Persistent reference drawers">
+          <h2 id="referenceDrawerHeading" class="panel-title-section">Quick Reference</h2>
+          <section id="referenceDrawerMount" data-shell-mount="reference-drawers" aria-labelledby="referenceDrawerHeading">
             <details class="reference-drawer" data-drawer-id="answer-sets">
               <summary>Standard answer sets</summary>
               <div class="reference-drawer-panel">
@@ -263,10 +272,11 @@
             </div>
             <div class="questionnaire-workspace">
               <div id="pagerMount" data-shell-mount="pager"></div>
-              <div id="questionnaireRenderRoot" data-shell-mount="questionnaire-pages" aria-live="polite"></div>
+              <div id="questionnaireRenderRoot" data-shell-mount="questionnaire-pages"></div>
             </div>
           </div>
         </div>
+        </form>
       </div>
     </section>
 
@@ -280,14 +290,14 @@
         <p class="panel-caption">Active-page guidance lives here. Generic scoring and evidence references stay in drawers; framework background and governance stay in the Info surface. On narrow screens this panel becomes a dismissible drawer.</p>
 
         <div id="contextSidebarMount" data-shell-mount="context-sidebar" data-shell-fallback="literal-framework-content">
-          <section class="doc-section context-empty-state" data-section="control" id="contextSidebarFallback">
-            <h2>Context route ready</h2>
+          <section class="doc-section context-empty-state" data-section="control" id="contextSidebarFallback" aria-labelledby="contextSidebarFallbackTitle">
+            <h2 id="contextSidebarFallbackTitle">Context route ready</h2>
             <p>Route cards, page anchors, and literal topic blocks are driven from the section and content registries. If a page lacks bespoke context prose, the generated route summary remains authoritative.</p>
           </section>
 
-          <section class="doc-section" data-section="control" data-topic-area="context" data-topic-ids="context.workflow-control">
+          <section class="doc-section" data-section="control" data-topic-area="context" data-topic-ids="context.workflow-control" aria-labelledby="contextWorkflowTitle">
             <div class="section-kicker">S0 · Workflow</div>
-            <h2>Workflow control guidance</h2>
+            <h2 id="contextWorkflowTitle">Workflow control guidance</h2>
             <p>This opening page defines which pages are accessible and whether they are editable, read-only, or system-skipped. Treat it as the control plane for the rest of the questionnaire.</p>
             <ul>
               <li><strong>Submission type</strong> determines whether the flow is nomination, primary evaluation, second review, final team decision, or re-evaluation.</li>
@@ -296,9 +306,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="profile" data-topic-area="context" data-topic-ids="context.tool-profile">
+          <section class="doc-section" data-section="profile" data-topic-area="context" data-topic-ids="context.tool-profile" aria-labelledby="contextProfileTitle">
             <div class="section-kicker">S1 · Profile</div>
-            <h2>Tool profile and scope guidance</h2>
+            <h2 id="contextProfileTitle">Tool profile and scope guidance</h2>
             <p>This page establishes what the tool is, who provides it, how it is accessed, and whether it belongs inside the TRUST evaluation scope before deeper scoring begins.</p>
             <ul>
               <li>Record vendor, category, deployment type, and access model as factual baseline data.</li>
@@ -307,9 +317,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="setup" data-topic-area="context" data-topic-ids="context.evaluation-setup">
+          <section class="doc-section" data-section="setup" data-topic-area="context" data-topic-ids="context.evaluation-setup" aria-labelledby="contextSetupTitle">
             <div class="section-kicker">S2 · Setup</div>
-            <h2>Evaluation setup and evidence expectations</h2>
+            <h2 id="contextSetupTitle">Evaluation setup and evidence expectations</h2>
             <p>This page makes the evaluation reproducible. Testing dates, pricing tier, sample queries, repeated-query design, and evidence boundaries should be complete before principle scoring is trusted.</p>
             <ul>
               <li>Document the exact scenarios used for known-item retrieval, exploratory search, and synthesis verification.</li>
@@ -318,9 +328,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="tr" data-topic-area="context" data-topic-ids="context.transparent">
+          <section class="doc-section" data-section="tr" data-topic-area="context" data-topic-ids="context.transparent" aria-labelledby="contextTrTitle">
             <div class="section-kicker">TR · Transparent</div>
-            <h2>Transparent principle context</h2>
+            <h2 id="contextTrTitle">Transparent principle context</h2>
             <p>Transparency asks whether the tool reveals its data sources, methodology, scope, and limitations clearly enough that evaluators do not need to rely on faith.</p>
             <ul>
               <li><strong>TR1</strong> — Document primary data sources, indexed coverage, disciplines, languages, date ranges, and update cadence.</li>
@@ -329,9 +339,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="re" data-topic-area="context" data-topic-ids="context.reliable">
+          <section class="doc-section" data-section="re" data-topic-area="context" data-topic-ids="context.reliable" aria-labelledby="contextReTitle">
             <div class="section-kicker">RE · Reliable</div>
-            <h2>Reliable principle context</h2>
+            <h2 id="contextReTitle">Reliable principle context</h2>
             <p>Reliability is about factual accuracy, consistency of consensus across repeated runs, and faithfulness to source material. Convenience does not excuse hallucinations or unsupported synthesis.</p>
             <ul>
               <li><strong>RE1</strong> — Verify factual accuracy and guard against fabricated citations.</li>
@@ -340,9 +350,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="uc" data-topic-area="context" data-topic-ids="context.user-centric">
+          <section class="doc-section" data-section="uc" data-topic-area="context" data-topic-ids="context.user-centric" aria-labelledby="contextUcTitle">
             <div class="section-kicker">UC · User-centric</div>
-            <h2>User-centric principle context</h2>
+            <h2 id="contextUcTitle">User-centric principle context</h2>
             <p>User-centric scoring covers fitness for purpose, workflow integration, usability, accessibility, and explicit communication that the interface is AI-assisted.</p>
             <ul>
               <li><strong>UC1</strong> — Assess fit with the research and teaching needs of the University of Twente community.</li>
@@ -352,9 +362,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="se" data-topic-area="context" data-topic-ids="context.secure">
+          <section class="doc-section" data-section="se" data-topic-area="context" data-topic-ids="context.secure" aria-labelledby="contextSeTitle">
             <div class="section-kicker">SE · Secure</div>
-            <h2>Secure principle context</h2>
+            <h2 id="contextSeTitle">Secure principle context</h2>
             <p>Security covers privacy, data handling, institutional compatibility, and the visibility of bias or fairness risks. It is a compliance and ethics question, not only a technical checkbox.</p>
             <ul>
               <li><strong>SE1</strong> — Assess data protection by design and by default under GDPR-oriented review.</li>
@@ -364,9 +374,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="tc" data-topic-area="context" data-topic-ids="context.traceable">
+          <section class="doc-section" data-section="tc" data-topic-area="context" data-topic-ids="context.traceable" aria-labelledby="contextTcTitle">
             <div class="section-kicker">TC · Traceable</div>
-            <h2>Traceable principle context</h2>
+            <h2 id="contextTcTitle">Traceable principle context</h2>
             <p>Traceability is the academic accountability core of the framework. Users and reviewers must be able to inspect which sources support an answer and how generated synthesis is separated from evidence.</p>
             <ul>
               <li><strong>TC1</strong> — Check source attribution quality, persistence, and any source-quality cues surfaced with citations.</li>
@@ -375,9 +385,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="reference" data-topic-area="context" data-topic-ids="context.critical-fails-and-confidence">
+          <section class="doc-section" data-section="reference" data-topic-area="context" data-topic-ids="context.critical-fails-and-confidence" aria-labelledby="contextReferenceTitle">
             <div class="section-kicker">S8 · Control</div>
-            <h2>Critical fail and confidence guidance</h2>
+            <h2 id="contextReferenceTitle">Critical fail and confidence guidance</h2>
             <p>Critical fails and confidence are evaluation-wide controls. They do not replace criterion scoring, but they can override what recommendation states are defensible.</p>
             <ul>
               <li>Check every applicable critical-fail flag explicitly; a single unresolved flag forces team review.</li>
@@ -386,9 +396,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="recommendation" data-topic-area="context" data-topic-ids="context.overall-recommendation">
+          <section class="doc-section" data-section="recommendation" data-topic-area="context" data-topic-ids="context.overall-recommendation" aria-labelledby="contextRecommendationTitle">
             <div class="section-kicker">S9 · Recommendation</div>
-            <h2>Overall recommendation guidance</h2>
+            <h2 id="contextRecommendationTitle">Overall recommendation guidance</h2>
             <p>This page translates the principle-level evidence into an institutional recommendation, a caveat set, and a public-facing summary that another team member can defend later.</p>
             <ul>
               <li>Keep recommendation status aligned with principle judgments and any unresolved critical-fail flags.</li>
@@ -397,9 +407,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.primary-evaluation-handoff">
+          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.primary-evaluation-handoff" aria-labelledby="contextHandoffTitle">
             <div class="section-kicker">S10A · Handoff</div>
-            <h2>Primary evaluation handoff guidance</h2>
+            <h2 id="contextHandoffTitle">Primary evaluation handoff guidance</h2>
             <p>The handoff is not a victory lap. It packages the primary evaluation for a second reviewer and should expose the weakest parts of the evidence set clearly.</p>
             <ul>
               <li>Flag key concerns that deserve targeted second-review attention.</li>
@@ -408,9 +418,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.second-review">
+          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.second-review" aria-labelledby="contextSecondReviewTitle">
             <div class="section-kicker">S10B · Review</div>
-            <h2>Second review guidance</h2>
+            <h2 id="contextSecondReviewTitle">Second review guidance</h2>
             <p>The second review step exists to challenge scoring drift, identify conflicting interpretations, and record disagreement before a team decision is made.</p>
             <ul>
               <li>Use the agreement field precisely: full agreement, partial agreement, or disagreement.</li>
@@ -419,9 +429,9 @@
             </ul>
           </section>
 
-          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.final-team-decision">
+          <section class="doc-section" data-section="governance" data-topic-area="context" data-topic-ids="context.final-team-decision" aria-labelledby="contextFinalDecisionTitle">
             <div class="section-kicker">S10C · Decision</div>
-            <h2>Final team decision guidance</h2>
+            <h2 id="contextFinalDecisionTitle">Final team decision guidance</h2>
             <p>The final decision records what the team approved, under which publication conditions, and when re-evaluation is due. It closes the workflow without erasing the evidence trail.</p>
             <ul>
               <li>At least two EIS-IS team members must have reviewed the tool before a final recommendation is assigned.</li>
@@ -444,9 +454,9 @@
         <button class="nav-button shell-action-button" type="button" data-surface-dismiss="aboutSurface">Close</button>
       </div>
       <div class="surface-body">
-        <section class="doc-section" data-section="control" data-topic-area="about" data-topic-ids="about.framework-overview">
+        <section class="doc-section" data-section="control" data-topic-area="about" data-topic-ids="about.framework-overview" aria-labelledby="aboutOverviewTitle">
           <div class="section-kicker">Version 2</div>
-          <h2>Framework overview</h2>
+          <h2 id="aboutOverviewTitle">Framework overview</h2>
           <p>TRUST is the EIS-IS team’s structured evaluation framework for AI-based information search tools used in academic contexts. Version 2 keeps the static, auditable evaluation workflow while tightening reliability standards, adding cognitive guardrails, and formalizing scoring, evidence, and governance.</p>
           <p>The framework is intentionally stricter than generic AI checklists because academic recommendation requires verifiable provenance, faithful synthesis, explicit limitations, and a defensible institutional review trail.</p>
           <div class="principle-list">
@@ -474,9 +484,9 @@
           <div class="notice">Operational additions in version 2 include the scoring model, minimum evidence requirements, critical-fail flags, confidence levels, and a formal governance workflow.</div>
         </section>
 
-        <section class="doc-section" data-section="profile" data-topic-area="about" data-topic-ids="about.scope-and-definitions">
+        <section class="doc-section" data-section="profile" data-topic-area="about" data-topic-ids="about.scope-and-definitions" aria-labelledby="aboutScopeTitle">
           <div class="section-kicker">Scope</div>
-          <h2>Scope and definitions</h2>
+          <h2 id="aboutScopeTitle">Scope and definitions</h2>
           <p>Within this framework, an AI-based search tool is a system that relies on non-deterministic generative models to produce outputs. Identical queries may yield non-identical results, and the system performs generative synthesis or conversational interaction beyond deterministic retrieval.</p>
           <div class="reference-cards">
             <section class="mini-card">
@@ -505,9 +515,9 @@
           </div>
         </section>
 
-        <section class="doc-section" data-section="governance" data-topic-area="about" data-topic-ids="about.governance-workflow">
+        <section class="doc-section" data-section="governance" data-topic-area="about" data-topic-ids="about.governance-workflow" aria-labelledby="aboutGovernanceTitle">
           <div class="section-kicker">Governance</div>
-          <h2>Governance and review workflow</h2>
+          <h2 id="aboutGovernanceTitle">Governance and review workflow</h2>
           <p>The evaluation cycle is structured so that results remain defensible after handoff. A tool moves from nomination through primary evaluation and second review into a final team decision with recorded publication status and next review date.</p>
           <ol>
             <li><strong>Nomination</strong> — record tool identity, vendor, URL, and reason for review.</li>

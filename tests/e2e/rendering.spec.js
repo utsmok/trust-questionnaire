@@ -1,19 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { gotoApp, setWorkflow, clickElement } from './helpers.js';
 
 const CANONICAL_PAGE_IDS = ['S0', 'S1', 'S2', 'TR', 'RE', 'UC', 'SE', 'TC', 'S8', 'S9', 'S10A', 'S10B', 'S10C'];
-
-async function gotoApp(page) {
-	await page.goto('/trust-framework.html');
-	await expect(page.locator('#questionnaireRenderRoot')).toHaveAttribute('data-rendered-source', 'schema');
-}
-
-async function setWorkflow(page, workflowValue) {
-	await page.locator('select[data-field-id="s0.submissionType"]').selectOption(workflowValue);
-}
-
-async function dispatchClick(locator) {
-	await locator.dispatchEvent('click');
-}
 
 test('renders the canonical schema-driven questionnaire inventory', async ({ page }) => {
 	await gotoApp(page);
@@ -54,7 +42,7 @@ test('adapts shell and rating scales across responsive breakpoints', async ({ pa
 	await page.setViewportSize({ width: 1400, height: 980 });
 	await gotoApp(page);
 	await setWorkflow(page, 'primary_evaluation');
-	await dispatchClick(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id="TR"]')).toHaveClass(/is-active/);
 
 	const shell = page.locator('#trustShell');

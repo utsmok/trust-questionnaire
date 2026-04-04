@@ -1,6 +1,7 @@
 import {
   CANONICAL_PAGE_SEQUENCE,
   COMPLETION_GROUPS,
+  PRINCIPLE_SECTION_IDS,
   SECTION_IDS,
   SECTION_REGISTRY_BY_ID,
   SECTION_WORKFLOW_STATES,
@@ -35,17 +36,9 @@ import {
   WORKFLOW_ESCALATION_RULES,
   WORKFLOW_PAGE_RULES,
 } from '../config/rules.js';
+import { isPlainObject, EMPTY_ARRAY, normalizeDelimitedList, extractEvidenceItems } from '../utils/shared.js';
 
 const EMPTY_OBJECT = Object.freeze({});
-const EMPTY_ARRAY = Object.freeze([]);
-
-const PRINCIPLE_SECTION_IDS = Object.freeze([
-  SECTION_IDS.TR,
-  SECTION_IDS.RE,
-  SECTION_IDS.UC,
-  SECTION_IDS.SE,
-  SECTION_IDS.TC,
-]);
 
 const PRINCIPLE_JUDGMENT_FIELD_IDS = Object.freeze({
   [SECTION_IDS.TR]: FIELD_IDS.TR.PRINCIPLE_JUDGMENT,
@@ -69,9 +62,6 @@ const RESOLVED_PROGRESS_STATES = new Set([
   PROGRESS_STATES.SKIPPED,
 ]);
 
-const isPlainObject = (value) =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
 const normalizeState = (evaluation = EMPTY_OBJECT) => ({
   workflow: isPlainObject(evaluation.workflow) ? evaluation.workflow : EMPTY_OBJECT,
   fields:
@@ -91,27 +81,6 @@ const getFieldValue = (state, fieldId) => state.fields[fieldId];
 const getSectionRecord = (state, sectionId) => state.sections[sectionId] ?? EMPTY_OBJECT;
 
 const getCriterionRecord = (state, criterionCode) => state.criteria[criterionCode] ?? EMPTY_OBJECT;
-
-const normalizeDelimitedList = (value, splitter = /[\n,]+/) => {
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => (typeof item === 'string' ? item.trim() : item))
-      .filter((item) => item !== '' && item !== null && item !== undefined);
-  }
-
-  if (value instanceof Set) {
-    return normalizeDelimitedList(Array.from(value), splitter);
-  }
-
-  if (typeof value === 'string') {
-    return value
-      .split(splitter)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return EMPTY_ARRAY;
-};
 
 const normalizeUrlList = (value) => normalizeDelimitedList(value, /\n+/);
 
@@ -636,24 +605,6 @@ const isPersonValuePresent = (value) => {
   return Boolean(value.id || value.email || value.name || value.displayName);
 };
 
-const extractEvidenceItems = (value) => {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (isPlainObject(value)) {
-    if (Array.isArray(value.items)) {
-      return value.items;
-    }
-
-    if (Array.isArray(value.files)) {
-      return value.files;
-    }
-  }
-
-  return EMPTY_ARRAY;
-};
-
 const hasEvidenceNote = (item) =>
   isPlainObject(item) && (hasMeaningfulText(item.note) || hasMeaningfulText(item.notes));
 
@@ -769,7 +720,7 @@ const isFieldValuePresent = (field, value) => {
     case FIELD_TYPES.LONG_TEXT:
     case FIELD_TYPES.URL:
     case FIELD_TYPES.DATE:
-      return hasMeaningfulText(value) || (value instanceof Date && !Number.isNaN(value.getTime()));
+      return hasMeaningfulText(value);
     case FIELD_TYPES.URL_LIST:
       return normalizeUrlList(value).length > 0;
     case FIELD_TYPES.DATE_RANGE:

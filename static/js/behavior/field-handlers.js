@@ -5,14 +5,8 @@ import {
 } from '../config/questionnaire-schema.js';
 import { SKIP_STATES } from '../config/rules.js';
 import { initializeEvidenceUi } from '../render/evidence.js';
+import { toArray, getDocumentRef, isPlainObject } from '../utils/shared.js';
 const EVIDENCE_BLOCK_SELECTOR = '[data-evidence-block="true"]';
-
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
-
-const toArray = (value) => Array.from(value ?? []);
-
-const isPlainObject = (value) =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
 
 const isFormControl = (value) =>
   value instanceof HTMLInputElement
@@ -233,9 +227,9 @@ const syncRatingOption = (option, selectedValue, optionValue, readOnly) => {
   // Rating selection confirmation pulse
   if (isSelected && wasNotSelected) {
     option.classList.add('is-just-selected');
-    option.addEventListener('animationend', () => {
-      option.classList.remove('is-just-selected');
-    }, { once: true });
+    const removeClass = () => option.classList.remove('is-just-selected');
+    option.addEventListener('animationend', removeClass, { once: true });
+    setTimeout(removeClass, 600);
   }
 
   const input = option.querySelector('input[type="radio"]');
@@ -793,7 +787,12 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
   });
 
   const unsubscribe = store.subscribe((state) => {
-    toArray(questionnaireRoot.querySelectorAll('.field-group[data-field-id]')).forEach((fieldGroup) => {
+    const activePageId = state.ui?.activePageId;
+    const activeSection = activePageId
+      ? questionnaireRoot.querySelector(`[data-page-id="${activePageId}"]`)
+      : null;
+    const scope = activeSection instanceof HTMLElement ? activeSection : questionnaireRoot;
+    toArray(scope.querySelectorAll('.field-group[data-field-id]')).forEach((fieldGroup) => {
       if (fieldGroup instanceof HTMLElement) {
         syncFieldGroup(fieldGroup, state);
       }

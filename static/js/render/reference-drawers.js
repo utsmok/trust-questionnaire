@@ -1,15 +1,6 @@
 import { getSectionDefinition } from '../config/sections.js';
 import { selectReferenceDrawerState } from '../state/store.js';
-
-const toArray = (value) => Array.from(value ?? []);
-
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
-
-const clearChildren = (element) => {
-  while (element?.firstChild) {
-    element.removeChild(element.firstChild);
-  }
-};
+import { toArray, getDocumentRef, clearChildren } from '../utils/shared.js';
 
 const RECOMMENDATION_STATE_BY_LABEL = Object.freeze({
   recommended: 'recommended',

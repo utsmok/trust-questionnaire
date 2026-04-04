@@ -104,43 +104,21 @@
     border: 2px solid #000;
   }
 
-  .form-section[data-section="tr"]::before,
-  .doc-section[data-section="tr"]::before {
-    content: "TR ";
+  .doc-section[data-section] .section-kicker::before,
+  .form-section[data-section] .section-kicker::before {
     font-weight: 800;
     font-family: var(--ff-mono);
     font-size: 12pt;
   }
 
-  .form-section[data-section="re"]::before,
-  .doc-section[data-section="re"]::before {
-    content: "RE ";
-    font-weight: 800;
-    font-family: var(--ff-mono);
-    font-size: 12pt;
-  }
-
-  .form-section[data-section="uc"]::before,
-  .doc-section[data-section="uc"]::before {
-    content: "UC ";
-    font-weight: 800;
-    font-family: var(--ff-mono);
-    font-size: 12pt;
-  }
-
-  .form-section[data-section="se"]::before,
-  .doc-section[data-section="se"]::before {
-    content: "SE ";
-    font-weight: 800;
-    font-family: var(--ff-mono);
-    font-size: 12pt;
-  }
-
-  .form-section[data-section="tc"]::before,
-  .doc-section[data-section="tc"]::before {
-    content: "TC ";
-    font-weight: 800;
-    font-family: var(--ff-mono);
-    font-size: 12pt;
-  }
+  .doc-section[data-section="tr"] .section-kicker::before { content: "TR "; }
+  .doc-section[data-section="re"] .section-kicker::before { content: "RE "; }
+  .doc-section[data-section="uc"] .section-kicker::before { content: "UC "; }
+  .doc-section[data-section="se"] .section-kicker::before { content: "SE "; }
+  .doc-section[data-section="tc"] .section-kicker::before { content: "TC "; }
+  .form-section[data-section="tr"] .section-kicker::before { content: "TR "; }
+  .form-section[data-section="re"] .section-kicker::before { content: "RE "; }
+  .form-section[data-section="uc"] .section-kicker::before { content: "UC "; }
+  .form-section[data-section="se"] .section-kicker::before { content: "SE "; }
+  .form-section[data-section="tc"] .section-kicker::before { content: "TC "; }
 }

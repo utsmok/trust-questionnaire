@@ -16,6 +16,7 @@ import {
   createEmptyEvaluationState,
   deriveQuestionnaireState,
 } from './derive.js';
+import { isPlainObject, isImageMimeType, extractEvidenceItems, inferMimeTypeFromName, normalizeDelimitedList } from '../utils/shared.js';
 
 export const ACTIVE_PAGE_VISIBILITY_THRESHOLD = 0.18;
 
@@ -69,9 +70,6 @@ const cloneReferenceDrawerStates = (referenceDrawers = DEFAULT_REFERENCE_DRAWER_
   ),
 });
 
-const isPlainObject = (value) =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
 const cloneRecordLookup = (records = {}) =>
   Object.fromEntries(
     Object.entries(records ?? {}).map(([recordId, record]) => [
@@ -116,65 +114,6 @@ const createEvidenceId = () => {
 
   return `evidence-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
-
-const extractEvidenceItems = (value) => {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (isPlainObject(value)) {
-    if (Array.isArray(value.items)) {
-      return value.items;
-    }
-
-    if (Array.isArray(value.files)) {
-      return value.files;
-    }
-  }
-
-  return [];
-};
-
-const inferMimeTypeFromName = (name) => {
-  const normalizedName = normalizeTextValue(name);
-
-  if (!normalizedName || !normalizedName.includes('.')) {
-    return null;
-  }
-
-  const extension = normalizedName.split('.').pop()?.toLowerCase();
-
-  switch (extension) {
-    case 'png':
-      return 'image/png';
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'svg':
-      return 'image/svg+xml';
-    case 'pdf':
-      return 'application/pdf';
-    case 'json':
-      return 'application/json';
-    case 'csv':
-      return 'text/csv';
-    case 'txt':
-      return 'text/plain';
-    case 'md':
-      return 'text/markdown';
-    case 'html':
-      return 'text/html';
-    default:
-      return null;
-  }
-};
-
-const isImageMimeType = (mimeType) =>
-  typeof mimeType === 'string' && mimeType.startsWith('image/');
 
 const normalizeEvidenceSizeValue = (value) => {
   if (value === null || value === undefined || value === '') {
@@ -268,22 +207,6 @@ const normalizeTextValue = (value) => {
 
   const nextValue = String(value);
   return nextValue === '' ? null : nextValue;
-};
-
-const normalizeDelimitedList = (value, splitter = /[\n,]+/) => {
-  const values = Array.isArray(value)
-    ? value
-    : value instanceof Set
-      ? Array.from(value)
-      : typeof value === 'string'
-        ? value.split(splitter)
-        : value === null || value === undefined
-          ? []
-          : [value];
-
-  return [...new Set(values
-    .map((entry) => (typeof entry === 'string' ? entry.trim() : String(entry).trim()))
-    .filter(Boolean))];
 };
 
 const normalizeOptionValue = (field, optionValue) => {

@@ -69,13 +69,13 @@
   --section-uc-on-accent: var(--ut-white);
 
   --section-se-accent: var(--se);
-  --section-se-accent-strong: #c2410c;
+  --section-se-accent-strong: color-mix(in srgb, var(--section-se-accent) 86%, black);
   --section-se-tint: color-mix(in srgb, var(--section-se-accent) 16%, var(--ut-white));
   --section-se-border: color-mix(in srgb, var(--section-se-accent) 32%, var(--ut-border));
   --section-se-on-accent: var(--ut-white);
 
   --section-tc-accent: var(--tc);
-  --section-tc-accent-strong: #0f766e;
+  --section-tc-accent-strong: color-mix(in srgb, var(--section-tc-accent) 86%, black);
   --section-tc-tint: color-mix(in srgb, var(--section-tc-accent) 16%, var(--ut-white));
   --section-tc-border: color-mix(in srgb, var(--section-tc-accent) 32%, var(--ut-border));
   --section-tc-on-accent: var(--ut-white);
@@ -183,13 +183,13 @@
   --help-on-accent: var(--ut-white);
 
   /* Darkened variants for WCAG AA compliance on white-text nav buttons */
-  --se-dark: #c2410c;
-  --tc-dark: #0f766e;
+  --se-dark: var(--section-se-accent-strong);
+  --tc-dark: var(--section-tc-accent-strong);
 
   --header-h: 138px;
 
   /* Type scale -- 7 steps, wider range for stronger hierarchy */
-  --text-xs: 0.56rem;
+  --text-xs: 0.625rem;
   --text-sm: 0.75rem;
   --text-body: 1rem;
   --text-sub: 1.2rem;

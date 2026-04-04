@@ -1,24 +1,5 @@
 import { expect, test } from '@playwright/test';
-
-async function gotoApp(page) {
-	await page.goto('/trust-framework.html');
-	await expect(page.locator('#questionnaireRenderRoot')).toHaveAttribute('data-rendered-source', 'schema');
-}
-
-async function setWorkflow(page, workflowValue) {
-	await page.locator('select[data-field-id="s0.submissionType"]').selectOption(workflowValue);
-}
-
-async function dispatchClick(locator) {
-	await locator.dispatchEvent('click');
-}
-
-async function openPage(page, pageId) {
-	const button = page.locator(`.page-index-button[data-page-id="${pageId}"]`);
-	await expect(button).toBeEnabled();
-	await dispatchClick(button);
-	await expect(page.locator(`#questionnaireRenderRoot > [data-page-id="${pageId}"]`)).toHaveClass(/is-active/);
-}
+import { gotoApp, setWorkflow, clickElement, openPage } from './helpers.js';
 
 async function expectPageProgress(page, pageId, progressState) {
 	await expect(page.locator(`.page-index-button[data-page-id="${pageId}"]`)).toHaveAttribute('data-progress-state', progressState);
@@ -28,7 +9,7 @@ test('tracks page progress through not-started, in-progress, invalid, complete, 
 	await gotoApp(page);
 	await setWorkflow(page, 'primary_evaluation');
 
-	await dispatchClick(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
 	await expectPageProgress(page, 'TR', 'not_started');
 
 	await page.locator('select[data-section-record-key="sectionSkipReasonCode"][data-section-id="TR"]').selectOption('test_not_performed');
@@ -52,7 +33,7 @@ test('tracks page progress through not-started, in-progress, invalid, complete, 
 test('criterion skip uses explicit skip controls and suppresses child criterion requirements until resumed', async ({ page }) => {
 	await gotoApp(page);
 	await setWorkflow(page, 'primary_evaluation');
-	await dispatchClick(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
 
 	const card = page.locator('.criterion-card[data-criterion="TR1"]');
 	const scoreGroup = card.locator('.field-group[data-field-id="tr1.score"]');

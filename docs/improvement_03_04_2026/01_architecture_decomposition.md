@@ -1,5 +1,7 @@
 # Architecture decomposition recommendation for `trust-framework.html`
 
+> **Note:** This document describes the pre-migration architecture and the planned decomposition. The actual implementation differs — see CLAUDE.md for the current file structure.
+
 ## Scope
 
 This report evaluates how to decompose the current single-file page in `trust-framework.html` into maintainable separate HTML, CSS, and JavaScript files, with further decomposition only where it produces a clear maintenance benefit. The focus is architecture, module boundaries, state ownership, metadata/config extraction, and reduction of monolithic coupling. No implementation changes are proposed here.
