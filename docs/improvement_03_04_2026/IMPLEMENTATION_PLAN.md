@@ -517,18 +517,18 @@ Additional rollback rules:
 | T001 | 1 | COMPLETE | Canonical page/section registry and separate content-topic registry implemented in `static/js/config/sections.js`; includes page order, quick-jump membership, completion grouping, workflow applicability, and first-class `S10A`/`S10B`/`S10C` entries. | 2026-04-03 |
 | T002 | 1 | COMPLETE | Canonical schema and option sets implemented in `questionnaire-schema.js` and `option-sets.js`; 16 criteria are typed once and the explicit Section 6 listing resolves the inventory to 135 fields rather than the stale appendix total of 132. | 2026-04-03 |
 | T003 | 1 | COMPLETE | `rules.js` and `state/derive.js` encode workflow branching, requiredness, skip state, principle judgments, recommendation constraints, completion, evidence completeness, and explicit governance/page activation behavior outside the DOM. | 2026-04-03 |
-| T004 | 2 | PENDING | Convert `trust-framework.html` into a page-based shell | — |
-| T005 | 2 | PENDING | Split CSS into external files by concern | — |
-| T006 | 2 | PENDING | Split JavaScript into module graph and bootstrap store | — |
-| T007 | 3 | PENDING | Render canonical questionnaire pages from schema | — |
-| T008 | 3 | PENDING | Implement contextual sidebar, persistent reference drawers, and Info/About surface | — |
-| T009 | 3 | PENDING | Implement page index, quick-jump row, and registry-driven navigation surfaces | — |
-| T010 | 3 | PENDING | Implement sequential pager and page/context tracking | — |
-| T011 | 4 | PENDING | Implement field interaction and store updates | — |
-| T012 | 4 | PENDING | Implement validation, skip state, and computed outcomes | — |
-| T013 | 4 | PENDING | Implement full-questionnaire completion and progress model | — |
-| T014 | 4 | PENDING | Implement evidence workflow and evidence manifest boundary | — |
-| T015 | 5 | PENDING | Normalize visual state system and explicit help pattern | — |
-| T016 | 5 | PENDING | Add minimal static-project tooling and regression harness | — |
-| T017 | 6 | PENDING | Remove dual-pane legacy remnants and verify canonical parity | — |
-| T018 | 6 | PENDING | Final release gate, rollback packaging, and handover | — |
+| T004 | 2 | COMPLETE | `trust-framework.html` now presents a form-first page shell with one active questionnaire page, contextual sidebar mount, persistent reference drawers, quick-jump controls, and explicit Info/Help surfaces instead of the old equal-weight dual-pane target model. | 2026-04-03 |
+| T005 | 2 | COMPLETE | `trust-framework.html` now wires the extracted CSS files in the required order (`tokens` → `base` → `layout` → `components` → `states` → `print`), and the live page no longer uses an inline stylesheet tag. | 2026-04-03 |
+| T006 | 2 | COMPLETE | `trust-framework.html` now boots from external `static/js/app.js`; `app.js` remains bootstrap-only, shell/page/context/drawer state is store-owned through `state/store.js` + `behavior/navigation.js`, and `panel-sync` is no longer the governing runtime path. | 2026-04-03 |
+| T007 | 3 | COMPLETE | `app.js` now mounts `render/questionnaire-pages.js` into `#questionnaireRenderRoot`, so the live shell renders all 13 canonical pages from schema with stable page/criterion/field/summary hooks and no longer depends on handwritten questionnaire markup at runtime. | 2026-04-03 |
+| T008 | 3 | COMPLETE | The contextual sidebar, persistent reference drawers, and Info surface are now integrated against the rendered pages; context follows active page/sub-anchor state, drawers remain persistent/pinnable, and closed overlay surfaces no longer intercept questionnaire interaction. | 2026-04-03 |
+| T009 | 3 | COMPLETE | The sidebar page index, quick-jump row, and page-anchor lists are generated from the shared registries plus rendered page anchors; accessible pages remain navigable, system-skipped pages are explicitly disabled/marked, and anchor harvesting is constrained to top-level rendered pages. | 2026-04-03 |
+| T010 | 3 | COMPLETE | Dedicated `pager.js` and `context-tracking.js` now drive sequential navigation in accessible canonical order; workflow mode derives editable/read-only/system-skipped states, context routing follows page/sub-anchor state instead of scroll sync, and every canonical page has a stable slug-backed hash identity. | 2026-04-03 |
+| T011 | 4 | COMPLETE | Live form controls now commit typed field and section-meta updates through the store, including section notes and skip scaffolds; representative browser verification confirmed real field updates plus skip override interaction on `S1`. | 2026-04-03 |
+| T012 | 4 | COMPLETE | Conditional requiredness, typed URL validation, skip rationale enforcement, and derived attention/skip outcomes were re-verified in both browser and Node runtime scenarios; cross-lane integration now keeps skip scaffolds wired to the rules/derive layer. | 2026-04-03 |
+| T013 | 4 | COMPLETE | Canonical full-questionnaire progress is now the authoritative live surface for page index, quick jump, completion strip, and principle badges; browser verification confirmed `complete`, `invalid_attention`, and `skipped` transitions with canonical badge copy. | 2026-04-03 |
+| T014 | 4 | COMPLETE | Evaluation evidence intake, mixed image/file rendering, note capture, preview lightbox, remove flow, and manifest export status were verified live; document-level evidence action handling now closes the lightbox correctly outside the questionnaire root. | 2026-04-03 |
+| T015 | 5 | COMPLETE | Visual state normalization and explicit help/info surfaces are now live in the shell and were re-verified through browser coverage, including the focus-return flows for Info, Help, and the narrow-screen Context drawer. | 2026-04-04 |
+| T016 | 5 | COMPLETE | Minimal static-project tooling is in place and verified: `html-validate` passes for `trust-framework.html`, and the Playwright suite passes end-to-end (`32 passed`) across Chromium and Firefox using the repo web-server configuration. | 2026-04-04 |
+| T017 | 6 | COMPLETE | Final legacy cleanup removed the unused `static/js/behavior/panel-sync.js` module; canonical parity was re-verified through the schema-rendering/browser specs, responsive checks passed in Playwright, and a print-media smoke check confirmed the extracted print layer hides shell chrome and restores a single-column document flow. | 2026-04-04 |
+| T018 | 6 | COMPLETE | Release gate passed with successful HTML validation, full browser regression coverage, and a served-page smoke pass against the rebuilt shell. The resulting implementation remains a maintainable static frontend with explicit config/state/render/behavior boundaries and no additional runtime architecture introduced in closeout. | 2026-04-04 |
