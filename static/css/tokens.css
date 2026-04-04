@@ -245,4 +245,32 @@
   --focus-ring: var(--ut-blue);
   --focus-ring-offset: 2px;
   --focus-ring-width: 2px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Border widths */
+  --border-thin: 1px;
+  --border-default: 2px;
+  --border-medium: 3px;
+  --border-thick: 4px;
+
+  /* Z-index scale */
+  --z-panel-shadow: 4;
+  --z-panel-progress: 5;
+  --z-drawer-backdrop: 18;
+  --z-drawer: 20;
+  --z-header: 25;
+  --z-accent-bar: 30;
+  --z-surface: 40;
+  --z-skip-link: 50;
+  --z-lightbox: 1000;
 }
