@@ -5,7 +5,7 @@ import {
   SECTION_REGISTRY,
   getSectionDefinition,
 } from '../config/sections.js';
-import { toArray, getDocumentRef, clearChildren } from '../utils/shared.js';
+import { toArray, getDocumentRef, clearChildren, setAccentKey, createSourceList } from '../utils/shared.js';
 
 const ABOUT_TOPIC_IDS = Object.freeze(
   CONTENT_TOPIC_REGISTRY
@@ -17,19 +17,6 @@ const parseTopicIds = (rawValue) =>
   typeof rawValue === 'string'
     ? rawValue.trim().split(/\s+/).filter(Boolean)
     : [];
-
-const setAccentKey = (element, accentKey) => {
-  if (!(element instanceof HTMLElement)) {
-    return;
-  }
-
-  if (accentKey) {
-    element.dataset.accentKey = accentKey;
-    return;
-  }
-
-  delete element.dataset.accentKey;
-};
 
 const getRelatedPagesForTopic = (topicId) =>
   SECTION_REGISTRY.filter((section) => section.aboutTopicIds.includes(topicId));
@@ -71,27 +58,6 @@ const buildAboutShell = (surfaceBody, documentRef) => {
     nav,
     view,
   };
-};
-
-const createSourceList = (documentRef, sourceRefs) => {
-  const block = documentRef.createElement('div');
-  const label = documentRef.createElement('p');
-  const list = documentRef.createElement('ul');
-
-  block.className = 'about-topic-meta-block';
-  label.className = 'context-block-label';
-  label.textContent = 'Source refs';
-  list.className = 'context-source-list';
-
-  sourceRefs.forEach((sourceRef) => {
-    const item = documentRef.createElement('li');
-    item.className = 'context-source-item';
-    item.textContent = sourceRef;
-    list.appendChild(item);
-  });
-
-  block.append(label, list);
-  return block;
 };
 
 const createRelatedPages = (documentRef, topicId) => {

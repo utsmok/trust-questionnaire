@@ -5,6 +5,7 @@ import {
   getSectionDefinition,
 } from '../config/sections.js';
 import { PROGRESS_STATES } from '../state/derive.js';
+import { getDocumentRef, clearChildren, joinTokens, formatProgressStateLabel, formatSectionProgressCompact, createInfoRow, getCompletionGroupLabel } from '../utils/shared.js';
 import { REFERENCE_DRAWER_BY_TOPIC_ID } from './reference-drawers.js';
 
 const PAGE_HELP_SUMMARIES = Object.freeze({
@@ -29,62 +30,7 @@ const WORKFLOW_STATE_LABELS = Object.freeze({
   [SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED]: 'System-skipped',
 });
 
-const PROGRESS_STATE_LABELS = Object.freeze({
-  [PROGRESS_STATES.NOT_STARTED]: 'Not started',
-  [PROGRESS_STATES.IN_PROGRESS]: 'In progress',
-  [PROGRESS_STATES.COMPLETE]: 'Complete',
-  [PROGRESS_STATES.INVALID_ATTENTION]: 'Needs attention',
-  [PROGRESS_STATES.SKIPPED]: 'Skipped',
-  [PROGRESS_STATES.BLOCKED_ESCALATED]: 'Blocked / escalated',
-});
-
-const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
-
-const clearChildren = (element) => {
-  while (element?.firstChild) {
-    element.removeChild(element.firstChild);
-  }
-};
-
-const joinTokens = (items) => items.filter(Boolean).join(' · ');
-
-const formatProgressStateLabel = (value, fallback = 'Not started') =>
-  PROGRESS_STATE_LABELS[value] ?? fallback;
-
-const formatSectionProgressCompact = (sectionProgress) => {
-  if (!sectionProgress) {
-    return 'Awaiting input';
-  }
-
-  if (sectionProgress.canonicalState === PROGRESS_STATES.SKIPPED) {
-    return sectionProgress.skippedByWorkflow ? 'Workflow skip' : 'Skip satisfied';
-  }
-
-  if (sectionProgress.applicableRequiredFieldCount > 0) {
-    return `${sectionProgress.satisfiedRequiredFieldCount}/${sectionProgress.applicableRequiredFieldCount} req`;
-  }
-
-  if (sectionProgress.criterionCount > 0) {
-    return `${sectionProgress.resolvedCriterionCount}/${sectionProgress.criterionCount} crit`;
-  }
-
-  return sectionProgress.hasAnyActivity ? 'No active req' : 'Awaiting input';
-};
-
-const createInfoRow = (documentRef, label, value) => {
-  const wrapper = documentRef.createElement('div');
-  const dt = documentRef.createElement('dt');
-  const dd = documentRef.createElement('dd');
-
-  wrapper.className = 'context-route-row';
-  dt.textContent = label;
-  dd.textContent = value;
-
-  wrapper.append(dt, dd);
-  return wrapper;
-};
-
-const createChip = (documentRef, text, dataset = {}) => {
+const PROGRESS_STATE_LABELS = (documentRef, text, dataset = {}) => {
   const chip = documentRef.createElement('span');
   chip.className = 'chip';
   chip.textContent = text;
@@ -114,9 +60,6 @@ const createLegendCard = ({ documentRef, titleText, bodyText, chips = [] }) => {
   card.append(title, body, chipRow);
   return card;
 };
-
-const getCompletionGroupLabel = (completionGroupId) =>
-  COMPLETION_GROUPS.find((group) => group.id === completionGroupId)?.label ?? completionGroupId;
 
 const createTagListBlock = ({ documentRef, labelText, items, accentKey = 'control' }) => {
   if (!items.length) {
@@ -209,7 +152,7 @@ export const createHelpPanelController = ({ root = document }) => {
       createInfoRow(documentRef, 'Workflow', WORKFLOW_STATE_LABELS[pageState?.workflowState] ?? 'Unavailable'),
       createInfoRow(documentRef, 'Progress', formatProgressStateLabel(sectionProgress?.canonicalState)),
       createInfoRow(documentRef, 'Required', formatSectionProgressCompact(sectionProgress)),
-      createInfoRow(documentRef, 'Completion group', getCompletionGroupLabel(pageDefinition?.completionGroupId)),
+      createInfoRow(documentRef, 'Completion group', getCompletionGroupLabel(pageDefinition?.completionGroupId, COMPLETION_GROUPS)),
       createInfoRow(documentRef, 'Context topic', contextTopicDefinition?.title ?? 'No registered context topic'),
     );
 

@@ -11,7 +11,7 @@ import {
 } from '../config/questionnaire-schema.js';
 import { PROGRESS_STATES } from '../state/derive.js';
 import { selectQuickJumpPageIds } from '../state/store.js';
-import { toArray, getDocumentRef, clearChildren } from '../utils/shared.js';
+import { toArray, getDocumentRef, clearChildren, joinTokens, setAccentKey, createInfoRow, getCompletionGroupLabel, formatProgressStateLabel, formatSectionProgressCompact, createSourceList } from '../utils/shared.js';
 import { REFERENCE_DRAWER_BY_TOPIC_ID } from './reference-drawers.js';
 
 export const CONTEXT_ROUTE_KINDS = Object.freeze({
@@ -126,21 +126,6 @@ const PROGRESS_STATE_LABELS = Object.freeze({
   [PROGRESS_STATES.BLOCKED_ESCALATED]: 'Blocked / escalated',
 });
 
-const joinTokens = (items) => items.filter(Boolean).join(' · ');
-
-const setAccentKey = (element, accentKey) => {
-  if (!(element instanceof HTMLElement)) {
-    return;
-  }
-
-  if (accentKey) {
-    element.dataset.accentKey = accentKey;
-    return;
-  }
-
-  delete element.dataset.accentKey;
-};
-
 const parseTopicIds = (rawValue) =>
   typeof rawValue === 'string'
     ? rawValue.trim().split(/\s+/).filter(Boolean)
@@ -149,10 +134,6 @@ const parseTopicIds = (rawValue) =>
 const toPrincipleKey = (pageId) => {
   const normalized = typeof pageId === 'string' ? pageId.toLowerCase() : '';
   return QUICK_JUMP_COLOR_BY_KEY[normalized] ? normalized : null;
-};
-
-const getCompletionGroupLabel = (completionGroupId) => {
-  return COMPLETION_GROUPS.find((group) => group.id === completionGroupId)?.label ?? completionGroupId;
 };
 
 const getSectionHeadingText = (section) => {
@@ -176,29 +157,6 @@ const formatStateLabel = (value, fallback = 'Unknown') => {
     .split('_')
     .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
     .join(' ');
-};
-
-const formatProgressStateLabel = (value, fallback = 'Not started') =>
-  PROGRESS_STATE_LABELS[value] ?? fallback;
-
-const formatSectionProgressCompact = (sectionProgress) => {
-  if (!sectionProgress) {
-    return 'Awaiting input';
-  }
-
-  if (sectionProgress.canonicalState === PROGRESS_STATES.SKIPPED) {
-    return sectionProgress.skippedByWorkflow ? 'Workflow skip' : 'Skip satisfied';
-  }
-
-  if (sectionProgress.applicableRequiredFieldCount > 0) {
-    return `${sectionProgress.satisfiedRequiredFieldCount}/${sectionProgress.applicableRequiredFieldCount} req`;
-  }
-
-  if (sectionProgress.criterionCount > 0) {
-    return `${sectionProgress.resolvedCriterionCount}/${sectionProgress.criterionCount} crit`;
-  }
-
-  return sectionProgress.hasAnyActivity ? 'No active req' : 'Awaiting input';
 };
 
 const formatSectionProgressDetail = (sectionProgress) => {
@@ -324,19 +282,6 @@ const getSummaryAnchorShortLabel = (summaryKind) =>
   summaryKind === 'criteria'
     ? 'CRITERIA'
     : formatStateLabel(summaryKind, 'SUMMARY').toUpperCase();
-
-const createInfoRow = (documentRef, label, value, extraClassName = '') => {
-  const wrapper = documentRef.createElement('div');
-  const dt = documentRef.createElement('dt');
-  const dd = documentRef.createElement('dd');
-
-  wrapper.className = `context-route-row${extraClassName ? ` ${extraClassName}` : ''}`;
-  dt.textContent = label;
-  dd.textContent = value;
-
-  wrapper.append(dt, dd);
-  return wrapper;
-};
 
 const createSectionTag = (documentRef, pageDefinition) => {
   const tag = documentRef.createElement('span');
@@ -464,27 +409,6 @@ const createLinkButton = ({
   }
 
   return button;
-};
-
-const createSourceList = (documentRef, sourceRefs) => {
-  const block = documentRef.createElement('div');
-  const label = documentRef.createElement('p');
-  const list = documentRef.createElement('ul');
-
-  block.className = 'context-source-block';
-  label.className = 'context-block-label';
-  label.textContent = 'Source refs';
-  list.className = 'context-source-list';
-
-  sourceRefs.forEach((sourceRef) => {
-    const item = documentRef.createElement('li');
-    item.className = 'context-source-item';
-    item.textContent = sourceRef;
-    list.appendChild(item);
-  });
-
-  block.append(label, list);
-  return block;
 };
 
 const buildCriterionCompanion = (documentRef, route) => {
@@ -984,7 +908,7 @@ export const createSidebarRenderer = ({
         groupItem.dataset.progressState = groupProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
         groupHeader.className = 'page-index-group-header';
         groupLabel.className = 'page-index-group-label';
-        groupLabel.textContent = getCompletionGroupLabel(pageDefinition?.completionGroupId);
+        groupLabel.textContent = getCompletionGroupLabel(pageDefinition?.completionGroupId, COMPLETION_GROUPS);
         groupSummary.className = 'page-index-group-summary';
         groupSummary.textContent = formatGroupProgressSummary(groupProgress);
 
