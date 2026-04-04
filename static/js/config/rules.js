@@ -4,6 +4,10 @@ import {
   WORKFLOW_MODES,
 } from './sections.js';
 import {
+  OPTION_SET_IDS,
+  OPTION_SETS,
+} from './option-sets.js';
+import {
   CRITERIA,
   CRITERION_FIELD_IDS,
   FIELD_IDS,
@@ -24,6 +28,49 @@ const indexRulesByTarget = (rules) =>
 const createRule = ({ id, targetFieldId, when, description }) =>
   Object.freeze({ id, targetFieldId, when, description });
 
+const createTextValidationRule = ({
+  id,
+  targetFieldId,
+  minSubstantiveLength,
+  description,
+}) =>
+  Object.freeze({
+    id,
+    targetFieldId,
+    minSubstantiveLength,
+    description,
+  });
+
+const createCrossFieldValidationRule = ({
+  id,
+  type,
+  targetFieldIds,
+  description,
+  ...config
+}) =>
+  Object.freeze({
+    id,
+    type,
+    targetFieldIds: freezeArray(targetFieldIds),
+    description,
+    ...config,
+  });
+
+const createWorkflowEscalationRule = ({
+  id,
+  requiresSectionId,
+  when,
+  releaseCondition = null,
+  description,
+}) =>
+  Object.freeze({
+    id,
+    requiresSectionId,
+    when,
+    releaseCondition,
+    description,
+  });
+
 const equals = (fieldId, value) => Object.freeze({ fieldId, operator: 'equals', value });
 const inValues = (fieldId, values) => Object.freeze({ fieldId, operator: 'in', value: freezeArray(values) });
 const hasAny = (fieldId) => Object.freeze({ fieldId, operator: 'has_any' });
@@ -34,6 +81,13 @@ export const SKIP_STATES = Object.freeze({
   USER_SKIPPED: 'user_skipped',
   SYSTEM_SKIPPED: 'system_skipped',
   INHERITED_SECTION_SKIP: 'inherited_section_skip',
+});
+
+export const VALIDATION_STATES = Object.freeze({
+  CLEAR: 'clear',
+  ATTENTION: 'attention',
+  INVALID: 'invalid',
+  BLOCKED: 'blocked',
 });
 
 export const SECTION_STATUS = Object.freeze({
@@ -285,17 +339,155 @@ export const FIELD_REQUIREMENT_RULES = freezeArray([
 export const FIELD_VISIBILITY_RULES_BY_TARGET = indexRulesByTarget(FIELD_VISIBILITY_RULES);
 export const FIELD_REQUIREMENT_RULES_BY_TARGET = indexRulesByTarget(FIELD_REQUIREMENT_RULES);
 
+export const FIELD_TEXT_VALIDATION_RULES = freezeArray([
+  createTextValidationRule({
+    id: 'validate_nomination_reason_detail',
+    targetFieldId: FIELD_IDS.S0.NOMINATION_REASON,
+    minSubstantiveLength: 20,
+    description: 'Nomination reason must contain enough detail to justify the nomination.',
+  }),
+  createTextValidationRule({
+    id: 'validate_scope_rationale_detail',
+    targetFieldId: FIELD_IDS.S1.SCOPE_RATIONALE,
+    minSubstantiveLength: 20,
+    description: 'Scope rationale must contain enough detail to justify the scope decision.',
+  }),
+  ...CRITERIA.map((criterion) =>
+    createTextValidationRule({
+      id: `validate_${criterion.code.toLowerCase()}_uncertainty_detail`,
+      targetFieldId: CRITERION_FIELD_IDS[criterion.code].uncertaintyOrBlockers,
+      minSubstantiveLength: 20,
+      description: `${criterion.code} uncertainty/blocker follow-up must explain the low or unclear score in enough detail.`,
+    }),
+  ),
+  createTextValidationRule({
+    id: 'validate_critical_fail_notes_detail',
+    targetFieldId: FIELD_IDS.S8.CRITICAL_FAIL_NOTES,
+    minSubstantiveLength: 20,
+    description: 'Critical fail notes must explain the flagged concern in enough detail.',
+  }),
+  createTextValidationRule({
+    id: 'validate_conditions_or_caveats_detail',
+    targetFieldId: FIELD_IDS.S9.CONDITIONS_OR_CAVEATS,
+    minSubstantiveLength: 20,
+    description: 'Conditions/caveats must explain the recommendation constraint in enough detail.',
+  }),
+  createTextValidationRule({
+    id: 'validate_conflict_summary_detail',
+    targetFieldId: FIELD_IDS.S10B.CONFLICT_SUMMARY,
+    minSubstantiveLength: 20,
+    description: 'Conflict summary must explain the disagreement in enough detail.',
+  }),
+  createTextValidationRule({
+    id: 'validate_final_status_rationale_detail',
+    targetFieldId: FIELD_IDS.S10C.FINAL_STATUS_RATIONALE,
+    minSubstantiveLength: 20,
+    description: 'Final status rationale must explain the team decision in enough detail.',
+  }),
+]);
+
+export const FIELD_TEXT_VALIDATION_RULES_BY_TARGET = indexRulesByTarget(FIELD_TEXT_VALIDATION_RULES);
+
+export const CROSS_FIELD_VALIDATION_RULES = freezeArray([
+  createCrossFieldValidationRule({
+    id: 'validate_second_review_after_submission',
+    type: 'date_order',
+    earlierFieldId: FIELD_IDS.S10A.DATE_SUBMITTED_FOR_REVIEW,
+    laterFieldId: FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
+    targetFieldIds: [
+      FIELD_IDS.S10A.DATE_SUBMITTED_FOR_REVIEW,
+      FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
+    ],
+    description: 'The second-review date must be on or after the handoff submission date.',
+  }),
+  createCrossFieldValidationRule({
+    id: 'validate_decision_meeting_after_second_review',
+    type: 'date_order',
+    earlierFieldId: FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
+    laterFieldId: FIELD_IDS.S10C.DECISION_MEETING_DATE,
+    targetFieldIds: [
+      FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
+      FIELD_IDS.S10C.DECISION_MEETING_DATE,
+    ],
+    description: 'The final decision meeting date must be on or after the second-review date.',
+  }),
+  createCrossFieldValidationRule({
+    id: 'validate_next_review_due_after_latest_milestone',
+    type: 'date_after_latest_of',
+    subjectFieldId: FIELD_IDS.S9.NEXT_REVIEW_DUE,
+    referenceFieldIds: freezeArray([
+      FIELD_IDS.S10C.DECISION_MEETING_DATE,
+      FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
+      FIELD_IDS.S10A.DATE_SUBMITTED_FOR_REVIEW,
+    ]),
+    targetFieldIds: [
+      FIELD_IDS.S9.NEXT_REVIEW_DUE,
+      FIELD_IDS.S10A.DATE_SUBMITTED_FOR_REVIEW,
+      FIELD_IDS.S10B.DATE_OF_SECOND_REVIEW,
+      FIELD_IDS.S10C.DECISION_MEETING_DATE,
+    ],
+    description: 'The next review due date must fall after the latest completed governance milestone.',
+  }),
+  createCrossFieldValidationRule({
+    id: 'validate_out_of_scope_recommendation_alignment',
+    type: 'field_value_alignment',
+    sourceFieldId: FIELD_IDS.S9.RECOMMENDATION_STATUS,
+    sourceValue: 'out_of_scope',
+    relatedFieldId: FIELD_IDS.S1.IN_SCOPE_CHECK,
+    expectedValue: 'out_of_scope',
+    targetFieldIds: [
+      FIELD_IDS.S9.RECOMMENDATION_STATUS,
+      FIELD_IDS.S1.IN_SCOPE_CHECK,
+    ],
+    description: 'Selecting “Out of scope” requires the scope check to also be “Out of scope”.',
+  }),
+]);
+
+const USER_SKIP_REASON_CODES = freezeArray(
+  (OPTION_SETS[OPTION_SET_IDS.SKIP_REASON_CODES]?.options ?? [])
+    .filter((option) => option.availability !== 'system')
+    .map((option) => option.value),
+);
+
+const SYSTEM_SKIP_REASON_CODES = freezeArray(
+  (OPTION_SETS[OPTION_SET_IDS.SKIP_REASON_CODES]?.options ?? [])
+    .filter((option) => option.availability === 'system')
+    .map((option) => option.value),
+);
+
 export const SKIP_POLICY = Object.freeze({
   section: Object.freeze({
+    scope: 'section',
     allowUserSkip: true,
     requiresReasonCode: true,
     requiresRationale: true,
+    rationaleMinLength: 20,
+    reasonCodeKeys: freezeArray(['sectionSkipReasonCode', 'section_skip_reason_code']),
+    rationaleKeys: freezeArray(['sectionSkipRationale', 'section_skip_rationale']),
+    userReasonCodes: USER_SKIP_REASON_CODES,
+    systemReasonCodes: SYSTEM_SKIP_REASON_CODES,
     inheritedCriterionSkipState: SKIP_STATES.INHERITED_SECTION_SKIP,
   }),
   criterion: Object.freeze({
+    scope: 'criterion',
     allowUserSkip: true,
     requiresReasonCode: true,
     requiresRationale: true,
+    rationaleMinLength: 20,
+    reasonCodeKeys: freezeArray([
+      'skipReasonCode',
+      'skip_reason_code',
+      'criterionSkipReasonCode',
+      'criterion_skip_reason_code',
+    ]),
+    rationaleKeys: freezeArray([
+      'skipRationale',
+      'skip_rationale',
+      'criterionSkipRationale',
+      'criterion_skip_rationale',
+    ]),
+    userReasonCodes: USER_SKIP_REASON_CODES,
+    systemReasonCodes: SYSTEM_SKIP_REASON_CODES,
     inheritedFieldSkipState: SKIP_STATES.INHERITED_SECTION_SKIP,
   }),
 });
@@ -355,6 +547,23 @@ export const RECOMMENDATION_CONSTRAINT_RULES = freezeArray([
     blockedValues: POSITIVE_RECOMMENDATION_VALUES,
     releaseCondition: { fieldId: FIELD_IDS.S10C.FINAL_STATUS, operator: 'not_empty' },
     description: 'Positive recommendations stay locked until final team decision resolves reviewer disagreement.',
+  }),
+]);
+
+export const WORKFLOW_ESCALATION_RULES = freezeArray([
+  createWorkflowEscalationRule({
+    id: 'escalate_critical_fail_to_final_decision',
+    requiresSectionId: SECTION_IDS.S10C,
+    when: hasAny(FIELD_IDS.S8.CRITICAL_FAIL_FLAGS),
+    releaseCondition: { fieldId: FIELD_IDS.S10C.FINAL_STATUS, operator: 'not_empty' },
+    description: 'Critical fail flags require a recorded final team decision before closure.',
+  }),
+  createWorkflowEscalationRule({
+    id: 'escalate_disagreement_to_final_decision',
+    requiresSectionId: SECTION_IDS.S10C,
+    when: equals(FIELD_IDS.S10B.AGREEMENT_WITH_PRIMARY_EVALUATION, 'disagreement'),
+    releaseCondition: { fieldId: FIELD_IDS.S10C.FINAL_STATUS, operator: 'not_empty' },
+    description: 'Reviewer disagreement requires a recorded final team decision before closure.',
   }),
 ]);
 

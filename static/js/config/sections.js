@@ -227,7 +227,7 @@ export const SECTION_REGISTRY = freezeArray([
 			reEvaluation: SECTION_WORKFLOW_STATES.EDITABLE,
 		}),
 		contextTopicId: 'context.secure',
-		referenceTopicIds: freezeArray(['reference.scoring-model', 'reference.evidence-requirements', 'reference.critical-fail-flags']),
+		referenceTopicIds: freezeArray(['reference.scoring-model', 'reference.evidence-requirements', 'reference.answer-sets']),
 		aboutTopicIds: freezeArray(['about.framework-overview', 'about.governance-workflow']),
 	}),
 	Object.freeze({
@@ -273,7 +273,7 @@ export const SECTION_REGISTRY = freezeArray([
 			reEvaluation: SECTION_WORKFLOW_STATES.EDITABLE,
 		}),
 		contextTopicId: 'context.critical-fails-and-confidence',
-		referenceTopicIds: freezeArray(['reference.critical-fail-flags', 'reference.scoring-model', 'reference.evidence-requirements']),
+		referenceTopicIds: freezeArray(['reference.answer-sets', 'reference.scoring-model', 'reference.evidence-requirements']),
 		aboutTopicIds: freezeArray(['about.governance-workflow']),
 	}),
 	Object.freeze({
