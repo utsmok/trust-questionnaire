@@ -1,9 +1,5 @@
-import {
-  CRITERIA,
-} from '../../config/questionnaire-schema.js';
-import {
-  SKIP_STATES,
-} from '../../config/rules.js';
+import { CRITERIA } from '../../config/questionnaire-schema.js';
+import { SKIP_STATES } from '../../config/rules.js';
 import {
   EMPTY_OBJECT,
   PRINCIPLE_JUDGMENT_FIELD_IDS,
@@ -18,11 +14,20 @@ import { derivePageStates } from './workflow.js';
 
 export const derivePrincipleJudgment = (sectionId, evaluation, context = EMPTY_OBJECT) => {
   const state = normalizeState(evaluation);
-  const criterionStates = context.criterionStates ?? deriveCriterionStates(state, context.pageStates).byCode;
-  const criterionCodes = CRITERIA.filter((criterion) => criterion.sectionId === sectionId).map((criterion) => criterion.code);
+  const criterionStates =
+    context.criterionStates ?? deriveCriterionStates(state, context.pageStates).byCode;
+  const criterionCodes = CRITERIA.filter((criterion) => criterion.sectionId === sectionId).map(
+    (criterion) => criterion.code,
+  );
   const criterionResults = criterionCodes.map((criterionCode) => criterionStates[criterionCode]);
-  const allScored = criterionResults.every((criterionState) => criterionState?.scorePresent === true);
-  const anySkipped = criterionResults.some((criterionState) => criterionState?.skipState === SKIP_STATES.USER_SKIPPED || criterionState?.skipState === SKIP_STATES.INHERITED_SECTION_SKIP);
+  const allScored = criterionResults.every(
+    (criterionState) => criterionState?.scorePresent === true,
+  );
+  const anySkipped = criterionResults.some(
+    (criterionState) =>
+      criterionState?.skipState === SKIP_STATES.USER_SKIPPED ||
+      criterionState?.skipState === SKIP_STATES.INHERITED_SECTION_SKIP,
+  );
 
   let computedValue = null;
 
@@ -40,9 +45,7 @@ export const derivePrincipleJudgment = (sectionId, evaluation, context = EMPTY_O
 
   const fieldId = PRINCIPLE_JUDGMENT_FIELD_IDS[sectionId];
   const overrideCandidate =
-    state.overrides.principleJudgments?.[sectionId] ??
-    getFieldValue(state, fieldId) ??
-    null;
+    state.overrides.principleJudgments?.[sectionId] ?? getFieldValue(state, fieldId) ?? null;
 
   let value = computedValue;
   let source = 'computed';
@@ -60,7 +63,8 @@ export const derivePrincipleJudgment = (sectionId, evaluation, context = EMPTY_O
       overrideIgnoredReason = 'Upward overrides are not allowed.';
     }
   } else if (overrideCandidate && !computedValue) {
-    overrideIgnoredReason = 'Judgment override was provided before all criterion scores were available.';
+    overrideIgnoredReason =
+      'Judgment override was provided before all criterion scores were available.';
   }
 
   return {

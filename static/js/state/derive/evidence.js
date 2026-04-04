@@ -4,10 +4,7 @@ import {
   FIELD_IDS,
   QUESTIONNAIRE_FIELDS_BY_ID,
 } from '../../config/questionnaire-schema.js';
-import {
-  EVIDENCE_COMPLETENESS_RULES,
-  SKIP_STATES,
-} from '../../config/rules.js';
+import { EVIDENCE_COMPLETENESS_RULES, SKIP_STATES } from '../../config/rules.js';
 import { SECTION_IDS } from '../../config/sections.js';
 import { extractEvidenceItems } from '../../utils/shared.js';
 import {
@@ -35,7 +32,8 @@ export const deriveEvidenceCompleteness = (evaluation, context = EMPTY_OBJECT) =
     evaluationFolderLinkValue,
   );
   const evaluationFolderLinkValid =
-    getTypedFieldValidationIssues(evaluationFolderLinkField, evaluationFolderLinkValue).length === 0;
+    getTypedFieldValidationIssues(evaluationFolderLinkField, evaluationFolderLinkValue).length ===
+    0;
   const criteria = {};
 
   for (const criterion of CRITERIA) {
@@ -49,13 +47,14 @@ export const deriveEvidenceCompleteness = (evaluation, context = EMPTY_OBJECT) =
         criterionState.skipState === SKIP_STATES.USER_SKIPPED
           ? criterionState.skipSatisfied
           : criterionState.skipState === SKIP_STATES.INHERITED_SECTION_SKIP ||
-            criterionState.skipState === SKIP_STATES.SYSTEM_SKIPPED
+              criterionState.skipState === SKIP_STATES.SYSTEM_SKIPPED
             ? true
             : criterionState.evidenceComplete,
-      summaryPresent: criterionState.evidenceComplete || hasMeaningfulText(criterionState.values.evidenceSummary),
+      summaryPresent:
+        criterionState.evidenceComplete || hasMeaningfulText(criterionState.values.evidenceSummary),
       linksPresent:
-        normalizeUrlList(criterionState.values.evidenceLinks).length > 0
-        && !criterionState.invalidFieldIds.includes(evidenceLinksFieldId),
+        normalizeUrlList(criterionState.values.evidenceLinks).length > 0 &&
+        !criterionState.invalidFieldIds.includes(evidenceLinksFieldId),
       itemCount: evidenceItems.length,
       noteHookComplete: evidenceItems.length === 0 || evidenceItems.every(hasEvidenceNote),
     };
@@ -76,7 +75,9 @@ export const deriveEvidenceCompleteness = (evaluation, context = EMPTY_OBJECT) =
     hooks: {
       evaluationEvidenceNotesReady:
         evaluationEvidenceItems.length === 0 || evaluationEvidenceItems.every(hasEvidenceNote),
-      criterionAssociationNotesReady: Object.values(criteria).every((criterion) => criterion.noteHookComplete),
+      criterionAssociationNotesReady: Object.values(criteria).every(
+        (criterion) => criterion.noteHookComplete,
+      ),
     },
   };
 };

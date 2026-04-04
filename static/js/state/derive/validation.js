@@ -1,7 +1,4 @@
-import {
-  CROSS_FIELD_VALIDATION_RULES,
-  VALIDATION_STATES,
-} from '../../config/rules.js';
+import { CROSS_FIELD_VALIDATION_RULES, VALIDATION_STATES } from '../../config/rules.js';
 import { EMPTY_ARRAY, isPlainObject } from '../../utils/shared.js';
 import {
   EMPTY_OBJECT,
@@ -16,11 +13,13 @@ import { deriveFieldStates } from './fields.js';
 export const deriveCrossFieldValidations = (evaluation, context = EMPTY_OBJECT) => {
   const state = normalizeState(evaluation);
   const pageStates = context.pageStates ?? derivePageStates(state);
-  const fieldStates = context.fieldStates ?? deriveFieldStates(state, {
-    ...context,
-    pageStates,
-    includeCrossFieldValidations: false,
-  });
+  const fieldStates =
+    context.fieldStates ??
+    deriveFieldStates(state, {
+      ...context,
+      pageStates,
+      includeCrossFieldValidations: false,
+    });
   const byFieldId = {};
   const issues = [];
 
@@ -42,9 +41,10 @@ export const deriveCrossFieldValidations = (evaluation, context = EMPTY_OBJECT) 
       .filter((fieldState) => fieldState.suppressedBySkip !== true);
 
     if (
-      targetFieldStates.length === 0
-      || !targetFieldStates.some((fieldState) =>
-        fieldState.visible || fieldState.answered || fieldState.logicallyRequired)
+      targetFieldStates.length === 0 ||
+      !targetFieldStates.some(
+        (fieldState) => fieldState.visible || fieldState.answered || fieldState.logicallyRequired,
+      )
     ) {
       continue;
     }
@@ -55,10 +55,10 @@ export const deriveCrossFieldValidations = (evaluation, context = EMPTY_OBJECT) 
         const laterState = fieldStates.byId[rule.laterFieldId];
 
         if (
-          !earlierState
-          || !laterState
-          || earlierState.suppressedBySkip
-          || laterState.suppressedBySkip
+          !earlierState ||
+          !laterState ||
+          earlierState.suppressedBySkip ||
+          laterState.suppressedBySkip
         ) {
           break;
         }
@@ -106,8 +106,8 @@ export const deriveCrossFieldValidations = (evaluation, context = EMPTY_OBJECT) 
           .filter(Boolean);
 
         if (
-          referenceDates.length === 0
-          || subjectDate.getTime() > Math.max(...referenceDates.map((date) => date.getTime()))
+          referenceDates.length === 0 ||
+          subjectDate.getTime() > Math.max(...referenceDates.map((date) => date.getTime()))
         ) {
           break;
         }
@@ -130,12 +130,12 @@ export const deriveCrossFieldValidations = (evaluation, context = EMPTY_OBJECT) 
         const relatedState = fieldStates.byId[rule.relatedFieldId];
 
         if (
-          !sourceState
-          || !relatedState
-          || sourceState.suppressedBySkip
-          || relatedState.suppressedBySkip
-          || sourceState.value !== rule.sourceValue
-          || relatedState.value === rule.expectedValue
+          !sourceState ||
+          !relatedState ||
+          sourceState.suppressedBySkip ||
+          relatedState.suppressedBySkip ||
+          sourceState.value !== rule.sourceValue ||
+          relatedState.value === rule.expectedValue
         ) {
           break;
         }

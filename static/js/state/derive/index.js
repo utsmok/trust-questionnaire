@@ -11,8 +11,18 @@ import { derivePageStates } from './workflow.js';
 import { deriveCriterionStates } from './criterion.js';
 import { derivePrincipleJudgments } from './judgments.js';
 import { deriveEvidenceCompleteness } from './evidence.js';
-import { deriveCompletionChecklist, deriveCompletionProgress, deriveOverallCompletion, PROGRESS_STATES } from './progress.js';
-import { buildDerivedFieldValues, deriveFieldStates, deriveRequiredFieldIds, deriveMissingRequiredFieldIds } from './fields.js';
+import {
+  deriveCompletionChecklist,
+  deriveCompletionProgress,
+  deriveOverallCompletion,
+  PROGRESS_STATES,
+} from './progress.js';
+import {
+  buildDerivedFieldValues,
+  deriveFieldStates,
+  deriveRequiredFieldIds,
+  deriveMissingRequiredFieldIds,
+} from './fields.js';
 import { deriveRecommendationConstraints } from './recommendation.js';
 import { deriveWorkflowEscalations } from './workflow.js';
 import { deriveSectionStates } from './section-state.js';
@@ -26,45 +36,55 @@ export { derivePageStates, deriveNavigationState, deriveWorkflowEscalations } fr
 export { deriveCriterionState, deriveCriterionStates } from './criterion.js';
 export { derivePrincipleJudgment, derivePrincipleJudgments } from './judgments.js';
 export { deriveEvidenceCompleteness } from './evidence.js';
-export { deriveCompletionChecklist, deriveCompletionProgress, deriveOverallCompletion } from './progress.js';
+export {
+  deriveCompletionChecklist,
+  deriveCompletionProgress,
+  deriveOverallCompletion,
+} from './progress.js';
 export { deriveCrossFieldValidations } from './validation.js';
-export { deriveFieldState, deriveFieldStates, buildDerivedFieldValues, deriveRequiredFieldIds, deriveMissingRequiredFieldIds } from './fields.js';
+export {
+  deriveFieldState,
+  deriveFieldStates,
+  buildDerivedFieldValues,
+  deriveRequiredFieldIds,
+  deriveMissingRequiredFieldIds,
+} from './fields.js';
 export { deriveRecommendationConstraints } from './recommendation.js';
 export { deriveSectionStates } from './section-state.js';
 
 const deriveValidationSummary = ({ fieldStates, criterionStates, sectionStates }) => ({
   fields: {
-    attentionIds: QUESTIONNAIRE_FIELDS
-      .filter((field) => fieldStates.byId[field.id]?.attention)
-      .map((field) => field.id),
-    invalidIds: QUESTIONNAIRE_FIELDS
-      .filter((field) => fieldStates.byId[field.id]?.invalid)
-      .map((field) => field.id),
-    blockedIds: QUESTIONNAIRE_FIELDS
-      .filter((field) => fieldStates.byId[field.id]?.blocked)
-      .map((field) => field.id),
+    attentionIds: QUESTIONNAIRE_FIELDS.filter((field) => fieldStates.byId[field.id]?.attention).map(
+      (field) => field.id,
+    ),
+    invalidIds: QUESTIONNAIRE_FIELDS.filter((field) => fieldStates.byId[field.id]?.invalid).map(
+      (field) => field.id,
+    ),
+    blockedIds: QUESTIONNAIRE_FIELDS.filter((field) => fieldStates.byId[field.id]?.blocked).map(
+      (field) => field.id,
+    ),
   },
   criteria: {
-    attentionCodes: CRITERIA
-      .filter((criterion) => criterionStates.byCode[criterion.code]?.attention)
-      .map((criterion) => criterion.code),
-    invalidCodes: CRITERIA
-      .filter((criterion) => criterionStates.byCode[criterion.code]?.invalid)
-      .map((criterion) => criterion.code),
-    blockedCodes: CRITERIA
-      .filter((criterion) => criterionStates.byCode[criterion.code]?.blocked)
-      .map((criterion) => criterion.code),
+    attentionCodes: CRITERIA.filter(
+      (criterion) => criterionStates.byCode[criterion.code]?.attention,
+    ).map((criterion) => criterion.code),
+    invalidCodes: CRITERIA.filter(
+      (criterion) => criterionStates.byCode[criterion.code]?.invalid,
+    ).map((criterion) => criterion.code),
+    blockedCodes: CRITERIA.filter(
+      (criterion) => criterionStates.byCode[criterion.code]?.blocked,
+    ).map((criterion) => criterion.code),
   },
   sections: {
-    attentionIds: QUESTIONNAIRE_SECTIONS
-      .filter((section) => sectionStates.bySectionId[section.id]?.attention)
-      .map((section) => section.id),
-    invalidIds: QUESTIONNAIRE_SECTIONS
-      .filter((section) => sectionStates.bySectionId[section.id]?.invalid)
-      .map((section) => section.id),
-    blockedIds: QUESTIONNAIRE_SECTIONS
-      .filter((section) => sectionStates.bySectionId[section.id]?.blocked)
-      .map((section) => section.id),
+    attentionIds: QUESTIONNAIRE_SECTIONS.filter(
+      (section) => sectionStates.bySectionId[section.id]?.attention,
+    ).map((section) => section.id),
+    invalidIds: QUESTIONNAIRE_SECTIONS.filter(
+      (section) => sectionStates.bySectionId[section.id]?.invalid,
+    ).map((section) => section.id),
+    blockedIds: QUESTIONNAIRE_SECTIONS.filter(
+      (section) => sectionStates.bySectionId[section.id]?.blocked,
+    ).map((section) => section.id),
   },
 });
 

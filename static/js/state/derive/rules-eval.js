@@ -3,7 +3,9 @@ import { normalizeDelimitedList } from '../../utils/shared.js';
 
 const getConditionValue = (condition, state, context) => {
   if (condition.fieldId) {
-    return context.derivedFieldValues?.[condition.fieldId] ?? getFieldValue(state, condition.fieldId);
+    return (
+      context.derivedFieldValues?.[condition.fieldId] ?? getFieldValue(state, condition.fieldId)
+    );
   }
 
   if (condition.sectionId) {

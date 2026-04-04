@@ -42,35 +42,25 @@ export const PROGRESS_STATES = Object.freeze({
   BLOCKED_ESCALATED: 'blocked_escalated',
 });
 
-const RESOLVED_PROGRESS_STATES = new Set([
-  PROGRESS_STATES.COMPLETE,
-  PROGRESS_STATES.SKIPPED,
-]);
+const RESOLVED_PROGRESS_STATES = new Set([PROGRESS_STATES.COMPLETE, PROGRESS_STATES.SKIPPED]);
 
 const hasCriterionActivity = (criterionState = EMPTY_OBJECT) => {
   if (!isPlainObject(criterionState)) {
     return false;
   }
 
-  if (
-    criterionState.skipState
-    && criterionState.skipState !== SKIP_STATES.NOT_STARTED
-  ) {
+  if (criterionState.skipState && criterionState.skipState !== SKIP_STATES.NOT_STARTED) {
     return true;
   }
 
-  if (
-    criterionState.status
-    && criterionState.status !== SECTION_STATUS.NOT_STARTED
-  ) {
+  if (criterionState.status && criterionState.status !== SECTION_STATUS.NOT_STARTED) {
     return true;
   }
 
   return Object.values(criterionState.values ?? EMPTY_OBJECT).some(hasMeaningfulRawValue);
 };
 
-const isResolvedProgressState = (progressState) =>
-  RESOLVED_PROGRESS_STATES.has(progressState);
+const isResolvedProgressState = (progressState) => RESOLVED_PROGRESS_STATES.has(progressState);
 
 const getCanonicalProgressState = ({
   pageState,
@@ -97,9 +87,10 @@ const getCanonicalProgressState = ({
     return PROGRESS_STATES.INVALID_ATTENTION;
   }
 
-  const requirementsSatisfied = applicableRequiredFieldCount === 0
-    ? hasAnyActivity
-    : satisfiedRequiredFieldCount === applicableRequiredFieldCount;
+  const requirementsSatisfied =
+    applicableRequiredFieldCount === 0
+      ? hasAnyActivity
+      : satisfiedRequiredFieldCount === applicableRequiredFieldCount;
 
   if (requirementsSatisfied) {
     return PROGRESS_STATES.COMPLETE;
@@ -148,13 +139,14 @@ const summarizeProgressEntries = (entries = EMPTY_ARRAY, options = EMPTY_OBJECT)
     (count, entry) => count + entry.missingRequiredFieldCount,
     0,
   );
-  const completionPercent = applicableRequiredFieldCount > 0
-    ? Math.round((satisfiedRequiredFieldCount / applicableRequiredFieldCount) * 100)
-    : activeEntries.length === 0
-      ? 100
-      : resolvedActiveEntries.length === activeEntries.length
+  const completionPercent =
+    applicableRequiredFieldCount > 0
+      ? Math.round((satisfiedRequiredFieldCount / applicableRequiredFieldCount) * 100)
+      : activeEntries.length === 0
         ? 100
-        : 0;
+        : resolvedActiveEntries.length === activeEntries.length
+          ? 100
+          : 0;
   const unresolvedEscalationCount = Number(options.unresolvedEscalationCount) || 0;
 
   return {
@@ -200,27 +192,15 @@ const deriveAggregateProgressState = (entries = EMPTY_ARRAY, options = EMPTY_OBJ
     return PROGRESS_STATES.BLOCKED_ESCALATED;
   }
 
-  if (
-    activeEntries.some(
-      (entry) => entry.canonicalState === PROGRESS_STATES.BLOCKED_ESCALATED,
-    )
-  ) {
+  if (activeEntries.some((entry) => entry.canonicalState === PROGRESS_STATES.BLOCKED_ESCALATED)) {
     return PROGRESS_STATES.BLOCKED_ESCALATED;
   }
 
-  if (
-    activeEntries.some(
-      (entry) => entry.canonicalState === PROGRESS_STATES.INVALID_ATTENTION,
-    )
-  ) {
+  if (activeEntries.some((entry) => entry.canonicalState === PROGRESS_STATES.INVALID_ATTENTION)) {
     return PROGRESS_STATES.INVALID_ATTENTION;
   }
 
-  if (
-    activeEntries.every(
-      (entry) => entry.canonicalState === PROGRESS_STATES.SKIPPED,
-    )
-  ) {
+  if (activeEntries.every((entry) => entry.canonicalState === PROGRESS_STATES.SKIPPED)) {
     return PROGRESS_STATES.SKIPPED;
   }
 
@@ -228,11 +208,7 @@ const deriveAggregateProgressState = (entries = EMPTY_ARRAY, options = EMPTY_OBJ
     return PROGRESS_STATES.COMPLETE;
   }
 
-  if (
-    activeEntries.some(
-      (entry) => entry.canonicalState !== PROGRESS_STATES.NOT_STARTED,
-    )
-  ) {
+  if (activeEntries.some((entry) => entry.canonicalState !== PROGRESS_STATES.NOT_STARTED)) {
     return PROGRESS_STATES.IN_PROGRESS;
   }
 
@@ -243,10 +219,12 @@ export const deriveCompletionChecklist = (evaluation, context = EMPTY_OBJECT) =>
   const state = normalizeState(evaluation);
   const pageStates = context.pageStates ?? derivePageStates(state);
   const criterionStatesBundle = context.criterionStates ?? deriveCriterionStates(state, pageStates);
-  const evidenceCompleteness = context.evidenceCompleteness ?? deriveEvidenceCompleteness(state, {
-    pageStates,
-    criterionStates: criterionStatesBundle,
-  });
+  const evidenceCompleteness =
+    context.evidenceCompleteness ??
+    deriveEvidenceCompleteness(state, {
+      pageStates,
+      criterionStates: criterionStatesBundle,
+    });
 
   const activeCriterionCodes = CRITERIA.filter(
     (criterion) => pageStates.bySectionId[criterion.sectionId].isAccessible,
@@ -258,7 +236,10 @@ export const deriveCompletionChecklist = (evaluation, context = EMPTY_OBJECT) =>
   const items = {
     all_criteria_scored_with_evidence:
       activeCriterionCodes.length > 0 &&
-      activeCriterionCodes.every((criterionCode) => criterionStatesBundle.byCode[criterionCode].status === SECTION_STATUS.COMPLETE),
+      activeCriterionCodes.every(
+        (criterionCode) =>
+          criterionStatesBundle.byCode[criterionCode].status === SECTION_STATUS.COMPLETE,
+      ),
     evidence_bundle_populated:
       evidenceCompleteness.evaluation.complete || evidenceCompleteness.evaluation.itemCount > 0,
     repeated_query_test_complete_or_omission_documented:
@@ -276,7 +257,8 @@ export const deriveCompletionChecklist = (evaluation, context = EMPTY_OBJECT) =>
           )
         : benchmarkPerformed === 'no',
     privacy_terms_reviewed: ['SE1', 'SE2'].every(
-      (criterionCode) => criterionStatesBundle.byCode[criterionCode]?.status === SECTION_STATUS.COMPLETE,
+      (criterionCode) =>
+        criterionStatesBundle.byCode[criterionCode]?.status === SECTION_STATUS.COMPLETE,
     ),
     sample_queries_documented: isFieldValuePresent(
       QUESTIONNAIRE_FIELDS_BY_ID[FIELD_IDS.S2.SAMPLE_QUERIES_OR_SCENARIOS],
@@ -289,16 +271,20 @@ export const deriveCompletionChecklist = (evaluation, context = EMPTY_OBJECT) =>
         return true;
       }
 
-      return criterionState.logicalMissingFieldIds.includes(
+      return (
+        criterionState.logicalMissingFieldIds.includes(
+          CRITERION_FIELD_IDS[criterionCode].uncertaintyOrBlockers,
+        ) === false &&
+        criterionState.invalidFieldIds.includes(
           CRITERION_FIELD_IDS[criterionCode].uncertaintyOrBlockers,
         ) === false
-        && criterionState.invalidFieldIds.includes(
-          CRITERION_FIELD_IDS[criterionCode].uncertaintyOrBlockers,
-        ) === false;
+      );
     }),
   };
 
-  const selectedValues = COMPLETION_CHECK_RULES.filter((rule) => items[rule.value]).map((rule) => rule.value);
+  const selectedValues = COMPLETION_CHECK_RULES.filter((rule) => items[rule.value]).map(
+    (rule) => rule.value,
+  );
 
   return {
     items,
@@ -312,41 +298,54 @@ export const deriveCompletionProgress = (evaluation, context = EMPTY_OBJECT) => 
   const state = normalizeState(evaluation);
   const pageStates = context.pageStates ?? derivePageStates(state);
   const criterionStatesBundle = context.criterionStates ?? deriveCriterionStates(state, pageStates);
-  const derivedFieldValues = context.derivedFieldValues ?? buildDerivedFieldValues(state, {
-    ...context,
-    pageStates,
-    criterionStates: criterionStatesBundle,
-  });
-  const recommendationConstraints = context.recommendationConstraints ?? deriveRecommendationConstraints(state, {
-    ...context,
-    pageStates,
-    derivedFieldValues,
-  });
-  const fieldStatesBundle = context.fieldStates ?? deriveFieldStates(state, {
-    ...context,
-    pageStates,
-    criterionStates: criterionStatesBundle,
-    derivedFieldValues,
-    recommendationConstraints,
-  });
-  const sectionStates = context.sectionStates ?? deriveSectionStates(state, {
-    ...context,
-    pageStates,
-    fieldStates: fieldStatesBundle,
-    criterionStates: criterionStatesBundle,
-    recommendationConstraints,
-  });
-  const workflowEscalations = context.workflowEscalations ?? deriveWorkflowEscalations(state, {
-    ...context,
-    pageStates,
-    derivedFieldValues,
-  });
-  const escalationReasonsBySectionId = workflowEscalations.unresolvedReasons.reduce((lookup, reason) => {
-    const sectionReasons = lookup[reason.requiresSectionId] ?? [];
-    sectionReasons.push(reason);
-    lookup[reason.requiresSectionId] = sectionReasons;
-    return lookup;
-  }, {});
+  const derivedFieldValues =
+    context.derivedFieldValues ??
+    buildDerivedFieldValues(state, {
+      ...context,
+      pageStates,
+      criterionStates: criterionStatesBundle,
+    });
+  const recommendationConstraints =
+    context.recommendationConstraints ??
+    deriveRecommendationConstraints(state, {
+      ...context,
+      pageStates,
+      derivedFieldValues,
+    });
+  const fieldStatesBundle =
+    context.fieldStates ??
+    deriveFieldStates(state, {
+      ...context,
+      pageStates,
+      criterionStates: criterionStatesBundle,
+      derivedFieldValues,
+      recommendationConstraints,
+    });
+  const sectionStates =
+    context.sectionStates ??
+    deriveSectionStates(state, {
+      ...context,
+      pageStates,
+      fieldStates: fieldStatesBundle,
+      criterionStates: criterionStatesBundle,
+      recommendationConstraints,
+    });
+  const workflowEscalations =
+    context.workflowEscalations ??
+    deriveWorkflowEscalations(state, {
+      ...context,
+      pageStates,
+      derivedFieldValues,
+    });
+  const escalationReasonsBySectionId = workflowEscalations.unresolvedReasons.reduce(
+    (lookup, reason) => {
+      const sectionReasons = lookup[reason.requiresSectionId] ?? [];
+      sectionReasons.push(reason);
+      lookup[reason.requiresSectionId] = sectionReasons;
+      return lookup;
+    },
+    {},
+  );
   const bySectionId = {};
 
   for (const sectionId of CANONICAL_PAGE_SEQUENCE) {
@@ -355,7 +354,9 @@ export const deriveCompletionProgress = (evaluation, context = EMPTY_OBJECT) => 
     const sectionDefinition = SECTION_REGISTRY_BY_ID[sectionId] ?? EMPTY_OBJECT;
     const fieldStates = fieldStatesBundle.bySectionId[sectionId] ?? EMPTY_ARRAY;
     const criterionStates = criterionStatesBundle.bySectionId[sectionId] ?? EMPTY_ARRAY;
-    const applicableRequiredFieldStates = fieldStates.filter((fieldState) => fieldState.logicallyRequired);
+    const applicableRequiredFieldStates = fieldStates.filter(
+      (fieldState) => fieldState.logicallyRequired,
+    );
     const satisfiedRequiredFieldStates = applicableRequiredFieldStates.filter(
       (fieldState) => fieldState.answered && !fieldState.invalid && !fieldState.blocked,
     );
@@ -369,29 +370,31 @@ export const deriveCompletionProgress = (evaluation, context = EMPTY_OBJECT) => 
       (fieldState) => fieldState.visible && fieldState.answered,
     );
     const criterionActivityCount = criterionStates.filter(hasCriterionActivity).length;
-    const resolvedCriterionCount = criterionStates.filter((criterionState) =>
-      criterionState.status === SECTION_STATUS.COMPLETE
-      || criterionState.status === SECTION_STATUS.SKIPPED).length;
+    const resolvedCriterionCount = criterionStates.filter(
+      (criterionState) =>
+        criterionState.status === SECTION_STATUS.COMPLETE ||
+        criterionState.status === SECTION_STATUS.SKIPPED,
+    ).length;
     const escalationReasons = escalationReasonsBySectionId[sectionId] ?? EMPTY_ARRAY;
     const skippedByWorkflow = pageState.workflowState === SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED;
     const userSkipped = Boolean(sectionState.skipRequested && sectionState.skipSatisfied);
     const hasInvalidOrAttention = Boolean(
-      sectionState.attention
-      || sectionState.invalid
-      || attentionFieldStates.length > 0
-      || invalidFieldStates.length > 0
-      || criterionStates.some((criterionState) => criterionState.attention || criterionState.invalid),
+      sectionState.attention ||
+      sectionState.invalid ||
+      attentionFieldStates.length > 0 ||
+      invalidFieldStates.length > 0 ||
+      criterionStates.some((criterionState) => criterionState.attention || criterionState.invalid),
     );
     const hasBlockedOrEscalated = Boolean(
-      sectionState.blocked
-      || blockedFieldStates.length > 0
-      || criterionStates.some((criterionState) => criterionState.blocked)
-      || escalationReasons.length > 0,
+      sectionState.blocked ||
+      blockedFieldStates.length > 0 ||
+      criterionStates.some((criterionState) => criterionState.blocked) ||
+      escalationReasons.length > 0,
     );
     const hasAnyActivity = Boolean(
-      sectionState.skipRequested
-      || answeredVisibleFieldStates.length > 0
-      || criterionActivityCount > 0,
+      sectionState.skipRequested ||
+      answeredVisibleFieldStates.length > 0 ||
+      criterionActivityCount > 0,
     );
     const canonicalState = getCanonicalProgressState({
       pageState,
@@ -402,15 +405,16 @@ export const deriveCompletionProgress = (evaluation, context = EMPTY_OBJECT) => 
       hasInvalidOrAttention,
       hasBlockedOrEscalated,
     });
-    const completionPercent = canonicalState === PROGRESS_STATES.SKIPPED
-      ? 100
-      : applicableRequiredFieldStates.length > 0
-        ? Math.round(
-            (satisfiedRequiredFieldStates.length / applicableRequiredFieldStates.length) * 100,
-          )
-        : canonicalState === PROGRESS_STATES.COMPLETE
-          ? 100
-          : 0;
+    const completionPercent =
+      canonicalState === PROGRESS_STATES.SKIPPED
+        ? 100
+        : applicableRequiredFieldStates.length > 0
+          ? Math.round(
+              (satisfiedRequiredFieldStates.length / applicableRequiredFieldStates.length) * 100,
+            )
+          : canonicalState === PROGRESS_STATES.COMPLETE
+            ? 100
+            : 0;
 
     bySectionId[sectionId] = {
       sectionId,
@@ -450,7 +454,8 @@ export const deriveCompletionProgress = (evaluation, context = EMPTY_OBJECT) => 
     COMPLETION_GROUPS.map((group) => {
       const entries = group.sectionIds.map((sectionId) => bySectionId[sectionId]).filter(Boolean);
       const unresolvedEscalationReasons = workflowEscalations.unresolvedReasons.filter((reason) =>
-        group.sectionIds.includes(reason.requiresSectionId));
+        group.sectionIds.includes(reason.requiresSectionId),
+      );
       const counts = summarizeProgressEntries(entries, {
         unresolvedEscalationCount: unresolvedEscalationReasons.length,
       });
@@ -477,12 +482,9 @@ export const deriveCompletionProgress = (evaluation, context = EMPTY_OBJECT) => 
   const overallCounts = summarizeProgressEntries(overallEntries, {
     unresolvedEscalationCount: overallEscalationCount,
   });
-  const overallCanonicalState = deriveAggregateProgressState(
-    overallEntries,
-    {
-      unresolvedEscalationCount: overallEscalationCount,
-    },
-  );
+  const overallCanonicalState = deriveAggregateProgressState(overallEntries, {
+    unresolvedEscalationCount: overallEscalationCount,
+  });
 
   return {
     bySectionId,
@@ -498,7 +500,8 @@ export const deriveCompletionProgress = (evaluation, context = EMPTY_OBJECT) => 
 };
 
 export const deriveOverallCompletion = (evaluation, context = EMPTY_OBJECT) => {
-  const completionProgress = context.completionProgress ?? deriveCompletionProgress(evaluation, context);
+  const completionProgress =
+    context.completionProgress ?? deriveCompletionProgress(evaluation, context);
   const overall = completionProgress.overall;
 
   return {

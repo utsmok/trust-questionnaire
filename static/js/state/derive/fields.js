@@ -51,7 +51,10 @@ const getLogicalVisibility = (field, state, context, currentValue) => {
     return true;
   }
 
-  return visibilityRules.some((rule) => matchesCondition(rule.when, state, context)) || isFieldValuePresent(field, currentValue);
+  return (
+    visibilityRules.some((rule) => matchesCondition(rule.when, state, context)) ||
+    isFieldValuePresent(field, currentValue)
+  );
 };
 
 const getLogicalRequiredness = (field, state, context) => {
@@ -74,14 +77,18 @@ export const buildDerivedFieldValues = (state, context = EMPTY_OBJECT) => {
 
   const pageStates = context.pageStates ?? derivePageStates(state);
   const criterionStates = context.criterionStates ?? deriveCriterionStates(state, pageStates);
-  const principleJudgments = context.principleJudgments ?? derivePrincipleJudgments(state, {
-    pageStates,
-    criterionStates,
-  });
-  const completionChecklist = context.completionChecklist ?? deriveCompletionChecklist(state, {
-    pageStates,
-    criterionStates,
-  });
+  const principleJudgments =
+    context.principleJudgments ??
+    derivePrincipleJudgments(state, {
+      pageStates,
+      criterionStates,
+    });
+  const completionChecklist =
+    context.completionChecklist ??
+    deriveCompletionChecklist(state, {
+      pageStates,
+      criterionStates,
+    });
 
   return {
     ...principleJudgments.byFieldId,
@@ -94,13 +101,11 @@ export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) =>
   const pageStates = context.pageStates ?? derivePageStates(state);
   const criterionStatesBundle = context.criterionStates ?? deriveCriterionStates(state, pageStates);
   const sectionSkipMetaLookup =
-    context.sectionSkipMeta
-    ?? criterionStatesBundle.sectionSkipMeta
-    ?? buildSectionSkipMeta(state);
+    context.sectionSkipMeta ?? criterionStatesBundle.sectionSkipMeta ?? buildSectionSkipMeta(state);
   const criterionSkipMetaLookup =
-    context.criterionSkipMeta
-    ?? criterionStatesBundle.criterionSkipMeta
-    ?? buildCriterionSkipMeta(state);
+    context.criterionSkipMeta ??
+    criterionStatesBundle.criterionSkipMeta ??
+    buildCriterionSkipMeta(state);
   const derivedFieldValues = buildDerivedFieldValues(state, {
     ...context,
     pageStates,
@@ -109,11 +114,13 @@ export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) =>
   const field = QUESTIONNAIRE_FIELDS_BY_ID[fieldId];
   const pageState = pageStates.bySectionId[field.sectionId];
   const sectionSkipMeta =
-    sectionSkipMetaLookup[field.sectionId]
-    ?? resolveSkipMeta(getSectionRecord(state, field.sectionId), SKIP_POLICY.section, {
+    sectionSkipMetaLookup[field.sectionId] ??
+    resolveSkipMeta(getSectionRecord(state, field.sectionId), SKIP_POLICY.section, {
       sectionId: field.sectionId,
     });
-  const criterionState = field.criterionCode ? criterionStatesBundle.byCode[field.criterionCode] : null;
+  const criterionState = field.criterionCode
+    ? criterionStatesBundle.byCode[field.criterionCode]
+    : null;
   const sectionUserSkipped = sectionSkipMeta.requested;
   const criterionSkipped = criterionState
     ? criterionState.skipState === SKIP_STATES.USER_SKIPPED ||
@@ -125,12 +132,21 @@ export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) =>
   const visible =
     !sectionUserSkipped &&
     !criterionSkipped &&
-    getLogicalVisibility(field, state, { ...context, pageStates, criterionStates: criterionStatesBundle }, value);
+    getLogicalVisibility(
+      field,
+      state,
+      { ...context, pageStates, criterionStates: criterionStatesBundle },
+      value,
+    );
   const logicallyRequired =
     visible &&
     !sectionUserSkipped &&
     !criterionSkipped &&
-    getLogicalRequiredness(field, state, { ...context, pageStates, criterionStates: criterionStatesBundle });
+    getLogicalRequiredness(field, state, {
+      ...context,
+      pageStates,
+      criterionStates: criterionStatesBundle,
+    });
   const workflowRequired = logicallyRequired && pageState.isEditable;
   const answered = isFieldValuePresent(field, value);
   const missing = workflowRequired && !answered;
@@ -161,7 +177,10 @@ export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) =>
 
   if (fieldId === FIELD_IDS.S9.RECOMMENDATION_STATUS) {
     validationIssues.push(
-      ...mapBlockedReasonsToIssues(context.recommendationConstraints?.selectedValueBlocked, fieldId),
+      ...mapBlockedReasonsToIssues(
+        context.recommendationConstraints?.selectedValueBlocked,
+        fieldId,
+      ),
     );
   }
 
@@ -188,7 +207,9 @@ export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) =>
     suppressedBySkip,
     hiddenByCondition,
     conditionallyRequired: field.requiredPolicy === 'conditional' && logicallyRequired,
-    criterionSkipMeta: field.criterionCode ? criterionSkipMetaLookup[field.criterionCode] ?? null : null,
+    criterionSkipMeta: field.criterionCode
+      ? (criterionSkipMetaLookup[field.criterionCode] ?? null)
+      : null,
     value,
   };
 };
@@ -203,13 +224,11 @@ export const deriveFieldStates = (evaluation, context = EMPTY_OBJECT) => {
     criterionStates: criterionStatesBundle,
   });
   const sectionSkipMeta =
-    context.sectionSkipMeta
-    ?? criterionStatesBundle.sectionSkipMeta
-    ?? buildSectionSkipMeta(state);
+    context.sectionSkipMeta ?? criterionStatesBundle.sectionSkipMeta ?? buildSectionSkipMeta(state);
   const criterionSkipMeta =
-    context.criterionSkipMeta
-    ?? criterionStatesBundle.criterionSkipMeta
-    ?? buildCriterionSkipMeta(state);
+    context.criterionSkipMeta ??
+    criterionStatesBundle.criterionSkipMeta ??
+    buildCriterionSkipMeta(state);
   const baseById = {};
   const baseBySectionId = {};
 
@@ -238,11 +257,13 @@ export const deriveFieldStates = (evaluation, context = EMPTY_OBJECT) => {
     };
   }
 
-  const crossFieldValidations = context.crossFieldValidations ?? deriveCrossFieldValidations(state, {
-    ...context,
-    pageStates,
-    fieldStates: baseFieldStates,
-  });
+  const crossFieldValidations =
+    context.crossFieldValidations ??
+    deriveCrossFieldValidations(state, {
+      ...context,
+      pageStates,
+      fieldStates: baseFieldStates,
+    });
   const byId = {};
   const bySectionId = {};
 
@@ -263,10 +284,14 @@ export const deriveFieldStates = (evaluation, context = EMPTY_OBJECT) => {
 
 export const deriveRequiredFieldIds = (evaluation, context = EMPTY_OBJECT) => {
   const fieldStates = context.fieldStates ?? deriveFieldStates(evaluation, context);
-  return QUESTIONNAIRE_FIELDS.filter((field) => fieldStates.byId[field.id]?.required).map((field) => field.id);
+  return QUESTIONNAIRE_FIELDS.filter((field) => fieldStates.byId[field.id]?.required).map(
+    (field) => field.id,
+  );
 };
 
 export const deriveMissingRequiredFieldIds = (evaluation, context = EMPTY_OBJECT) => {
   const fieldStates = context.fieldStates ?? deriveFieldStates(evaluation, context);
-  return QUESTIONNAIRE_FIELDS.filter((field) => fieldStates.byId[field.id]?.missing).map((field) => field.id);
+  return QUESTIONNAIRE_FIELDS.filter((field) => fieldStates.byId[field.id]?.missing).map(
+    (field) => field.id,
+  );
 };

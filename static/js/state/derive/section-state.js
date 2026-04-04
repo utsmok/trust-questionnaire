@@ -1,11 +1,5 @@
-import {
-  QUESTIONNAIRE_SECTIONS,
-} from '../../config/questionnaire-schema.js';
-import {
-  SECTION_STATUS,
-  SKIP_POLICY,
-  VALIDATION_STATES,
-} from '../../config/rules.js';
+import { QUESTIONNAIRE_SECTIONS } from '../../config/questionnaire-schema.js';
+import { SECTION_STATUS, SKIP_POLICY, VALIDATION_STATES } from '../../config/rules.js';
 import { SECTION_WORKFLOW_STATES } from '../../config/sections.js';
 import {
   EMPTY_OBJECT,
@@ -24,21 +18,25 @@ export const deriveSectionStates = (evaluation, context = EMPTY_OBJECT) => {
   const pageStates = context.pageStates ?? derivePageStates(state);
   const fieldStatesBundle = context.fieldStates ?? deriveFieldStates(state, context);
   const sectionSkipMetaLookup =
-    context.sectionSkipMeta
-    ?? context.criterionStates?.sectionSkipMeta
-    ?? buildSectionSkipMeta(state);
+    context.sectionSkipMeta ??
+    context.criterionStates?.sectionSkipMeta ??
+    buildSectionSkipMeta(state);
   const bySectionId = {};
 
   for (const section of QUESTIONNAIRE_SECTIONS) {
     const pageState = pageStates.bySectionId[section.id];
     const sectionSkipMeta =
-      sectionSkipMetaLookup[section.id]
-      ?? resolveSkipMeta(getSectionRecord(state, section.id), SKIP_POLICY.section, {
+      sectionSkipMetaLookup[section.id] ??
+      resolveSkipMeta(getSectionRecord(state, section.id), SKIP_POLICY.section, {
         sectionId: section.id,
       });
     const fieldStates = fieldStatesBundle.bySectionId[section.id] ?? EMPTY_ARRAY;
-    const logicallyRequiredFieldStates = fieldStates.filter((fieldState) => fieldState.logicallyRequired);
-    const logicalMissingFieldStates = logicallyRequiredFieldStates.filter((fieldState) => fieldState.answered === false);
+    const logicallyRequiredFieldStates = fieldStates.filter(
+      (fieldState) => fieldState.logicallyRequired,
+    );
+    const logicalMissingFieldStates = logicallyRequiredFieldStates.filter(
+      (fieldState) => fieldState.answered === false,
+    );
     const answeredFieldCount = fieldStates.filter(
       (fieldState) => fieldState.visible && fieldState.answered,
     ).length;
@@ -77,9 +75,10 @@ export const deriveSectionStates = (evaluation, context = EMPTY_OBJECT) => {
       status = SECTION_STATUS.ATTENTION_REQUIRED;
       validationState = VALIDATION_STATES.INVALID;
     } else if (logicalMissingFieldStates.length === 0) {
-      status = answeredFieldCount > 0 || logicallyRequiredFieldStates.length > 0
-        ? SECTION_STATUS.COMPLETE
-        : SECTION_STATUS.NOT_STARTED;
+      status =
+        answeredFieldCount > 0 || logicallyRequiredFieldStates.length > 0
+          ? SECTION_STATUS.COMPLETE
+          : SECTION_STATUS.NOT_STARTED;
       validationState = VALIDATION_STATES.CLEAR;
     } else if (answeredFieldCount === 0) {
       status = SECTION_STATUS.NOT_STARTED;

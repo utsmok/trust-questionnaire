@@ -4,12 +4,7 @@ import {
   CRITERION_FIELD_IDS,
   QUESTIONNAIRE_FIELDS_BY_ID,
 } from '../../config/questionnaire-schema.js';
-import {
-  SECTION_STATUS,
-  SKIP_POLICY,
-  SKIP_STATES,
-  VALIDATION_STATES,
-} from '../../config/rules.js';
+import { SECTION_STATUS, SKIP_POLICY, SKIP_STATES, VALIDATION_STATES } from '../../config/rules.js';
 import { SECTION_WORKFLOW_STATES } from '../../config/sections.js';
 import { EMPTY_ARRAY } from '../../utils/shared.js';
 import {
@@ -38,13 +33,13 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
   const sectionRecord = getSectionRecord(state, criterion.sectionId);
   const criterionRecord = getCriterionRecord(state, criterionCode);
   const sectionSkipMeta =
-    context.sectionSkipMeta?.[criterion.sectionId]
-    ?? resolveSkipMeta(sectionRecord, SKIP_POLICY.section, {
+    context.sectionSkipMeta?.[criterion.sectionId] ??
+    resolveSkipMeta(sectionRecord, SKIP_POLICY.section, {
       sectionId: criterion.sectionId,
     });
   const criterionSkipMeta =
-    context.criterionSkipMeta?.[criterionCode]
-    ?? resolveSkipMeta(criterionRecord, SKIP_POLICY.criterion, {
+    context.criterionSkipMeta?.[criterionCode] ??
+    resolveSkipMeta(criterionRecord, SKIP_POLICY.criterion, {
       sectionId: criterion.sectionId,
       criterionCode,
     });
@@ -70,24 +65,32 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
     skipState = SKIP_STATES.INHERITED_SECTION_SKIP;
   } else if (criterionSkipMeta.requested) {
     skipState = SKIP_STATES.USER_SKIPPED;
-  } else if (Object.values(values).some((value, index) => {
-    const fieldKey = Object.keys(values)[index];
-    return isFieldValuePresent(fieldDefinitions[fieldKey], value);
-  })) {
+  } else if (
+    Object.values(values).some((value, index) => {
+      const fieldKey = Object.keys(values)[index];
+      return isFieldValuePresent(fieldDefinitions[fieldKey], value);
+    })
+  ) {
     skipState = SKIP_STATES.ANSWERED;
   }
 
   const score = toNumber(values.score);
   const scorePresent = isFieldValuePresent(fieldDefinitions.score, values.score);
-  const summaryPresent = isFieldValuePresent(fieldDefinitions.evidenceSummary, values.evidenceSummary);
+  const summaryPresent = isFieldValuePresent(
+    fieldDefinitions.evidenceSummary,
+    values.evidenceSummary,
+  );
   const linksPresent = isFieldValuePresent(fieldDefinitions.evidenceLinks, values.evidenceLinks);
-  const blockersPresent = isFieldValuePresent(fieldDefinitions.uncertaintyOrBlockers, values.uncertaintyOrBlockers);
+  const blockersPresent = isFieldValuePresent(
+    fieldDefinitions.uncertaintyOrBlockers,
+    values.uncertaintyOrBlockers,
+  );
   const lowScoreFollowUpRequired = score === 0 || score === 1;
 
   const logicallyRequiredFieldIds =
-    skipState === SKIP_STATES.USER_SKIPPED
-    || skipState === SKIP_STATES.INHERITED_SECTION_SKIP
-    || skipState === SKIP_STATES.SYSTEM_SKIPPED
+    skipState === SKIP_STATES.USER_SKIPPED ||
+    skipState === SKIP_STATES.INHERITED_SECTION_SKIP ||
+    skipState === SKIP_STATES.SYSTEM_SKIPPED
       ? EMPTY_ARRAY
       : [
           fieldIds.score,
@@ -102,7 +105,9 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
     return !isFieldValuePresent(fieldDefinition, fieldValue);
   });
 
-  const workflowMissingFieldIds = sectionPageState.isEditable ? logicalMissingFieldIds : EMPTY_ARRAY;
+  const workflowMissingFieldIds = sectionPageState.isEditable
+    ? logicalMissingFieldIds
+    : EMPTY_ARRAY;
   const validationIssuesByFieldId = {};
   const addFieldIssues = (fieldId, issues = EMPTY_ARRAY) => {
     if (!fieldId || !Array.isArray(issues) || issues.length === 0) {
@@ -115,9 +120,9 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
   };
 
   if (
-    skipState !== SKIP_STATES.USER_SKIPPED
-    && skipState !== SKIP_STATES.INHERITED_SECTION_SKIP
-    && skipState !== SKIP_STATES.SYSTEM_SKIPPED
+    skipState !== SKIP_STATES.USER_SKIPPED &&
+    skipState !== SKIP_STATES.INHERITED_SECTION_SKIP &&
+    skipState !== SKIP_STATES.SYSTEM_SKIPPED
   ) {
     addFieldIssues(
       fieldIds.evidenceLinks,
@@ -137,7 +142,8 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
 
   const fieldValidationIssues = dedupeValidationIssues(
     Object.entries(validationIssuesByFieldId).flatMap(([fieldId, issues]) =>
-      issues.map((issue) => ({ ...issue, fieldId }))),
+      issues.map((issue) => ({ ...issue, fieldId })),
+    ),
   );
   const invalidFieldIds = Object.keys(validationIssuesByFieldId);
 
@@ -158,7 +164,13 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
     status = criterionSkipMeta.satisfied
       ? SECTION_STATUS.SKIPPED
       : SECTION_STATUS.ATTENTION_REQUIRED;
-  } else if (!scorePresent && !summaryPresent && !linksPresent && !blockersPresent && fieldValidationIssues.length === 0) {
+  } else if (
+    !scorePresent &&
+    !summaryPresent &&
+    !linksPresent &&
+    !blockersPresent &&
+    fieldValidationIssues.length === 0
+  ) {
     status = SECTION_STATUS.NOT_STARTED;
   } else if (fieldValidationIssues.length > 0) {
     validationState = VALIDATION_STATES.INVALID;
@@ -174,9 +186,7 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
   }
 
   const evidenceComplete =
-    summaryPresent
-    && linksPresent
-    && !invalidFieldIds.includes(fieldIds.evidenceLinks);
+    summaryPresent && linksPresent && !invalidFieldIds.includes(fieldIds.evidenceLinks);
 
   return {
     criterionCode,

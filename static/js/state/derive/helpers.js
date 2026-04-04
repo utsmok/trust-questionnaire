@@ -15,10 +15,7 @@ import {
   VALIDATION_STATES,
   WORKFLOW_PAGE_RULES,
 } from '../../config/rules.js';
-import {
-  SECTION_IDS,
-  WORKFLOW_MODES,
-} from '../../config/sections.js';
+import { SECTION_IDS, WORKFLOW_MODES } from '../../config/sections.js';
 import { EMPTY_ARRAY, isPlainObject, normalizeDelimitedList } from '../../utils/shared.js';
 
 export const EMPTY_OBJECT = Object.freeze({});
@@ -33,12 +30,11 @@ export const PRINCIPLE_JUDGMENT_FIELD_IDS = Object.freeze({
 
 export const normalizeState = (evaluation = EMPTY_OBJECT) => ({
   workflow: isPlainObject(evaluation.workflow) ? evaluation.workflow : EMPTY_OBJECT,
-  fields:
-    isPlainObject(evaluation.fields)
-      ? evaluation.fields
-      : isPlainObject(evaluation.values)
-        ? evaluation.values
-        : EMPTY_OBJECT,
+  fields: isPlainObject(evaluation.fields)
+    ? evaluation.fields
+    : isPlainObject(evaluation.values)
+      ? evaluation.values
+      : EMPTY_OBJECT,
   sections: isPlainObject(evaluation.sections) ? evaluation.sections : EMPTY_OBJECT,
   criteria: isPlainObject(evaluation.criteria) ? evaluation.criteria : EMPTY_OBJECT,
   evidence: isPlainObject(evaluation.evidence) ? evaluation.evidence : EMPTY_OBJECT,
@@ -49,15 +45,15 @@ export const getFieldValue = (state, fieldId) => state.fields[fieldId];
 
 export const getSectionRecord = (state, sectionId) => state.sections[sectionId] ?? EMPTY_OBJECT;
 
-export const getCriterionRecord = (state, criterionCode) => state.criteria[criterionCode] ?? EMPTY_OBJECT;
+export const getCriterionRecord = (state, criterionCode) =>
+  state.criteria[criterionCode] ?? EMPTY_OBJECT;
 
 export const normalizeUrlList = (value) => normalizeDelimitedList(value, /\n+/);
 
 export const countSubstantiveCharacters = (value) =>
   (typeof value === 'string' ? value.replace(/\s+/g, '') : '').length;
 
-export const normalizeUrlCandidate = (value) =>
-  typeof value === 'string' ? value.trim() : '';
+export const normalizeUrlCandidate = (value) => (typeof value === 'string' ? value.trim() : '');
 
 export const isValidAbsoluteUrl = (value) => {
   const candidate = normalizeUrlCandidate(value);
@@ -160,7 +156,8 @@ export const mapBlockedReasonsToIssues = (reasons = EMPTY_ARRAY, fieldId) => {
       message: reason.description,
       fieldId,
       relatedFieldIds: fieldId ? [fieldId] : EMPTY_ARRAY,
-    }));
+    }),
+  );
 };
 
 export const getRecordValue = (record, keys = EMPTY_ARRAY) => {
@@ -238,16 +235,21 @@ export const getSkipStateFromRecord = (record) => {
   return null;
 };
 
-export const isUserSkippedRecord = (record) => getSkipStateFromRecord(record) === SKIP_STATES.USER_SKIPPED;
+export const isUserSkippedRecord = (record) =>
+  getSkipStateFromRecord(record) === SKIP_STATES.USER_SKIPPED;
 
-export const resolveSkipMeta = (record, policy, { sectionId = null, criterionCode = null } = EMPTY_OBJECT) => {
+export const resolveSkipMeta = (
+  record,
+  policy,
+  { sectionId = null, criterionCode = null } = EMPTY_OBJECT,
+) => {
   const explicitSkipState = getSkipStateFromRecord(record);
   const reasonCode = getRecordValue(record, policy.reasonCodeKeys);
   const rationale = getRecordValue(record, policy.rationaleKeys);
   const requested =
-    explicitSkipState === SKIP_STATES.USER_SKIPPED
-    || hasMeaningfulText(reasonCode)
-    || hasMeaningfulText(rationale);
+    explicitSkipState === SKIP_STATES.USER_SKIPPED ||
+    hasMeaningfulText(reasonCode) ||
+    hasMeaningfulText(rationale);
 
   if (!requested) {
     return {
@@ -274,7 +276,10 @@ export const resolveSkipMeta = (record, policy, { sectionId = null, criterionCod
         criterionCode,
       }),
     );
-  } else if (Array.isArray(policy.userReasonCodes) && !policy.userReasonCodes.includes(reasonCode)) {
+  } else if (
+    Array.isArray(policy.userReasonCodes) &&
+    !policy.userReasonCodes.includes(reasonCode)
+  ) {
     issues.push(
       createValidationIssue({
         ruleId: `${policy.scope}_skip_reason_invalid`,
@@ -299,8 +304,8 @@ export const resolveSkipMeta = (record, policy, { sectionId = null, criterionCod
       }),
     );
   } else if (
-    policy.rationaleMinLength > 0
-    && countSubstantiveCharacters(rationale) < policy.rationaleMinLength
+    policy.rationaleMinLength > 0 &&
+    countSubstantiveCharacters(rationale) < policy.rationaleMinLength
   ) {
     issues.push(
       createValidationIssue({
@@ -601,7 +606,8 @@ export const toNumber = (value) => {
   return null;
 };
 
-export const getSeverityRank = (judgment) => PRINCIPLE_JUDGMENT_RULES.severityOrder.indexOf(judgment);
+export const getSeverityRank = (judgment) =>
+  PRINCIPLE_JUDGMENT_RULES.severityOrder.indexOf(judgment);
 
 export const isDownwardOverride = (computedValue, overrideValue) => {
   const computedRank = getSeverityRank(computedValue);
@@ -610,7 +616,8 @@ export const isDownwardOverride = (computedValue, overrideValue) => {
   return computedRank !== -1 && overrideRank !== -1 && overrideRank >= computedRank;
 };
 
-export const resolveDerivedFieldValue = (fieldId, derivedFieldValues) => derivedFieldValues[fieldId];
+export const resolveDerivedFieldValue = (fieldId, derivedFieldValues) =>
+  derivedFieldValues[fieldId];
 
 export const isFieldValuePresent = (field, value) => {
   if (field.derived && value === undefined) {
@@ -619,10 +626,14 @@ export const isFieldValuePresent = (field, value) => {
 
   switch (field.type) {
     case FIELD_TYPES.SINGLE_SELECT:
-      return value !== null && value !== undefined && (typeof value !== 'string' || value.trim() !== '');
+      return (
+        value !== null && value !== undefined && (typeof value !== 'string' || value.trim() !== '')
+      );
     case FIELD_TYPES.MULTI_SELECT: {
       const selections = normalizeDelimitedList(value);
-      return field.explicitNoneAllowed ? Array.isArray(value) || value instanceof Set : selections.length > 0;
+      return field.explicitNoneAllowed
+        ? Array.isArray(value) || value instanceof Set
+        : selections.length > 0;
     }
     case FIELD_TYPES.SHORT_TEXT:
     case FIELD_TYPES.LONG_TEXT:
@@ -647,7 +658,10 @@ export const isFieldValuePresent = (field, value) => {
     case FIELD_TYPES.PERSON:
       return isPersonValuePresent(value);
     case FIELD_TYPES.PEOPLE_LIST:
-      return normalizeDelimitedList(value).length > 0 || (Array.isArray(value) && value.some(isPersonValuePresent));
+      return (
+        normalizeDelimitedList(value).length > 0 ||
+        (Array.isArray(value) && value.some(isPersonValuePresent))
+      );
     case FIELD_TYPES.CHECKLIST:
       if (Array.isArray(value)) {
         return value.length === COMPLETION_CHECK_RULES.length;
@@ -664,7 +678,9 @@ export const isFieldValuePresent = (field, value) => {
 };
 
 export const getWorkflowMode = (state) =>
-  getFieldValue(state, FIELD_IDS.S0.SUBMISSION_TYPE) ?? state.workflow.mode ?? WORKFLOW_MODES.NOMINATION;
+  getFieldValue(state, FIELD_IDS.S0.SUBMISSION_TYPE) ??
+  state.workflow.mode ??
+  WORKFLOW_MODES.PRIMARY_EVALUATION;
 
 export const getWorkflowPageRule = (workflowMode) =>
   WORKFLOW_PAGE_RULES[workflowMode] ?? WORKFLOW_PAGE_RULES[WORKFLOW_MODES.NOMINATION];

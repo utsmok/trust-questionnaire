@@ -3,16 +3,9 @@ import {
   SECTION_REGISTRY_BY_ID,
   SECTION_WORKFLOW_STATES,
 } from '../../config/sections.js';
-import {
-  WORKFLOW_ESCALATION_RULES,
-} from '../../config/rules.js';
+import { WORKFLOW_ESCALATION_RULES } from '../../config/rules.js';
 import { SECTION_IDS } from '../../config/sections.js';
-import {
-  EMPTY_OBJECT,
-  getWorkflowMode,
-  getWorkflowPageRule,
-  normalizeState,
-} from './helpers.js';
+import { EMPTY_OBJECT, getWorkflowMode, getWorkflowPageRule, normalizeState } from './helpers.js';
 import { matchesCondition } from './rules-eval.js';
 
 export const derivePageStates = (evaluation) => {
@@ -42,14 +35,23 @@ export const derivePageStates = (evaluation) => {
     };
   }
 
-  const accessibleSectionIds = CANONICAL_PAGE_SEQUENCE.filter((sectionId) => bySectionId[sectionId].isAccessible);
+  const accessibleSectionIds = CANONICAL_PAGE_SEQUENCE.filter(
+    (sectionId) => bySectionId[sectionId].isAccessible,
+  );
 
   return {
     workflowMode,
     bySectionId,
-    editableSectionIds: CANONICAL_PAGE_SEQUENCE.filter((sectionId) => bySectionId[sectionId].isEditable),
-    readOnlySectionIds: CANONICAL_PAGE_SEQUENCE.filter((sectionId) => bySectionId[sectionId].isReadOnly),
-    systemSkippedSectionIds: CANONICAL_PAGE_SEQUENCE.filter((sectionId) => bySectionId[sectionId].workflowState === SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED),
+    editableSectionIds: CANONICAL_PAGE_SEQUENCE.filter(
+      (sectionId) => bySectionId[sectionId].isEditable,
+    ),
+    readOnlySectionIds: CANONICAL_PAGE_SEQUENCE.filter(
+      (sectionId) => bySectionId[sectionId].isReadOnly,
+    ),
+    systemSkippedSectionIds: CANONICAL_PAGE_SEQUENCE.filter(
+      (sectionId) =>
+        bySectionId[sectionId].workflowState === SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED,
+    ),
     primaryPagerSectionIds: workflowRule.primaryPagerSectionIds,
     accessibleSectionIds,
   };
