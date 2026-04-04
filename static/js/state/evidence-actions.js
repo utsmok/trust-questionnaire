@@ -34,35 +34,25 @@ const normalizeEvidenceSizeValue = (value) => {
   return Number.isFinite(nextValue) && nextValue >= 0 ? nextValue : null;
 };
 
-const normalizeEvidenceItem = (
-  item,
-  {
-    scope = 'evaluation',
-    criterionCode = null,
-  } = {},
-) => {
+const normalizeEvidenceItem = (item, { scope = 'evaluation', criterionCode = null } = {}) => {
   if (!isPlainObject(item)) {
     return null;
   }
 
   const resolvedCriterionCode = normalizeTextValue(criterionCode ?? item.criterionCode);
-  const resolvedName = normalizeTextValue(item.name ?? item.filename ?? item.fileName ?? item.label);
+  const resolvedName = normalizeTextValue(
+    item.name ?? item.filename ?? item.fileName ?? item.label,
+  );
   const resolvedMimeType = normalizeTextValue(item.mimeType) ?? inferMimeTypeFromName(resolvedName);
   const resolvedDataUrl = normalizeTextValue(item.dataUrl ?? item.url ?? item.href);
-  const resolvedSectionId =
-    resolvedCriterionCode
-      ? CRITERIA_BY_CODE[resolvedCriterionCode]?.sectionId ?? normalizeTextValue(item.sectionId)
-      : normalizeTextValue(item.sectionId) ?? SECTION_IDS.S2;
+  const resolvedSectionId = resolvedCriterionCode
+    ? (CRITERIA_BY_CODE[resolvedCriterionCode]?.sectionId ?? normalizeTextValue(item.sectionId))
+    : (normalizeTextValue(item.sectionId) ?? SECTION_IDS.S2);
 
   return {
     id: normalizeTextValue(item.id),
-    assetId:
-      normalizeTextValue(item.assetId ?? item.asset_id)
-      ?? normalizeTextValue(item.id),
-    scope:
-      resolvedCriterionCode || scope === 'criterion'
-        ? 'criterion'
-        : 'evaluation',
+    assetId: normalizeTextValue(item.assetId ?? item.asset_id) ?? normalizeTextValue(item.id),
+    scope: resolvedCriterionCode || scope === 'criterion' ? 'criterion' : 'evaluation',
     sectionId: resolvedSectionId,
     criterionCode: resolvedCriterionCode,
     evidenceType: normalizeTextValue(item.evidenceType ?? item.type),
@@ -73,8 +63,8 @@ const normalizeEvidenceItem = (
     isImage: item.isImage === true || isImageMimeType(resolvedMimeType),
     dataUrl: resolvedDataUrl,
     previewDataUrl:
-      normalizeTextValue(item.previewDataUrl)
-      ?? (isImageMimeType(resolvedMimeType) ? resolvedDataUrl : null),
+      normalizeTextValue(item.previewDataUrl) ??
+      (isImageMimeType(resolvedMimeType) ? resolvedDataUrl : null),
     addedAt: normalizeTextValue(item.addedAt ?? item.createdAt ?? item.uploadedAt),
   };
 };
@@ -113,7 +103,8 @@ const cloneEvidenceCriteria = (criteria = {}) =>
 const getAllEvidenceItems = (evaluation = createEmptyEvaluationState()) => [
   ...(evaluation.evidence?.evaluation ?? []),
   ...Object.values(evaluation.evidence?.criteria ?? {}).flatMap((items) =>
-    Array.isArray(items) ? items : []),
+    Array.isArray(items) ? items : [],
+  ),
 ];
 
 const findEvidenceItemById = (evaluation, itemId) => {
@@ -133,7 +124,9 @@ const findEvidenceItemByAssetId = (evaluation, assetId) => {
     return null;
   }
 
-  return getAllEvidenceItems(evaluation).find((item) => item?.assetId === normalizedAssetId) ?? null;
+  return (
+    getAllEvidenceItems(evaluation).find((item) => item?.assetId === normalizedAssetId) ?? null
+  );
 };
 
 const removeEvidenceAssetAssociations = (evaluation, assetId) => {
@@ -223,10 +216,7 @@ export const createEvidenceActions = ({
       }
 
       const evaluation = cloneEvaluation(previousState.evaluation);
-      evaluation.evidence.evaluation = [
-        ...evaluation.evidence.evaluation,
-        ...normalizedItems,
-      ];
+      evaluation.evidence.evaluation = [...evaluation.evidence.evaluation, ...normalizedItems];
 
       return createStateWithEvaluation(previousState, evaluation);
     });
@@ -250,10 +240,7 @@ export const createEvidenceActions = ({
 
       const evaluation = cloneEvaluation(previousState.evaluation);
       const currentItems = evaluation.evidence.criteria[criterionCode] ?? [];
-      evaluation.evidence.criteria[criterionCode] = [
-        ...currentItems,
-        ...normalizedItems,
-      ];
+      evaluation.evidence.criteria[criterionCode] = [...currentItems, ...normalizedItems];
 
       return createStateWithEvaluation(previousState, evaluation);
     });
@@ -430,8 +417,4 @@ export const createEvidenceActions = ({
   };
 };
 
-export {
-  normalizeEvidenceItems,
-  finalizeEvidenceItemsForInsert,
-  cloneEvidenceCriteria,
-};
+export { normalizeEvidenceItems, finalizeEvidenceItemsForInsert, cloneEvidenceCriteria };

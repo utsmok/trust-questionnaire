@@ -11,10 +11,7 @@ import {
 } from '../config/questionnaire-schema.js';
 import { OPTION_SETS } from '../config/option-sets.js';
 import { SKIP_STATES } from '../config/rules.js';
-import {
-  createEmptyEvaluationState,
-  deriveQuestionnaireState,
-} from './derive.js';
+import { createEmptyEvaluationState, deriveQuestionnaireState } from './derive.js';
 import { isPlainObject, normalizeDelimitedList } from '../utils/shared.js';
 import {
   createEvidenceActions,
@@ -83,7 +80,7 @@ import {
  * @property {string|null} activeContextTopicId
  * @property {Object<string, number>} pageRatiosById
  * @property {{ context: PanelMetrics, questionnaire: PanelMetrics }} panelMetrics
- * @property {{ contextSidebar: boolean, aboutSurface: boolean, helpSurface: boolean }} surfaces
+ * @property {{ isOpen: boolean, activeTab: string }} sidebarPanel
  * @property {Object<string, boolean>} referenceDrawers
  */
 
@@ -118,10 +115,9 @@ const DEFAULT_PANEL_METRICS = Object.freeze({
   canScrollDown: false,
 });
 
-const DEFAULT_SURFACE_VISIBILITY = Object.freeze({
-  contextSidebar: true,
-  aboutSurface: false,
-  helpSurface: false,
+const DEFAULT_SIDEBAR_PANEL = Object.freeze({
+  isOpen: true,
+  activeTab: 'guidance',
 });
 
 const DEFAULT_REFERENCE_DRAWER_STATES = Object.freeze({
@@ -131,9 +127,8 @@ const DEFAULT_REFERENCE_DRAWER_STATES = Object.freeze({
 });
 
 const uniquePageOrder = (pageOrder) => {
-  const nextPageOrder = Array.isArray(pageOrder) && pageOrder.length
-    ? pageOrder
-    : CANONICAL_PAGE_SEQUENCE;
+  const nextPageOrder =
+    Array.isArray(pageOrder) && pageOrder.length ? pageOrder : CANONICAL_PAGE_SEQUENCE;
 
   return [...new Set(nextPageOrder.filter(Boolean))];
 };
@@ -144,10 +139,11 @@ const clonePanelMetrics = (metrics = DEFAULT_PANEL_METRICS) => ({
   canScrollDown: Boolean(metrics.canScrollDown),
 });
 
-const cloneSurfaceVisibility = (surfaces = DEFAULT_SURFACE_VISIBILITY) => ({
-  contextSidebar: surfaces.contextSidebar !== false,
-  aboutSurface: Boolean(surfaces.aboutSurface),
-  helpSurface: Boolean(surfaces.helpSurface),
+const cloneSidebarPanel = (sidebarPanel = DEFAULT_SIDEBAR_PANEL) => ({
+  isOpen: sidebarPanel.isOpen !== false,
+  activeTab: ['guidance', 'reference', 'about'].includes(sidebarPanel.activeTab)
+    ? sidebarPanel.activeTab
+    : 'guidance',
 });
 
 const cloneReferenceDrawerStates = (referenceDrawers = DEFAULT_REFERENCE_DRAWER_STATES) => ({
@@ -209,7 +205,9 @@ const normalizeOptionValue = (field, optionValue) => {
   }
 
   const optionSet = OPTION_SETS[field.optionSetId] ?? null;
-  const matchedOption = optionSet?.options.find((option) => String(option.value) === String(optionValue));
+  const matchedOption = optionSet?.options.find(
+    (option) => String(option.value) === String(optionValue),
+  );
 
   return matchedOption?.value ?? optionValue;
 };
@@ -322,15 +320,20 @@ const areNormalizedValuesEqual = (left, right) => {
   }
 
   if (Array.isArray(left) && Array.isArray(right)) {
-    return left.length === right.length && left.every((value, index) => areNormalizedValuesEqual(value, right[index]));
+    return (
+      left.length === right.length &&
+      left.every((value, index) => areNormalizedValuesEqual(value, right[index]))
+    );
   }
 
   if (isPlainObject(left) && isPlainObject(right)) {
     const leftKeys = Object.keys(left);
     const rightKeys = Object.keys(right);
 
-    return leftKeys.length === rightKeys.length
-      && leftKeys.every((key) => areNormalizedValuesEqual(left[key], right[key]));
+    return (
+      leftKeys.length === rightKeys.length &&
+      leftKeys.every((key) => areNormalizedValuesEqual(left[key], right[key]))
+    );
   }
 
   return false;
@@ -338,7 +341,8 @@ const areNormalizedValuesEqual = (left, right) => {
 
 const applyNormalizedFieldValue = (fields, fieldId, value) => {
   const field = QUESTIONNAIRE_FIELDS_BY_ID[fieldId] ?? null;
-  const isDeletableArray = Array.isArray(value) && value.length === 0 && field?.explicitNoneAllowed !== true;
+  const isDeletableArray =
+    Array.isArray(value) && value.length === 0 && field?.explicitNoneAllowed !== true;
 
   if (value === null || value === undefined || isDeletableArray) {
     delete fields[fieldId];
@@ -366,7 +370,9 @@ const applyNormalizedSectionValue = (sections, sectionId, key, value) => {
 };
 
 const applyNormalizedCriterionValue = (criteria, criterionCode, key, value) => {
-  const currentRecord = isPlainObject(criteria[criterionCode]) ? { ...criteria[criterionCode] } : {};
+  const currentRecord = isPlainObject(criteria[criterionCode])
+    ? { ...criteria[criterionCode] }
+    : {};
 
   if (value === null || value === undefined || value === '') {
     delete currentRecord[key];
@@ -383,7 +389,9 @@ const applyNormalizedCriterionValue = (criteria, criterionCode, key, value) => {
 };
 
 const clearCriterionSkipRecord = (criteria, criterionCode) => {
-  const currentRecord = isPlainObject(criteria[criterionCode]) ? { ...criteria[criterionCode] } : null;
+  const currentRecord = isPlainObject(criteria[criterionCode])
+    ? { ...criteria[criterionCode] }
+    : null;
 
   if (!currentRecord) {
     return;
@@ -432,9 +440,7 @@ const resolveActivePageId = (pageOrder, requestedPageId) => {
 const resolveContextTopicId = (pageId) => getSectionDefinition(pageId)?.contextTopicId ?? null;
 
 const normalizePageRatios = (pageOrder, pageRatiosById = {}) =>
-  Object.fromEntries(
-    pageOrder.map((pageId) => [pageId, Number(pageRatiosById[pageId]) || 0]),
-  );
+  Object.fromEntries(pageOrder.map((pageId) => [pageId, Number(pageRatiosById[pageId]) || 0]));
 
 const createUiState = ({
   pageOrder,
@@ -442,7 +448,7 @@ const createUiState = ({
   activeSubAnchorId,
   pageRatiosById,
   panelMetrics,
-  surfaces,
+  sidebarPanel,
   referenceDrawers,
 }) => {
   const normalizedPageOrder = uniquePageOrder(pageOrder);
@@ -461,7 +467,7 @@ const createUiState = ({
       [PANEL_NAMES.CONTEXT]: clonePanelMetrics(panelMetrics?.[PANEL_NAMES.CONTEXT]),
       [PANEL_NAMES.QUESTIONNAIRE]: clonePanelMetrics(panelMetrics?.[PANEL_NAMES.QUESTIONNAIRE]),
     },
-    surfaces: cloneSurfaceVisibility(surfaces),
+    sidebarPanel: cloneSidebarPanel(sidebarPanel),
     referenceDrawers: cloneReferenceDrawerStates(referenceDrawers),
   };
 };
@@ -509,13 +515,13 @@ export const selectPageOrder = (state) => state.ui.pageOrder;
 export const selectQuickJumpPageIds = (state) =>
   QUICK_JUMP_SECTION_IDS.filter((pageId) => state.ui.pageOrder.includes(pageId));
 
-export const selectActivePageDefinition = (state) =>
-  getSectionDefinition(state.ui.activePageId);
+export const selectActivePageDefinition = (state) => getSectionDefinition(state.ui.activePageId);
 
 export const selectActiveSubAnchorId = (state) => state.ui.activeSubAnchorId;
 
-export const selectShellSurfaceState = (state, surfaceName) =>
-  Boolean(state.ui.surfaces?.[surfaceName]);
+export const selectSidebarOpen = (state) => Boolean(state.ui.sidebarPanel?.isOpen);
+
+export const selectSidebarActiveTab = (state) => state.ui.sidebarPanel?.activeTab ?? 'guidance';
 
 export const selectReferenceDrawerState = (state, drawerId) =>
   Boolean(state.ui.referenceDrawers?.[drawerId]);
@@ -626,8 +632,8 @@ export const createAppStore = ({
       applyNormalizedCriterionValue(evaluation.criteria, criterionCode, key, normalizedValue);
 
       if (
-        normalizedValue
-        && (CRITERION_SKIP_REASON_KEYS.has(key) || CRITERION_SKIP_RATIONALE_KEYS.has(key))
+        normalizedValue &&
+        (CRITERION_SKIP_REASON_KEYS.has(key) || CRITERION_SKIP_RATIONALE_KEYS.has(key))
       ) {
         applyNormalizedCriterionValue(
           evaluation.criteria,
@@ -659,18 +665,19 @@ export const createAppStore = ({
         clearCriterionSkipRecord(evaluation.criteria, criterionCode);
       }
 
-      if (areNormalizedValuesEqual(
-        previousState.evaluation.criteria?.[criterionCode] ?? null,
-        evaluation.criteria?.[criterionCode] ?? null,
-      )) {
+      if (
+        areNormalizedValuesEqual(
+          previousState.evaluation.criteria?.[criterionCode] ?? null,
+          evaluation.criteria?.[criterionCode] ?? null,
+        )
+      ) {
         return previousState;
       }
 
       return createStateWithEvaluation(previousState, evaluation);
     });
 
-  const clearCriterionSkip = (criterionCode) =>
-    setCriterionSkipRequested(criterionCode, false);
+  const clearCriterionSkip = (criterionCode) => setCriterionSkipRequested(criterionCode, false);
 
   const setCriterionSkipReasonCode = (criterionCode, value) =>
     setCriterionValue(criterionCode, 'skipReasonCode', value);
@@ -713,9 +720,7 @@ export const createAppStore = ({
 
   const setActiveSubAnchor = (anchorId) =>
     commit((previousState) => {
-      const nextAnchorId = typeof anchorId === 'string' && anchorId.trim() !== ''
-        ? anchorId
-        : null;
+      const nextAnchorId = typeof anchorId === 'string' && anchorId.trim() !== '' ? anchorId : null;
 
       if (previousState.ui.activeSubAnchorId === nextAnchorId) {
         return previousState;
@@ -730,10 +735,32 @@ export const createAppStore = ({
       };
     });
 
-  const recordPageVisibilities = (
-    entries,
-    threshold = ACTIVE_PAGE_VISIBILITY_THRESHOLD,
-  ) =>
+  const setActivePageWithAnchor = (pageId, anchorId) =>
+    commit((previousState) => {
+      if (!previousState.ui.pageOrder.includes(pageId)) {
+        return previousState;
+      }
+
+      const nextAnchorId = typeof anchorId === 'string' && anchorId.trim() !== '' ? anchorId : null;
+
+      if (
+        previousState.ui.activePageId === pageId &&
+        previousState.ui.activeSubAnchorId === nextAnchorId
+      ) {
+        return previousState;
+      }
+
+      return {
+        ...previousState,
+        ui: createUiState({
+          ...previousState.ui,
+          activePageId: pageId,
+          activeSubAnchorId: nextAnchorId,
+        }),
+      };
+    });
+
+  const recordPageVisibilities = (entries, threshold = ACTIVE_PAGE_VISIBILITY_THRESHOLD) =>
     commit((previousState) => {
       if (!Array.isArray(entries) || entries.length === 0) {
         return previousState;
@@ -790,9 +817,25 @@ export const createAppStore = ({
       };
     });
 
-  const setSurfaceOpen = (surfaceName, isOpen) =>
+  const setSidebarOpen = (isOpen) =>
+    commit((previousState) => ({
+      ...previousState,
+      ui: createUiState({
+        ...previousState.ui,
+        sidebarPanel: {
+          ...previousState.ui.sidebarPanel,
+          isOpen: Boolean(isOpen),
+        },
+      }),
+    }));
+
+  const setSidebarActiveTab = (tabId) =>
     commit((previousState) => {
-      if (!(surfaceName in previousState.ui.surfaces)) {
+      if (!['guidance', 'reference', 'about'].includes(tabId)) {
+        return previousState;
+      }
+
+      if (previousState.ui.sidebarPanel.activeTab === tabId) {
         return previousState;
       }
 
@@ -800,16 +843,15 @@ export const createAppStore = ({
         ...previousState,
         ui: createUiState({
           ...previousState.ui,
-          surfaces: {
-            ...previousState.ui.surfaces,
-            [surfaceName]: Boolean(isOpen),
+          sidebarPanel: {
+            ...previousState.ui.sidebarPanel,
+            activeTab: tabId,
           },
         }),
       };
     });
 
-  const toggleSurface = (surfaceName) =>
-    setSurfaceOpen(surfaceName, !state.ui.surfaces?.[surfaceName]);
+  const toggleSidebar = () => setSidebarOpen(!state.ui.sidebarPanel?.isOpen);
 
   const setReferenceDrawerOpen = (drawerId, isOpen) =>
     commit((previousState) => {
@@ -865,11 +907,13 @@ export const createAppStore = ({
       removeEvidenceAsset: evidenceActions.removeEvidenceAsset,
       setActivePage,
       setActiveSubAnchor,
+      setActivePageWithAnchor,
       recordPageVisibility,
       recordPageVisibilities,
       setPanelMetrics,
-      setSurfaceOpen,
-      toggleSurface,
+      setSidebarOpen,
+      setSidebarActiveTab,
+      toggleSidebar,
       setReferenceDrawerOpen,
       toggleReferenceDrawer,
     },
