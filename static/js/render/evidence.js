@@ -9,6 +9,7 @@ import {
   serializeEvidenceManifest,
 } from '../adapters/evidence-storage.js';
 import { EMPTY_ARRAY, isPlainObject, toArray, inferMimeTypeFromName, extractEvidenceItems, normalizeTextValue, isImageMimeType } from '../utils/shared.js';
+import { confirmDialog } from '../utils/confirm-dialog.js';
 
 const EVIDENCE_BLOCK_SELECTOR = '[data-evidence-block="true"]';
 const LIGHTBOX_ELEMENT_ID = 'questionnaire-evidence-lightbox';
@@ -1435,9 +1436,7 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
       const confirmMessage = usageCount > 1
         ? `Remove “${sourceItem?.name ?? 'this evidence file'}” everywhere? This will remove ${usageCount} linked associations.`
         : `Remove “${sourceItem?.name ?? 'this evidence file'}” from this questionnaire?`;
-      const shouldRemove = documentRef.defaultView?.confirm
-        ? documentRef.defaultView.confirm(confirmMessage)
-        : true;
+      const shouldRemove = await confirmDialog(confirmMessage, { documentRef });
 
       if (!shouldRemove) {
         return;
