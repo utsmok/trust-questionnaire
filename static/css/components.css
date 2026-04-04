@@ -943,11 +943,11 @@
   margin-top: 10px;
 }
 
-.form-section#questionnaire-section-9 {
+.form-section[data-section="governance"] {
   border-top: 3px solid var(--ut-darkblue);
 }
 
-.form-section#questionnaire-section-9 .mock-control:first-of-type .value {
+.form-section[data-section="governance"] .mock-control:first-of-type .value {
   font-size: var(--text-sub);
   font-weight: 800;
   letter-spacing: 0.02em;
