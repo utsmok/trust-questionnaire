@@ -13,6 +13,8 @@ export const freezeArray = (items) => Object.freeze([...items]);
 
 export const EMPTY_ARRAY = Object.freeze([]);
 
+export const EMPTY_OBJECT = Object.freeze({});
+
 export const inferMimeTypeFromName = (name) => {
   const normalizedName = normalizeTextValue(name);
 
@@ -96,3 +98,87 @@ export const normalizeDelimitedList = (value, splitter = /[\n,]+/) => {
 
 export const isImageMimeType = (mimeType) =>
   typeof mimeType === 'string' && mimeType.startsWith('image/');
+
+export const joinTokens = (items) => items.filter(Boolean).join(' \u00b7 ');
+
+export const setAccentKey = (element, accentKey) => {
+  if (!(element instanceof HTMLElement)) {
+    return;
+  }
+
+  if (accentKey) {
+    element.dataset.accentKey = accentKey;
+    return;
+  }
+
+  delete element.dataset.accentKey;
+};
+
+export const createInfoRow = (documentRef, label, value, extraClassName = '') => {
+  const wrapper = documentRef.createElement('div');
+  const dt = documentRef.createElement('dt');
+  const dd = documentRef.createElement('dd');
+
+  wrapper.className = `context-route-row${extraClassName ? ` ${extraClassName}` : ''}`;
+  dt.textContent = label;
+  dd.textContent = value;
+
+  wrapper.append(dt, dd);
+  return wrapper;
+};
+
+export const getCompletionGroupLabel = (completionGroupId, completionGroups = []) =>
+  completionGroups.find((group) => group.id === completionGroupId)?.label ?? completionGroupId;
+
+const PROGRESS_STATE_LABELS = Object.freeze({
+  not_started: 'Not started',
+  in_progress: 'In progress',
+  complete: 'Complete',
+  invalid_attention: 'Needs attention',
+  skipped: 'Skipped',
+  blocked_escalated: 'Blocked / escalated',
+});
+
+export const formatProgressStateLabel = (value, fallback = 'Not started') =>
+  PROGRESS_STATE_LABELS[value] ?? fallback;
+
+export const formatSectionProgressCompact = (sectionProgress) => {
+  if (!sectionProgress) {
+    return 'Awaiting input';
+  }
+
+  if (sectionProgress.canonicalState === 'skipped') {
+    return sectionProgress.skippedByWorkflow ? 'Workflow skip' : 'Skip satisfied';
+  }
+
+  if (sectionProgress.applicableRequiredFieldCount > 0) {
+    return `${sectionProgress.satisfiedRequiredFieldCount}/${sectionProgress.applicableRequiredFieldCount} req`;
+  }
+
+  if (sectionProgress.criterionCount > 0) {
+    return `${sectionProgress.resolvedCriterionCount}/${sectionProgress.criterionCount} crit`;
+  }
+
+  return sectionProgress.hasAnyActivity ? 'No active req' : 'Awaiting input';
+};
+
+export const createSourceList = (documentRef, sourceRefs) => {
+  const block = documentRef.createElement('div');
+  const label = documentRef.createElement('p');
+  const list = documentRef.createElement('ul');
+
+  block.className = 'context-source-block';
+  label.className = 'context-block-label';
+  label.textContent = 'Source refs';
+  list.className = 'context-source-list';
+
+  sourceRefs.forEach((sourceRef) => {
+    const item = documentRef.createElement('li');
+    item.className = 'context-source-item';
+    item.textContent = sourceRef;
+    list.appendChild(item);
+  });
+
+  block.append(label, list);
+  return block;
+};
