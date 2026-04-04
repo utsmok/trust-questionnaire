@@ -10,7 +10,11 @@
   .site-header,
   .panel-progress,
   .nav-indicator,
-  .completion-strip {
+  .completion-strip,
+  .page-index-column,
+  #pagerMount,
+  .shell-toolbar,
+  .shell-surface {
     display: none;
   }
 
@@ -22,7 +26,7 @@
     display: none;
   }
 
-  .split-layout {
+  .shell-layout {
     position: static;
     display: block;
   }
@@ -35,6 +39,7 @@
 
   .framework-panel {
     border-right: none;
+    border-left: none;
   }
 
   .panel-inner {
@@ -42,10 +47,53 @@
     padding: 0;
   }
 
+  .workspace-layout,
+  .questionnaire-workspace,
+  .reference-drawer-stack,
+  .surface-body {
+    display: block;
+  }
+
+  .is-page-hidden,
+  .is-context-hidden {
+    display: block !important;
+  }
+
+  .reference-drawer {
+    border: none;
+    break-inside: avoid;
+  }
+
+  .reference-drawer > summary {
+    display: none;
+  }
+
+  .reference-drawer-panel {
+    display: block;
+    padding: 0;
+    border-top: none;
+  }
+
   .doc-section,
   .form-section {
     break-inside: avoid;
     opacity: 1;
+    animation: none;
+  }
+
+  /* Reset Wave 1 animation classes */
+  .form-section.is-page-transitioning-out,
+  .form-section.is-page-transitioning-in,
+  .rating-option.is-just-selected,
+  .evidence-item.is-removing {
+    opacity: 1;
+    transform: none;
+    animation: none;
+    border-left-width: revert;
+  }
+
+  .shell-surface:not([hidden]),
+  .shell-surface:not([hidden]) .surface-card {
     animation: none;
   }
 

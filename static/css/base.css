@@ -14,8 +14,9 @@ body {
   margin: 0;
   font-family: var(--ff-body);
   font-kerning: normal;
+  text-rendering: optimizeSpeed;
   color: var(--ut-text);
-  background: var(--ut-grey);
+  background: var(--ut-canvas);
   overflow: hidden;
 }
 

@@ -11,16 +11,17 @@
   --ut-green: #4a8355;
   --ut-purple: #4f2d7f;
   --ut-pink: #cf0072;
-  --ut-grey: #f0f1f2;
+  --ut-grey: #eef0f3;
 
-  --ut-offwhite: #f0f1f2;
-  --ut-border: #c8cdd3;
+  --ut-offwhite: #f3f4f6;
+  --ut-border: #bfc6cf;
   --ut-text: #172033;
-  --ut-muted: #5B6474;
+  --ut-muted: #576578;
+  --ut-slate: #8b9bb0;
 
   /* Panel-specific backgrounds */
-  --ut-panel-bg: #eef0f2;
-  --ut-white: #fff;
+  --ut-panel-bg: #f3f4f6;
+  --ut-white: #fafbfc;
 
   /* TRUST principle tokens */
   --tr: #2563EB;
@@ -30,31 +31,176 @@
   --tc: #0D9488;
   --section-default: #64748B;
 
+  /* Section context families */
+  --section-control-accent: var(--ut-darkblue);
+  --section-control-accent-strong: color-mix(in srgb, var(--section-control-accent) 88%, black);
+  --section-control-tint: color-mix(in srgb, var(--section-control-accent) 16%, var(--ut-white));
+  --section-control-border: color-mix(in srgb, var(--section-control-accent) 32%, var(--ut-border));
+  --section-control-on-accent: var(--ut-white);
+
+  --section-profile-accent: var(--ut-blue);
+  --section-profile-accent-strong: color-mix(in srgb, var(--section-profile-accent) 88%, black);
+  --section-profile-tint: color-mix(in srgb, var(--section-profile-accent) 16%, var(--ut-white));
+  --section-profile-border: color-mix(in srgb, var(--section-profile-accent) 32%, var(--ut-border));
+  --section-profile-on-accent: var(--ut-white);
+
+  --section-setup-accent: color-mix(in srgb, var(--ut-darkblue) 52%, var(--ut-blue));
+  --section-setup-accent-strong: color-mix(in srgb, var(--section-setup-accent) 88%, black);
+  --section-setup-tint: color-mix(in srgb, var(--section-setup-accent) 16%, var(--ut-white));
+  --section-setup-border: color-mix(in srgb, var(--section-setup-accent) 32%, var(--ut-border));
+  --section-setup-on-accent: var(--ut-white);
+
+  --section-tr-accent: var(--tr);
+  --section-tr-accent-strong: color-mix(in srgb, var(--section-tr-accent) 86%, black);
+  --section-tr-tint: color-mix(in srgb, var(--section-tr-accent) 16%, var(--ut-white));
+  --section-tr-border: color-mix(in srgb, var(--section-tr-accent) 32%, var(--ut-border));
+  --section-tr-on-accent: var(--ut-white);
+
+  --section-re-accent: var(--re);
+  --section-re-accent-strong: color-mix(in srgb, var(--section-re-accent) 86%, black);
+  --section-re-tint: color-mix(in srgb, var(--section-re-accent) 16%, var(--ut-white));
+  --section-re-border: color-mix(in srgb, var(--section-re-accent) 32%, var(--ut-border));
+  --section-re-on-accent: var(--ut-white);
+
+  --section-uc-accent: var(--uc);
+  --section-uc-accent-strong: color-mix(in srgb, var(--section-uc-accent) 86%, black);
+  --section-uc-tint: color-mix(in srgb, var(--section-uc-accent) 16%, var(--ut-white));
+  --section-uc-border: color-mix(in srgb, var(--section-uc-accent) 32%, var(--ut-border));
+  --section-uc-on-accent: var(--ut-white);
+
+  --section-se-accent: var(--se);
+  --section-se-accent-strong: #c2410c;
+  --section-se-tint: color-mix(in srgb, var(--section-se-accent) 16%, var(--ut-white));
+  --section-se-border: color-mix(in srgb, var(--section-se-accent) 32%, var(--ut-border));
+  --section-se-on-accent: var(--ut-white);
+
+  --section-tc-accent: var(--tc);
+  --section-tc-accent-strong: #0f766e;
+  --section-tc-tint: color-mix(in srgb, var(--section-tc-accent) 16%, var(--ut-white));
+  --section-tc-border: color-mix(in srgb, var(--section-tc-accent) 32%, var(--ut-border));
+  --section-tc-on-accent: var(--ut-white);
+
+  --section-reference-accent: var(--ut-pink);
+  --section-reference-accent-strong: color-mix(in srgb, var(--section-reference-accent) 88%, black);
+  --section-reference-tint: color-mix(in srgb, var(--section-reference-accent) 16%, var(--ut-white));
+  --section-reference-border: color-mix(in srgb, var(--section-reference-accent) 32%, var(--ut-border));
+  --section-reference-on-accent: var(--ut-white);
+
+  --section-recommendation-accent: color-mix(in srgb, var(--ut-pink) 44%, var(--ut-darkblue));
+  --section-recommendation-accent-strong: color-mix(in srgb, var(--section-recommendation-accent) 88%, black);
+  --section-recommendation-tint: color-mix(in srgb, var(--section-recommendation-accent) 16%, var(--ut-white));
+  --section-recommendation-border: color-mix(in srgb, var(--section-recommendation-accent) 32%, var(--ut-border));
+  --section-recommendation-on-accent: var(--ut-white);
+
+  --section-governance-accent: color-mix(in srgb, var(--ut-darkblue) 58%, var(--ut-slate));
+  --section-governance-accent-strong: color-mix(in srgb, var(--section-governance-accent) 88%, black);
+  --section-governance-tint: color-mix(in srgb, var(--section-governance-accent) 16%, var(--ut-white));
+  --section-governance-border: color-mix(in srgb, var(--section-governance-accent) 32%, var(--ut-border));
+  --section-governance-on-accent: var(--ut-white);
+
   /* Score-level semantic colors */
   --score-0: #c60c30;
   --score-1: #EA580C;
-  --score-2: #007d9c;
+  --score-2: #088080;
   --score-3: #4a8355;
+
+  --score-0-tint: color-mix(in srgb, var(--score-0) 10%, var(--ut-white));
+  --score-0-border: color-mix(in srgb, var(--score-0) 24%, var(--ut-border));
+  --score-1-tint: color-mix(in srgb, var(--score-1) 10%, var(--ut-white));
+  --score-1-border: color-mix(in srgb, var(--score-1) 24%, var(--ut-border));
+  --score-2-tint: color-mix(in srgb, var(--score-2) 10%, var(--ut-white));
+  --score-2-border: color-mix(in srgb, var(--score-2) 24%, var(--ut-border));
+  --score-3-tint: color-mix(in srgb, var(--score-3) 10%, var(--ut-white));
+  --score-3-border: color-mix(in srgb, var(--score-3) 24%, var(--ut-border));
+
+  /* Workflow state family */
+  --workflow-editable: color-mix(in srgb, var(--ut-darkblue) 78%, var(--ut-blue));
+  --workflow-editable-tint: color-mix(in srgb, var(--workflow-editable) 10%, var(--ut-white));
+  --workflow-editable-border: color-mix(in srgb, var(--workflow-editable) 24%, var(--ut-border));
+  --workflow-read-only: var(--ut-blue);
+  --workflow-read-only-tint: color-mix(in srgb, var(--workflow-read-only) 10%, var(--ut-white));
+  --workflow-read-only-border: color-mix(in srgb, var(--workflow-read-only) 24%, var(--ut-border));
+  --workflow-system-skipped: var(--ut-slate);
+  --workflow-system-skipped-tint: color-mix(in srgb, var(--workflow-system-skipped) 12%, var(--ut-white));
+  --workflow-system-skipped-border: color-mix(in srgb, var(--workflow-system-skipped) 28%, var(--ut-border));
+
+  /* Validation and progress state family */
+  --state-success: var(--ut-green);
+  --state-success-tint: color-mix(in srgb, var(--state-success) 10%, var(--ut-white));
+  --state-success-border: color-mix(in srgb, var(--state-success) 24%, var(--ut-border));
+  --state-info: var(--ut-blue);
+  --state-info-tint: color-mix(in srgb, var(--state-info) 10%, var(--ut-white));
+  --state-info-border: color-mix(in srgb, var(--state-info) 24%, var(--ut-border));
+  --state-warning: var(--se);
+  --state-warning-tint: color-mix(in srgb, var(--state-warning) 10%, var(--ut-white));
+  --state-warning-border: color-mix(in srgb, var(--state-warning) 24%, var(--ut-border));
+  --state-error: var(--ut-red);
+  --state-error-tint: color-mix(in srgb, var(--state-error) 10%, var(--ut-white));
+  --state-error-border: color-mix(in srgb, var(--state-error) 24%, var(--ut-border));
+  --state-skipped: var(--ut-slate);
+  --state-skipped-tint: color-mix(in srgb, var(--state-skipped) 14%, var(--ut-white));
+  --state-skipped-border: color-mix(in srgb, var(--state-skipped) 28%, var(--ut-border));
+  --state-blocked: var(--ut-red);
+  --state-blocked-tint: color-mix(in srgb, var(--ut-slate) 18%, var(--ut-white));
+  --state-blocked-border: color-mix(in srgb, var(--state-blocked) 26%, var(--ut-border));
+
+  /* Judgment state family */
+  --judgment-pass: var(--ut-green);
+  --judgment-pass-tint: color-mix(in srgb, var(--judgment-pass) 10%, var(--ut-white));
+  --judgment-pass-border: color-mix(in srgb, var(--judgment-pass) 24%, var(--ut-border));
+  --judgment-conditional: var(--se);
+  --judgment-conditional-tint: color-mix(in srgb, var(--judgment-conditional) 10%, var(--ut-white));
+  --judgment-conditional-border: color-mix(in srgb, var(--judgment-conditional) 24%, var(--ut-border));
+  --judgment-fail: var(--ut-red);
+  --judgment-fail-tint: color-mix(in srgb, var(--judgment-fail) 10%, var(--ut-white));
+  --judgment-fail-border: color-mix(in srgb, var(--judgment-fail) 24%, var(--ut-border));
+
+  /* Recommendation state family */
+  --recommendation-recommended: var(--ut-green);
+  --recommendation-recommended-tint: color-mix(in srgb, var(--recommendation-recommended) 10%, var(--ut-white));
+  --recommendation-recommended-border: color-mix(in srgb, var(--recommendation-recommended) 24%, var(--ut-border));
+  --recommendation-recommended-with-caveats: var(--se);
+  --recommendation-recommended-with-caveats-tint: color-mix(in srgb, var(--recommendation-recommended-with-caveats) 10%, var(--ut-white));
+  --recommendation-recommended-with-caveats-border: color-mix(in srgb, var(--recommendation-recommended-with-caveats) 24%, var(--ut-border));
+  --recommendation-needs-review-provisional: var(--ut-blue);
+  --recommendation-needs-review-provisional-tint: color-mix(in srgb, var(--recommendation-needs-review-provisional) 10%, var(--ut-white));
+  --recommendation-needs-review-provisional-border: color-mix(in srgb, var(--recommendation-needs-review-provisional) 24%, var(--ut-border));
+  --recommendation-pilot-only: var(--ut-purple);
+  --recommendation-pilot-only-tint: color-mix(in srgb, var(--recommendation-pilot-only) 10%, var(--ut-white));
+  --recommendation-pilot-only-border: color-mix(in srgb, var(--recommendation-pilot-only) 24%, var(--ut-border));
+  --recommendation-not-recommended: var(--ut-red);
+  --recommendation-not-recommended-tint: color-mix(in srgb, var(--recommendation-not-recommended) 10%, var(--ut-white));
+  --recommendation-not-recommended-border: color-mix(in srgb, var(--recommendation-not-recommended) 24%, var(--ut-border));
+  --recommendation-out-of-scope: var(--ut-slate);
+  --recommendation-out-of-scope-tint: color-mix(in srgb, var(--recommendation-out-of-scope) 14%, var(--ut-white));
+  --recommendation-out-of-scope-border: color-mix(in srgb, var(--recommendation-out-of-scope) 28%, var(--ut-border));
+
+  /* Help and documentation family */
+  --help-accent: color-mix(in srgb, var(--ut-darkblue) 76%, var(--ut-blue));
+  --help-accent-strong: color-mix(in srgb, var(--help-accent) 88%, black);
+  --help-tint: color-mix(in srgb, var(--help-accent) 10%, var(--ut-white));
+  --help-border: color-mix(in srgb, var(--help-accent) 24%, var(--ut-border));
+  --help-on-accent: var(--ut-white);
 
   /* Darkened variants for WCAG AA compliance on white-text nav buttons */
   --se-dark: #c2410c;
   --tc-dark: #0f766e;
 
-  /* Tokenize hardcoded slate */
-  --ut-slate: #94A3B8;
-
   --header-h: 138px;
 
-  /* Type scale -- 5 steps, ~1.15-1.2 ratio */
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-body: 0.9375rem;
-  --text-sub: 1.0625rem;
-  --text-heading: 1.1875rem;
+  /* Type scale -- 7 steps, wider range for stronger hierarchy */
+  --text-xs: 0.56rem;
+  --text-sm: 0.75rem;
+  --text-body: 1rem;
+  --text-sub: 1.2rem;
+  --text-heading: 1.563rem;
+  --text-display: 1.95rem;
+  --text-mega: 2.25rem;
 
   /* Line heights */
   --lh-body: 1.55;
   --lh-heading: 1.2;
+  --lh-sub: 1.3;
 
   /* Letter spacing */
   --ls-heading: -0.01em;
@@ -78,4 +224,25 @@
   --ff-body: "Inter", ui-sans-serif, system-ui, sans-serif;
   --ff-heading: "Arial Narrow", Arial, sans-serif;
   --ff-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Neutral scale (navy-tinted) */
+  --neutral-50:  color-mix(in srgb, var(--ut-navy) 2%, var(--ut-white));
+  --neutral-100: color-mix(in srgb, var(--ut-navy) 4%, var(--ut-white));
+  --neutral-150: color-mix(in srgb, var(--ut-navy) 6%, var(--ut-white));
+  --neutral-200: color-mix(in srgb, var(--ut-navy) 8%, var(--ut-white));
+  --neutral-300: var(--ut-offwhite);
+  --neutral-400: var(--ut-border);
+  --neutral-500: var(--ut-slate);
+  --neutral-600: var(--ut-muted);
+  --neutral-700: var(--ut-text);
+  --neutral-800: var(--ut-navy);
+  --neutral-900: color-mix(in srgb, var(--ut-navy) 90%, black);
+
+  /* Canvas background */
+  --ut-canvas: var(--ut-grey);
+
+  /* Focus ring */
+  --focus-ring: var(--ut-blue);
+  --focus-ring-offset: 2px;
+  --focus-ring-width: 2px;
 }

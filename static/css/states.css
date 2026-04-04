@@ -17,28 +17,373 @@
   }
 }
 
+body {
+  --active-section-accent: var(--section-control-accent);
+  --active-section-accent-strong: var(--section-control-accent-strong);
+}
+
+:where(
+  .doc-section,
+  .form-section,
+  .criterion-card,
+  .nav-button[data-page-id],
+  .page-index-button,
+  .context-route-card,
+  .context-anchor-card,
+  .context-anchor-button,
+  .about-topic-meta,
+  .about-topic-button,
+  .about-topic-page,
+  .context-route-code,
+  .strip-cell,
+  .surface-card[data-accent-key],
+  .panel-title-section[data-accent-key],
+  .help-section-item
+) {
+  --section-accent: var(--section-control-accent);
+  --section-accent-strong: var(--section-control-accent-strong);
+  --section-tint: var(--section-control-tint);
+  --section-border: var(--section-control-border);
+  --section-on-accent: var(--section-control-on-accent);
+}
+
+body[data-active-accent-key="control"],
+body[data-active-accent-key="intro"],
+:where(
+  .doc-section[data-section="intro"],
+  .doc-section[data-section="control"],
+  .form-section[data-accent-key="control"],
+  .nav-button[data-accent-key="control"],
+  .page-index-button[data-accent-key="control"],
+  .context-route-card[data-accent-key="control"],
+  .context-anchor-card[data-accent-key="control"],
+  .context-anchor-button[data-accent-key="control"],
+  .about-topic-meta[data-accent-key="control"],
+  .about-topic-button[data-accent-key="control"],
+  .about-topic-page[data-accent-key="control"],
+  .context-route-code[data-accent-key="control"],
+  .strip-cell[data-accent-key="control"],
+  .surface-card[data-accent-key="control"],
+  .panel-title-section[data-accent-key="control"],
+  .help-section-item[data-accent-key="control"]
+) {
+  --section-accent: var(--section-control-accent);
+  --section-accent-strong: var(--section-control-accent-strong);
+  --section-tint: var(--section-control-tint);
+  --section-border: var(--section-control-border);
+  --section-on-accent: var(--section-control-on-accent);
+  --active-section-accent: var(--section-control-accent);
+  --active-section-accent-strong: var(--section-control-accent-strong);
+}
+
+body[data-active-accent-key="profile"],
+body[data-active-accent-key="scope"],
+:where(
+  .doc-section[data-section="scope"],
+  .doc-section[data-section="profile"],
+  .form-section[data-accent-key="profile"],
+  .nav-button[data-accent-key="profile"],
+  .page-index-button[data-accent-key="profile"],
+  .context-route-card[data-accent-key="profile"],
+  .context-anchor-card[data-accent-key="profile"],
+  .context-anchor-button[data-accent-key="profile"],
+  .about-topic-meta[data-accent-key="profile"],
+  .about-topic-button[data-accent-key="profile"],
+  .about-topic-page[data-accent-key="profile"],
+  .context-route-code[data-accent-key="profile"],
+  .strip-cell[data-accent-key="profile"],
+  .surface-card[data-accent-key="profile"],
+  .panel-title-section[data-accent-key="profile"],
+  .help-section-item[data-accent-key="profile"]
+) {
+  --section-accent: var(--section-profile-accent);
+  --section-accent-strong: var(--section-profile-accent-strong);
+  --section-tint: var(--section-profile-tint);
+  --section-border: var(--section-profile-border);
+  --section-on-accent: var(--section-profile-on-accent);
+  --active-section-accent: var(--section-profile-accent);
+  --active-section-accent-strong: var(--section-profile-accent-strong);
+}
+
+body[data-active-accent-key="setup"],
+:where(
+  .doc-section[data-section="setup"],
+  .form-section[data-accent-key="setup"],
+  .nav-button[data-accent-key="setup"],
+  .page-index-button[data-accent-key="setup"],
+  .context-route-card[data-accent-key="setup"],
+  .context-anchor-card[data-accent-key="setup"],
+  .context-anchor-button[data-accent-key="setup"],
+  .about-topic-meta[data-accent-key="setup"],
+  .about-topic-button[data-accent-key="setup"],
+  .about-topic-page[data-accent-key="setup"],
+  .context-route-code[data-accent-key="setup"],
+  .strip-cell[data-accent-key="setup"],
+  .surface-card[data-accent-key="setup"],
+  .panel-title-section[data-accent-key="setup"],
+  .help-section-item[data-accent-key="setup"]
+) {
+  --section-accent: var(--section-setup-accent);
+  --section-accent-strong: var(--section-setup-accent-strong);
+  --section-tint: var(--section-setup-tint);
+  --section-border: var(--section-setup-border);
+  --section-on-accent: var(--section-setup-on-accent);
+  --active-section-accent: var(--section-setup-accent);
+  --active-section-accent-strong: var(--section-setup-accent-strong);
+}
+
+body[data-active-accent-key="tr"],
+:where(
+  .doc-section[data-section="tr"],
+  .form-section[data-section="tr"],
+  .criterion-card.tr,
+  .nav-button[data-accent-key="tr"],
+  .page-index-button[data-accent-key="tr"],
+  .context-route-card[data-accent-key="tr"],
+  .context-anchor-card[data-accent-key="tr"],
+  .context-anchor-button[data-accent-key="tr"],
+  .about-topic-meta[data-accent-key="tr"],
+  .about-topic-button[data-accent-key="tr"],
+  .about-topic-page[data-accent-key="tr"],
+  .context-route-code[data-accent-key="tr"],
+  .strip-cell[data-accent-key="tr"],
+  .surface-card[data-accent-key="tr"],
+  .panel-title-section[data-accent-key="tr"],
+  .help-section-item[data-accent-key="tr"]
+) {
+  --section-accent: var(--section-tr-accent);
+  --section-accent-strong: var(--section-tr-accent-strong);
+  --section-tint: var(--section-tr-tint);
+  --section-border: var(--section-tr-border);
+  --section-on-accent: var(--section-tr-on-accent);
+  --active-section-accent: var(--section-tr-accent);
+  --active-section-accent-strong: var(--section-tr-accent-strong);
+}
+
+body[data-active-accent-key="re"],
+:where(
+  .doc-section[data-section="re"],
+  .form-section[data-section="re"],
+  .criterion-card.re,
+  .nav-button[data-accent-key="re"],
+  .page-index-button[data-accent-key="re"],
+  .context-route-card[data-accent-key="re"],
+  .context-anchor-card[data-accent-key="re"],
+  .context-anchor-button[data-accent-key="re"],
+  .about-topic-meta[data-accent-key="re"],
+  .about-topic-button[data-accent-key="re"],
+  .about-topic-page[data-accent-key="re"],
+  .context-route-code[data-accent-key="re"],
+  .strip-cell[data-accent-key="re"],
+  .surface-card[data-accent-key="re"],
+  .panel-title-section[data-accent-key="re"],
+  .help-section-item[data-accent-key="re"]
+) {
+  --section-accent: var(--section-re-accent);
+  --section-accent-strong: var(--section-re-accent-strong);
+  --section-tint: var(--section-re-tint);
+  --section-border: var(--section-re-border);
+  --section-on-accent: var(--section-re-on-accent);
+  --active-section-accent: var(--section-re-accent);
+  --active-section-accent-strong: var(--section-re-accent-strong);
+}
+
+body[data-active-accent-key="uc"],
+:where(
+  .doc-section[data-section="uc"],
+  .form-section[data-section="uc"],
+  .criterion-card.uc,
+  .nav-button[data-accent-key="uc"],
+  .page-index-button[data-accent-key="uc"],
+  .context-route-card[data-accent-key="uc"],
+  .context-anchor-card[data-accent-key="uc"],
+  .context-anchor-button[data-accent-key="uc"],
+  .about-topic-meta[data-accent-key="uc"],
+  .about-topic-button[data-accent-key="uc"],
+  .about-topic-page[data-accent-key="uc"],
+  .context-route-code[data-accent-key="uc"],
+  .strip-cell[data-accent-key="uc"],
+  .surface-card[data-accent-key="uc"],
+  .panel-title-section[data-accent-key="uc"],
+  .help-section-item[data-accent-key="uc"]
+) {
+  --section-accent: var(--section-uc-accent);
+  --section-accent-strong: var(--section-uc-accent-strong);
+  --section-tint: var(--section-uc-tint);
+  --section-border: var(--section-uc-border);
+  --section-on-accent: var(--section-uc-on-accent);
+  --active-section-accent: var(--section-uc-accent);
+  --active-section-accent-strong: var(--section-uc-accent-strong);
+}
+
+body[data-active-accent-key="se"],
+:where(
+  .doc-section[data-section="se"],
+  .form-section[data-section="se"],
+  .criterion-card.se,
+  .nav-button[data-accent-key="se"],
+  .page-index-button[data-accent-key="se"],
+  .context-route-card[data-accent-key="se"],
+  .context-anchor-card[data-accent-key="se"],
+  .context-anchor-button[data-accent-key="se"],
+  .about-topic-meta[data-accent-key="se"],
+  .about-topic-button[data-accent-key="se"],
+  .about-topic-page[data-accent-key="se"],
+  .context-route-code[data-accent-key="se"],
+  .strip-cell[data-accent-key="se"],
+  .surface-card[data-accent-key="se"],
+  .panel-title-section[data-accent-key="se"],
+  .help-section-item[data-accent-key="se"]
+) {
+  --section-accent: var(--section-se-accent);
+  --section-accent-strong: var(--section-se-accent-strong);
+  --section-tint: var(--section-se-tint);
+  --section-border: var(--section-se-border);
+  --section-on-accent: var(--section-se-on-accent);
+  --active-section-accent: var(--section-se-accent);
+  --active-section-accent-strong: var(--section-se-accent-strong);
+}
+
+body[data-active-accent-key="tc"],
+:where(
+  .doc-section[data-section="tc"],
+  .form-section[data-section="tc"],
+  .criterion-card.tc,
+  .nav-button[data-accent-key="tc"],
+  .page-index-button[data-accent-key="tc"],
+  .context-route-card[data-accent-key="tc"],
+  .context-anchor-card[data-accent-key="tc"],
+  .context-anchor-button[data-accent-key="tc"],
+  .about-topic-meta[data-accent-key="tc"],
+  .about-topic-button[data-accent-key="tc"],
+  .about-topic-page[data-accent-key="tc"],
+  .context-route-code[data-accent-key="tc"],
+  .strip-cell[data-accent-key="tc"],
+  .surface-card[data-accent-key="tc"],
+  .panel-title-section[data-accent-key="tc"],
+  .help-section-item[data-accent-key="tc"]
+) {
+  --section-accent: var(--section-tc-accent);
+  --section-accent-strong: var(--section-tc-accent-strong);
+  --section-tint: var(--section-tc-tint);
+  --section-border: var(--section-tc-border);
+  --section-on-accent: var(--section-tc-on-accent);
+  --active-section-accent: var(--section-tc-accent);
+  --active-section-accent-strong: var(--section-tc-accent-strong);
+}
+
+body[data-active-accent-key="reference"],
+body[data-active-accent-key="scoring"],
+body[data-active-accent-key="evidence"],
+:where(
+  .doc-section[data-section="scoring"],
+  .doc-section[data-section="evidence"],
+  .doc-section[data-section="reference"],
+  .form-section[data-accent-key="reference"],
+  .nav-button[data-accent-key="reference"],
+  .page-index-button[data-accent-key="reference"],
+  .context-route-card[data-accent-key="reference"],
+  .context-anchor-card[data-accent-key="reference"],
+  .context-anchor-button[data-accent-key="reference"],
+  .about-topic-meta[data-accent-key="reference"],
+  .about-topic-button[data-accent-key="reference"],
+  .about-topic-page[data-accent-key="reference"],
+  .context-route-code[data-accent-key="reference"],
+  .strip-cell[data-accent-key="reference"],
+  .surface-card[data-accent-key="reference"],
+  .panel-title-section[data-accent-key="reference"],
+  .help-section-item[data-accent-key="reference"]
+) {
+  --section-accent: var(--section-reference-accent);
+  --section-accent-strong: var(--section-reference-accent-strong);
+  --section-tint: var(--section-reference-tint);
+  --section-border: var(--section-reference-border);
+  --section-on-accent: var(--section-reference-on-accent);
+  --active-section-accent: var(--section-reference-accent);
+  --active-section-accent-strong: var(--section-reference-accent-strong);
+}
+
+body[data-active-accent-key="recommendation"],
+:where(
+  .doc-section[data-section="recommendation"],
+  .form-section[data-accent-key="recommendation"],
+  .nav-button[data-accent-key="recommendation"],
+  .page-index-button[data-accent-key="recommendation"],
+  .context-route-card[data-accent-key="recommendation"],
+  .context-anchor-card[data-accent-key="recommendation"],
+  .context-anchor-button[data-accent-key="recommendation"],
+  .about-topic-meta[data-accent-key="recommendation"],
+  .about-topic-button[data-accent-key="recommendation"],
+  .about-topic-page[data-accent-key="recommendation"],
+  .context-route-code[data-accent-key="recommendation"],
+  .strip-cell[data-accent-key="recommendation"],
+  .surface-card[data-accent-key="recommendation"],
+  .panel-title-section[data-accent-key="recommendation"],
+  .help-section-item[data-accent-key="recommendation"]
+) {
+  --section-accent: var(--section-recommendation-accent);
+  --section-accent-strong: var(--section-recommendation-accent-strong);
+  --section-tint: var(--section-recommendation-tint);
+  --section-border: var(--section-recommendation-border);
+  --section-on-accent: var(--section-recommendation-on-accent);
+  --active-section-accent: var(--section-recommendation-accent);
+  --active-section-accent-strong: var(--section-recommendation-accent-strong);
+}
+
+body[data-active-accent-key="governance"],
+:where(
+  .doc-section[data-section="governance"],
+  .form-section[data-accent-key="governance"],
+  .nav-button[data-accent-key="governance"],
+  .page-index-button[data-accent-key="governance"],
+  .context-route-card[data-accent-key="governance"],
+  .context-anchor-card[data-accent-key="governance"],
+  .context-anchor-button[data-accent-key="governance"],
+  .about-topic-meta[data-accent-key="governance"],
+  .about-topic-button[data-accent-key="governance"],
+  .about-topic-page[data-accent-key="governance"],
+  .context-route-code[data-accent-key="governance"],
+  .strip-cell[data-accent-key="governance"],
+  .surface-card[data-accent-key="governance"],
+  .panel-title-section[data-accent-key="governance"],
+  .help-section-item[data-accent-key="governance"]
+) {
+  --section-accent: var(--section-governance-accent);
+  --section-accent-strong: var(--section-governance-accent-strong);
+  --section-tint: var(--section-governance-tint);
+  --section-border: var(--section-governance-border);
+  --section-on-accent: var(--section-governance-on-accent);
+  --active-section-accent: var(--section-governance-accent);
+  --active-section-accent-strong: var(--section-governance-accent-strong);
+}
+
+.top-accent {
+  background: var(--active-section-accent-strong);
+  transition: background var(--duration-fast) var(--ease-out-quart);
+}
+
 .strip-cell.filled.tr {
-  background: rgba(37, 99, 235, 0.30);
+  background: color-mix(in srgb, var(--tr) 30%, var(--ut-white));
   border-color: var(--tr);
 }
 
 .strip-cell.filled.re {
-  background: rgba(22, 163, 74, 0.30);
+  background: color-mix(in srgb, var(--re) 30%, var(--ut-white));
   border-color: var(--re);
 }
 
 .strip-cell.filled.uc {
-  background: rgba(147, 51, 234, 0.30);
+  background: color-mix(in srgb, var(--uc) 30%, var(--ut-white));
   border-color: var(--uc);
 }
 
 .strip-cell.filled.se {
-  background: rgba(234, 88, 12, 0.30);
+  background: color-mix(in srgb, var(--se) 30%, var(--ut-white));
   border-color: var(--se);
 }
 
 .strip-cell.filled.tc {
-  background: rgba(13, 148, 136, 0.30);
+  background: color-mix(in srgb, var(--tc) 30%, var(--ut-white));
   border-color: var(--tc);
 }
 
@@ -61,8 +406,8 @@
 }
 
 .nav-button:focus-visible {
-  outline: 2px solid var(--ut-blue);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .nav-button:hover {
@@ -76,7 +421,7 @@
 
 .nav-button.active {
   color: #fff;
-  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, #fff 20%, transparent);
 }
 
 .nav-button.active[data-target="tr"] {
@@ -143,48 +488,48 @@
 
 .doc-section.is-active,
 .form-section.is-active {
-  background: rgba(0, 44, 95, 0.03);
+  background: color-mix(in srgb, var(--ut-navy) 3%, var(--ut-white));
   border-left-width: 8px;
-  border-color: rgba(0, 44, 95, 0.12);
+  border-color: color-mix(in srgb, var(--ut-navy) 12%, var(--ut-border));
 }
 
 .doc-section.is-active[data-section="tr"],
 .form-section.is-active[data-section="tr"] {
-  border-top-color: rgba(37, 99, 235, 0.10);
-  border-right-color: rgba(37, 99, 235, 0.10);
-  border-bottom-color: rgba(37, 99, 235, 0.10);
+  border-top-color: color-mix(in srgb, var(--tr) 10%, var(--ut-border));
+  border-right-color: color-mix(in srgb, var(--tr) 10%, var(--ut-border));
+  border-bottom-color: color-mix(in srgb, var(--tr) 10%, var(--ut-border));
   border-left-color: var(--tr);
 }
 
 .doc-section.is-active[data-section="re"],
 .form-section.is-active[data-section="re"] {
-  border-top-color: rgba(22, 163, 74, 0.10);
-  border-right-color: rgba(22, 163, 74, 0.10);
-  border-bottom-color: rgba(22, 163, 74, 0.10);
+  border-top-color: color-mix(in srgb, var(--re) 10%, var(--ut-border));
+  border-right-color: color-mix(in srgb, var(--re) 10%, var(--ut-border));
+  border-bottom-color: color-mix(in srgb, var(--re) 10%, var(--ut-border));
   border-left-color: var(--re);
 }
 
 .doc-section.is-active[data-section="uc"],
 .form-section.is-active[data-section="uc"] {
-  border-top-color: rgba(147, 51, 234, 0.10);
-  border-right-color: rgba(147, 51, 234, 0.10);
-  border-bottom-color: rgba(147, 51, 234, 0.10);
+  border-top-color: color-mix(in srgb, var(--uc) 10%, var(--ut-border));
+  border-right-color: color-mix(in srgb, var(--uc) 10%, var(--ut-border));
+  border-bottom-color: color-mix(in srgb, var(--uc) 10%, var(--ut-border));
   border-left-color: var(--uc);
 }
 
 .doc-section.is-active[data-section="se"],
 .form-section.is-active[data-section="se"] {
-  border-top-color: rgba(234, 88, 12, 0.10);
-  border-right-color: rgba(234, 88, 12, 0.10);
-  border-bottom-color: rgba(234, 88, 12, 0.10);
+  border-top-color: color-mix(in srgb, var(--se) 10%, var(--ut-border));
+  border-right-color: color-mix(in srgb, var(--se) 10%, var(--ut-border));
+  border-bottom-color: color-mix(in srgb, var(--se) 10%, var(--ut-border));
   border-left-color: var(--se);
 }
 
 .doc-section.is-active[data-section="tc"],
 .form-section.is-active[data-section="tc"] {
-  border-top-color: rgba(13, 148, 136, 0.10);
-  border-right-color: rgba(13, 148, 136, 0.10);
-  border-bottom-color: rgba(13, 148, 136, 0.10);
+  border-top-color: color-mix(in srgb, var(--tc) 10%, var(--ut-border));
+  border-right-color: color-mix(in srgb, var(--tc) 10%, var(--ut-border));
+  border-bottom-color: color-mix(in srgb, var(--tc) 10%, var(--ut-border));
   border-left-color: var(--tc);
 }
 
@@ -242,59 +587,59 @@
 }
 
 .criterion-card.tr {
-  background: rgba(37, 99, 235, 0.02);
+  background: color-mix(in srgb, var(--tr) 2%, var(--ut-white));
 }
 
 .criterion-card.re {
-  background: rgba(22, 163, 74, 0.02);
+  background: color-mix(in srgb, var(--re) 2%, var(--ut-white));
 }
 
 .criterion-card.uc {
-  background: rgba(147, 51, 234, 0.02);
+  background: color-mix(in srgb, var(--uc) 2%, var(--ut-white));
 }
 
 .criterion-card.se {
-  background: rgba(234, 88, 12, 0.02);
+  background: color-mix(in srgb, var(--se) 2%, var(--ut-white));
 }
 
 .criterion-card.tc {
-  background: rgba(13, 148, 136, 0.02);
+  background: color-mix(in srgb, var(--tc) 2%, var(--ut-white));
 }
 
 .section-kicker.tr {
   border-left: 3px solid var(--tr);
   color: var(--tr);
-  background: rgba(37, 99, 235, 0.10);
+  background: color-mix(in srgb, var(--tr) 10%, var(--ut-white));
 }
 
 .section-kicker.re {
   border-left: 3px solid var(--re);
   color: var(--re);
-  background: rgba(22, 163, 74, 0.10);
+  background: color-mix(in srgb, var(--re) 10%, var(--ut-white));
 }
 
 .section-kicker.uc {
   border-left: 3px solid var(--uc);
   color: var(--uc);
-  background: rgba(147, 51, 234, 0.10);
+  background: color-mix(in srgb, var(--uc) 10%, var(--ut-white));
 }
 
 .section-kicker.se {
   border-left: 3px solid var(--se);
   color: var(--se);
-  background: rgba(234, 88, 12, 0.10);
+  background: color-mix(in srgb, var(--se) 10%, var(--ut-white));
 }
 
 .section-kicker.tc {
   border-left: 3px solid var(--tc);
   color: var(--tc);
-  background: rgba(13, 148, 136, 0.10);
+  background: color-mix(in srgb, var(--tc) 10%, var(--ut-white));
 }
 
 .doc-section[data-section="scoring"] .section-kicker,
 .form-section[data-section="scoring"] .section-kicker {
   color: var(--ut-pink);
-  background: rgba(207, 0, 114, 0.10);
+  background: color-mix(in srgb, var(--ut-pink) 10%, var(--ut-white));
 }
 
 .score-table tbody tr:nth-child(1) td:first-child {
@@ -314,105 +659,310 @@
 }
 
 .chip.red {
-  background: rgba(198, 12, 48, 0.10);
-  border-color: rgba(198, 12, 48, 0.20);
+  background: var(--state-error-tint);
+  border-color: var(--state-error-border);
   color: var(--ut-red);
 }
 
 .chip.navy {
-  background: rgba(0, 44, 95, 0.10);
-  border-color: rgba(0, 44, 95, 0.20);
+  background: color-mix(in srgb, var(--ut-navy) 10%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--ut-navy) 20%, var(--ut-border));
   color: var(--ut-navy);
 }
 
 .chip.green {
-  background: rgba(22, 163, 74, 0.10);
-  border-color: rgba(22, 163, 74, 0.20);
+  background: color-mix(in srgb, var(--re) 10%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--re) 20%, var(--ut-border));
   color: var(--re);
 }
 
 .chip.orange {
-  background: rgba(234, 88, 12, 0.10);
-  border-color: rgba(234, 88, 12, 0.20);
+  background: color-mix(in srgb, var(--se) 10%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--se) 20%, var(--ut-border));
   color: var(--se);
 }
 
 .chip.purple {
-  background: rgba(147, 51, 234, 0.10);
-  border-color: rgba(147, 51, 234, 0.20);
+  background: color-mix(in srgb, var(--uc) 10%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--uc) 20%, var(--ut-border));
   color: var(--uc);
 }
 
 .chip.teal {
-  background: rgba(13, 148, 136, 0.10);
-  border-color: rgba(13, 148, 136, 0.20);
+  background: color-mix(in srgb, var(--tc) 10%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--tc) 20%, var(--ut-border));
   color: var(--tc);
+}
+
+.chip[data-score="0"] {
+  background: var(--score-0-tint);
+  border-color: var(--score-0-border);
+  color: var(--score-0);
+}
+
+.chip[data-score="1"] {
+  background: var(--score-1-tint);
+  border-color: var(--score-1-border);
+  color: var(--score-1);
+}
+
+.chip[data-score="2"] {
+  background: var(--score-2-tint);
+  border-color: var(--score-2-border);
+  color: var(--score-2);
+}
+
+.chip[data-score="3"] {
+  background: var(--score-3-tint);
+  border-color: var(--score-3-border);
+  color: var(--score-3);
+}
+
+.chip[data-workflow-state="editable"] {
+  background: var(--workflow-editable-tint);
+  border-color: var(--workflow-editable-border);
+  color: var(--workflow-editable);
+}
+
+.chip[data-workflow-state="read_only"] {
+  background: var(--workflow-read-only-tint);
+  border-color: var(--workflow-read-only-border);
+  color: var(--workflow-read-only);
+}
+
+.chip[data-workflow-state="system_skipped"] {
+  background: var(--workflow-system-skipped-tint);
+  border-color: var(--workflow-system-skipped-border);
+  color: var(--workflow-system-skipped);
+}
+
+.chip[data-judgment="pass"] {
+  background: var(--judgment-pass-tint);
+  border-color: var(--judgment-pass-border);
+  color: var(--judgment-pass);
+}
+
+.chip[data-judgment="conditional_pass"] {
+  background: var(--judgment-conditional-tint);
+  border-color: var(--judgment-conditional-border);
+  color: var(--judgment-conditional);
+}
+
+.chip[data-judgment="fail"] {
+  background: var(--judgment-fail-tint);
+  border-color: var(--judgment-fail-border);
+  color: var(--judgment-fail);
+}
+
+.chip[data-recommendation-state="recommended"] {
+  background: var(--recommendation-recommended-tint);
+  border-color: var(--recommendation-recommended-border);
+  color: var(--recommendation-recommended);
+}
+
+.chip[data-recommendation-state="recommended_with_caveats"] {
+  background: var(--recommendation-recommended-with-caveats-tint);
+  border-color: var(--recommendation-recommended-with-caveats-border);
+  color: var(--recommendation-recommended-with-caveats);
+}
+
+.chip[data-recommendation-state="needs_review_provisional"] {
+  background: var(--recommendation-needs-review-provisional-tint);
+  border-color: var(--recommendation-needs-review-provisional-border);
+  color: var(--recommendation-needs-review-provisional);
+}
+
+.chip[data-recommendation-state="pilot_only"] {
+  background: var(--recommendation-pilot-only-tint);
+  border-color: var(--recommendation-pilot-only-border);
+  color: var(--recommendation-pilot-only);
+}
+
+.chip[data-recommendation-state="not_recommended"] {
+  background: var(--recommendation-not-recommended-tint);
+  border-color: var(--recommendation-not-recommended-border);
+  color: var(--recommendation-not-recommended);
+}
+
+.chip[data-recommendation-state="out_of_scope"] {
+  background: var(--recommendation-out-of-scope-tint);
+  border-color: var(--recommendation-out-of-scope-border);
+  color: var(--recommendation-out-of-scope);
+}
+
+.chip[data-confidence-level="high"] {
+  background: var(--state-success-tint);
+  border-color: var(--state-success-border);
+  color: var(--state-success);
+}
+
+.chip[data-confidence-level="medium"] {
+  background: var(--state-info-tint);
+  border-color: var(--state-info-border);
+  color: var(--state-info);
+}
+
+.chip[data-confidence-level="low"] {
+  background: var(--state-skipped-tint);
+  border-color: var(--state-skipped-border);
+  color: var(--state-skipped);
+}
+
+.chip[data-help-role="context"],
+.chip[data-help-role="info"] {
+  background: var(--help-tint);
+  border-color: var(--help-border);
+  color: var(--help-accent-strong);
+}
+
+.chip[data-help-role="help"] {
+  background: var(--help-accent);
+  border-color: var(--help-accent);
+  color: var(--help-on-accent);
 }
 
 .form-section[data-section="tr"] .condition-tag {
   color: var(--tr);
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.15);
+  background: color-mix(in srgb, var(--tr) 8%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--tr) 15%, var(--ut-border));
 }
 
 .form-section[data-section="re"] .condition-tag {
   color: var(--re);
-  background: rgba(22, 163, 74, 0.08);
-  border-color: rgba(22, 163, 74, 0.15);
+  background: color-mix(in srgb, var(--re) 8%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--re) 15%, var(--ut-border));
 }
 
 .form-section[data-section="uc"] .condition-tag {
   color: var(--uc);
-  background: rgba(147, 51, 234, 0.08);
-  border-color: rgba(147, 51, 234, 0.15);
+  background: color-mix(in srgb, var(--uc) 8%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--uc) 15%, var(--ut-border));
 }
 
 .form-section[data-section="se"] .condition-tag {
   color: var(--se);
-  background: rgba(234, 88, 12, 0.08);
-  border-color: rgba(234, 88, 12, 0.15);
+  background: color-mix(in srgb, var(--se) 8%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--se) 15%, var(--ut-border));
 }
 
 .form-section[data-section="tc"] .condition-tag {
   color: var(--tc);
-  background: rgba(13, 148, 136, 0.08);
-  border-color: rgba(13, 148, 136, 0.15);
+  background: color-mix(in srgb, var(--tc) 8%, var(--ut-white));
+  border-color: color-mix(in srgb, var(--tc) 15%, var(--ut-border));
+}
+
+.doc-section[data-section],
+.form-section[data-section],
+.criterion-card[class] {
+  border-left-color: var(--section-accent);
+}
+
+.doc-section.is-active[data-section],
+.form-section.is-active[data-section] {
+  background: var(--section-tint);
+  border-top-color: var(--section-border);
+  border-right-color: var(--section-border);
+  border-bottom-color: var(--section-border);
+  border-left-color: var(--section-accent);
+}
+
+.doc-section[data-section] .section-kicker,
+.form-section[data-section] .section-kicker {
+  border-left: 3px solid var(--section-accent);
+  color: var(--section-accent-strong);
+  background: var(--section-tint);
+}
+
+.form-section[data-accent-key] .condition-tag {
+  color: var(--section-accent-strong);
+  background: color-mix(in srgb, var(--section-tint) 70%, var(--ut-white));
+  border-color: var(--section-border);
+}
+
+.criterion-card[class] {
+  background: color-mix(in srgb, var(--section-tint) 36%, var(--ut-white));
+}
+
+.criterion-card[class]::after {
+  color: var(--section-accent-strong);
+}
+
+.criterion-card:focus-within[class] {
+  border-left-color: var(--section-accent);
+  border-color: var(--section-border);
+  background: var(--section-tint);
+}
+
+.panel-title-section[data-accent-key] {
+  color: var(--section-accent-strong);
+}
+
+.context-route-card[data-accent-key],
+.context-anchor-card[data-accent-key],
+.about-topic-meta[data-accent-key],
+.help-section-item[data-accent-key] {
+  border-left-color: var(--section-accent);
+}
+
+.context-anchor-button.is-active[data-accent-key],
+.about-topic-button.is-active[data-accent-key] {
+  background: var(--section-tint);
+  border-color: var(--section-border);
+  border-left-color: var(--section-accent);
+}
+
+.about-topic-button.is-suggested {
+  border-left-color: var(--help-accent);
+  background: color-mix(in srgb, var(--help-tint) 50%, var(--ut-white));
+}
+
+.help-section-item.is-active {
+  background: var(--section-tint);
+  border-color: var(--section-border);
+  border-left-color: var(--section-accent);
+  box-shadow: inset 0 2px 0 var(--section-accent);
 }
 
 .completion-badge.complete {
   color: var(--ut-navy);
-  border-color: rgba(0, 44, 95, 0.15);
-  background: rgba(0, 44, 95, 0.04);
+  border-color: color-mix(in srgb, var(--ut-navy) 15%, var(--ut-border));
+  background: color-mix(in srgb, var(--ut-navy) 4%, var(--ut-white));
 }
 
 .completion-badge.complete.tr {
   color: var(--tr);
-  border-color: rgba(37, 99, 235, 0.20);
-  background: rgba(37, 99, 235, 0.06);
+  border-color: color-mix(in srgb, var(--tr) 20%, var(--ut-border));
+  background: color-mix(in srgb, var(--tr) 6%, var(--ut-white));
 }
 
 .completion-badge.complete.re {
   color: var(--re);
-  border-color: rgba(22, 163, 74, 0.20);
-  background: rgba(22, 163, 74, 0.06);
+  border-color: color-mix(in srgb, var(--re) 20%, var(--ut-border));
+  background: color-mix(in srgb, var(--re) 6%, var(--ut-white));
 }
 
 .completion-badge.complete.uc {
   color: var(--uc);
-  border-color: rgba(147, 51, 234, 0.20);
-  background: rgba(147, 51, 234, 0.06);
+  border-color: color-mix(in srgb, var(--uc) 20%, var(--ut-border));
+  background: color-mix(in srgb, var(--uc) 6%, var(--ut-white));
 }
 
 .completion-badge.complete.se {
   color: var(--se);
-  border-color: rgba(234, 88, 12, 0.20);
-  background: rgba(234, 88, 12, 0.06);
+  border-color: color-mix(in srgb, var(--se) 20%, var(--ut-border));
+  background: color-mix(in srgb, var(--se) 6%, var(--ut-white));
 }
 
 .completion-badge.complete.tc {
   color: var(--tc);
-  border-color: rgba(13, 148, 136, 0.20);
-  background: rgba(13, 148, 136, 0.06);
+  border-color: color-mix(in srgb, var(--tc) 20%, var(--ut-border));
+  background: color-mix(in srgb, var(--tc) 6%, var(--ut-white));
+}
+
+.completion-badge.complete[class] {
+  color: var(--section-accent-strong);
+  border-color: var(--section-border);
+  background: var(--section-tint);
 }
 
 .completion-badge.just-completed {
@@ -430,33 +980,33 @@
 }
 
 .mock-control.judgment-pass {
-  color: var(--score-3);
-  background: rgba(74, 131, 85, 0.10);
-  border-color: rgba(74, 131, 85, 0.20);
+  color: var(--judgment-pass);
+  background: var(--judgment-pass-tint);
+  border-color: var(--judgment-pass-border);
 }
 
 .mock-control.judgment-pass .value {
-  color: var(--score-3);
+  color: var(--judgment-pass);
 }
 
 .mock-control.judgment-conditional {
-  color: var(--score-1);
-  background: rgba(234, 88, 12, 0.10);
-  border-color: rgba(234, 88, 12, 0.20);
+  color: var(--judgment-conditional);
+  background: var(--judgment-conditional-tint);
+  border-color: var(--judgment-conditional-border);
 }
 
 .mock-control.judgment-conditional .value {
-  color: var(--score-1);
+  color: var(--judgment-conditional);
 }
 
 .mock-control.judgment-fail {
-  color: var(--score-0);
-  background: rgba(198, 12, 48, 0.10);
-  border-color: rgba(198, 12, 48, 0.20);
+  color: var(--judgment-fail);
+  background: var(--judgment-fail-tint);
+  border-color: var(--judgment-fail-border);
 }
 
 .mock-control.judgment-fail .value {
-  color: var(--score-0);
+  color: var(--judgment-fail);
 }
 
 .mock-control.judgment-pass,
@@ -469,15 +1019,57 @@
 }
 
 .mock-control.judgment-pass {
-  border-left-color: var(--score-3);
+  border-left-color: var(--judgment-pass);
 }
 
 .mock-control.judgment-conditional {
-  border-left-color: var(--score-1);
+  border-left-color: var(--judgment-conditional);
 }
 
 .mock-control.judgment-fail {
-  border-left-color: var(--score-0);
+  border-left-color: var(--judgment-fail);
+}
+
+.mock-control.recommendation-recommended {
+  color: var(--recommendation-recommended);
+  background: var(--recommendation-recommended-tint);
+  border-color: var(--recommendation-recommended-border);
+  border-left: 4px solid var(--recommendation-recommended);
+}
+
+.mock-control.recommendation-recommended-with-caveats {
+  color: var(--recommendation-recommended-with-caveats);
+  background: var(--recommendation-recommended-with-caveats-tint);
+  border-color: var(--recommendation-recommended-with-caveats-border);
+  border-left: 4px solid var(--recommendation-recommended-with-caveats);
+}
+
+.mock-control.recommendation-needs-review-provisional {
+  color: var(--recommendation-needs-review-provisional);
+  background: var(--recommendation-needs-review-provisional-tint);
+  border-color: var(--recommendation-needs-review-provisional-border);
+  border-left: 4px solid var(--recommendation-needs-review-provisional);
+}
+
+.mock-control.recommendation-pilot-only {
+  color: var(--recommendation-pilot-only);
+  background: var(--recommendation-pilot-only-tint);
+  border-color: var(--recommendation-pilot-only-border);
+  border-left: 4px solid var(--recommendation-pilot-only);
+}
+
+.mock-control.recommendation-not-recommended {
+  color: var(--recommendation-not-recommended);
+  background: var(--recommendation-not-recommended-tint);
+  border-color: var(--recommendation-not-recommended-border);
+  border-left: 4px solid var(--recommendation-not-recommended);
+}
+
+.mock-control.recommendation-out-of-scope {
+  color: var(--recommendation-out-of-scope);
+  background: var(--recommendation-out-of-scope-tint);
+  border-color: var(--recommendation-out-of-scope-border);
+  border-left: 4px solid var(--recommendation-out-of-scope);
 }
 
 .form-section[id="questionnaire-section-8"] .checkbox-block:first-of-type .checkbox-item input {
@@ -493,13 +1085,13 @@
 }
 
 .form-section#questionnaire-section-8 .checkbox-block:first-of-type {
-  border-color: rgba(198, 12, 48, 0.20);
-  background: rgba(198, 12, 48, 0.02);
+  border-color: var(--state-error-border);
+  background: color-mix(in srgb, var(--ut-red) 2%, var(--ut-white));
 }
 
 .form-section#questionnaire-section-8 .checkbox-block:last-of-type {
-  border-color: rgba(74, 131, 85, 0.20);
-  background: rgba(74, 131, 85, 0.02);
+  border-color: var(--state-success-border);
+  background: color-mix(in srgb, var(--ut-green) 2%, var(--ut-white));
 }
 
 .checkbox-item {
@@ -509,19 +1101,19 @@
 }
 
 .checkbox-item input:focus-visible {
-  outline: 2px solid var(--ut-blue);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .checkbox-item:hover {
-  background: rgba(0, 44, 95, 0.02);
+  background: color-mix(in srgb, var(--ut-navy) 2%, var(--ut-white));
   border-radius: 2px;
 }
 
 .checkbox-item:has(input:checked) {
   color: var(--ut-navy);
   font-weight: 500;
-  background: rgba(0, 44, 95, 0.03);
+  background: color-mix(in srgb, var(--ut-navy) 3%, var(--ut-white));
   border-radius: 2px;
   margin: -2px -4px;
   padding: 2px 4px;
@@ -531,7 +1123,7 @@
 .checkbox-item.has-checked {
   color: var(--ut-navy);
   font-weight: 500;
-  background: rgba(0, 44, 95, 0.03);
+  background: color-mix(in srgb, var(--ut-navy) 3%, var(--ut-white));
   border-radius: 2px;
   margin: -2px -4px;
   padding: 2px 4px;
@@ -556,7 +1148,7 @@
 
 .rating-option:focus-visible {
   outline: 2px solid var(--ut-blue);
-  outline-offset: 1px;
+  outline-offset: var(--focus-ring-offset);
 }
 
 .rating-option.focused {
@@ -565,38 +1157,38 @@
 }
 
 .rating-option.selected {
-  background: rgba(0, 44, 95, 0.06);
-  border-color: var(--ut-darkblue);
-  border-left: 3px solid var(--ut-darkblue);
+  background: var(--score-2-tint);
+  border-color: var(--score-2-border);
+  border-left: 3px solid var(--score-2);
 }
 
 .rating-option.selected .rating-dot {
-  border-color: var(--ut-darkblue);
-  background: var(--ut-darkblue);
+  border-color: var(--score-2);
+  background: var(--score-2);
 }
 
 .rating-option.score-0 {
   border-left: 3px solid var(--score-0);
-  background: rgba(198, 12, 48, 0.08);
-  border-color: rgba(198, 12, 48, 0.20);
+  background: var(--score-0-tint);
+  border-color: var(--score-0-border);
 }
 
 .rating-option.score-1 {
   border-left: 3px solid var(--score-1);
-  background: rgba(234, 88, 12, 0.08);
-  border-color: rgba(234, 88, 12, 0.20);
+  background: var(--score-1-tint);
+  border-color: var(--score-1-border);
 }
 
 .rating-option.score-2 {
   border-left: 3px solid var(--score-2);
-  background: rgba(0, 125, 156, 0.08);
-  border-color: rgba(0, 125, 156, 0.20);
+  background: var(--score-2-tint);
+  border-color: var(--score-2-border);
 }
 
 .rating-option.score-3 {
   border-left: 3px solid var(--score-3);
-  background: rgba(74, 131, 85, 0.08);
-  border-color: rgba(74, 131, 85, 0.20);
+  background: var(--score-3-tint);
+  border-color: var(--score-3-border);
 }
 
 .rating-option.score-0 .rating-dot {
@@ -622,7 +1214,8 @@
 .criterion-card {
   transition:
     border-left-width var(--duration-fast) var(--ease-out-quart),
-    border-color var(--duration-fast) var(--ease-out-quart);
+    border-color var(--duration-fast) var(--ease-out-quart),
+    box-shadow var(--duration-fast) var(--ease-out-quart);
 }
 
 .criterion-card.tr::after {
@@ -651,33 +1244,34 @@
 
 .criterion-card:focus-within {
   border-left-width: 8px;
-  border-color: rgba(0, 44, 95, 0.08);
+  border-color: color-mix(in srgb, var(--ut-navy) 8%, var(--ut-border));
   border-left-color: var(--ut-darkblue);
+  box-shadow: 0 0 0 1px var(--section-border);
 }
 
 .criterion-card.tr:focus-within {
   border-left-color: var(--tr);
-  border-color: rgba(37, 99, 235, 0.08);
+  border-color: color-mix(in srgb, var(--tr) 8%, var(--ut-border));
 }
 
 .criterion-card.re:focus-within {
   border-left-color: var(--re);
-  border-color: rgba(22, 163, 74, 0.08);
+  border-color: color-mix(in srgb, var(--re) 8%, var(--ut-border));
 }
 
 .criterion-card.uc:focus-within {
   border-left-color: var(--uc);
-  border-color: rgba(147, 51, 234, 0.08);
+  border-color: color-mix(in srgb, var(--uc) 8%, var(--ut-border));
 }
 
 .criterion-card.se:focus-within {
   border-left-color: var(--se);
-  border-color: rgba(234, 88, 12, 0.08);
+  border-color: color-mix(in srgb, var(--se) 8%, var(--ut-border));
 }
 
 .criterion-card.tc:focus-within {
   border-left-color: var(--tc);
-  border-color: rgba(13, 148, 136, 0.08);
+  border-color: color-mix(in srgb, var(--tc) 8%, var(--ut-border));
 }
 
 .panel.can-scroll-down::after {
@@ -686,4 +1280,585 @@
 
 .panel.can-scroll-up::before {
   opacity: 1;
+}
+
+/* Wave 2 shell conversion states */
+
+.page-index-button:focus-visible,
+.pager-button:focus-visible,
+.reference-drawer-summary:focus-visible,
+.shell-action-button:focus-visible,
+.surface-card .nav-button:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.page-index-button:hover,
+.pager-button:hover,
+.reference-drawer-summary:hover {
+  background: color-mix(in srgb, var(--section-tint, var(--ut-grey)) 28%, var(--ut-white));
+  border-color: var(--ut-darkblue);
+}
+
+.page-index-button {
+  transition:
+    background var(--duration-fast) var(--ease-out-quart),
+    border-color var(--duration-fast) var(--ease-out-quart),
+    box-shadow var(--duration-fast) var(--ease-out-quart);
+}
+
+.page-index-button.is-active {
+  background: var(--section-tint);
+  border-color: var(--section-border);
+  border-left-color: var(--section-accent);
+  box-shadow: inset 0 2px 0 var(--section-accent);
+}
+
+.page-index-button.is-active .page-index-code,
+.page-index-button.is-active .page-index-label {
+  color: var(--section-accent-strong);
+}
+
+.page-index-button:disabled,
+.nav-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.page-index-button[data-workflow-state="read_only"] {
+  border-style: dashed;
+}
+
+.page-index-button[data-workflow-state="system_skipped"] {
+  background: var(--workflow-system-skipped-tint);
+}
+
+.page-index-state[data-workflow-state="editable"] {
+  border-color: var(--workflow-editable-border);
+  background: var(--workflow-editable-tint);
+  color: var(--workflow-editable);
+}
+
+.page-index-state[data-workflow-state="read_only"] {
+  border-color: var(--workflow-read-only-border);
+  background: var(--workflow-read-only-tint);
+  color: var(--workflow-read-only);
+}
+
+.page-index-state[data-workflow-state="system_skipped"] {
+  border-color: var(--workflow-system-skipped-border);
+  background: var(--workflow-system-skipped-tint);
+  color: var(--workflow-system-skipped);
+}
+
+.page-index-status[data-section-status="complete"] {
+  border-color: var(--state-success-border);
+  background: var(--state-success-tint);
+  color: var(--state-success);
+}
+
+.page-index-status[data-section-status="in_progress"] {
+  border-color: var(--state-info-border);
+  background: var(--state-info-tint);
+  color: var(--state-info);
+}
+
+.page-index-status[data-section-status="attention_required"],
+.page-index-status[data-section-status="blocked"] {
+  border-color: var(--state-error-border);
+  background: var(--state-error-tint);
+  color: var(--state-error);
+}
+
+.page-index-status[data-section-status="skipped"],
+.page-index-status[data-section-status="system_skipped"] {
+  border-color: var(--state-skipped-border);
+  background: var(--state-skipped-tint);
+  color: var(--state-skipped);
+}
+
+.pager-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.shell-action-button[aria-expanded="true"] {
+  background: var(--ut-darkblue);
+  border-color: var(--ut-darkblue);
+  color: #fff;
+}
+
+.shell-action-button[data-surface-toggle="aboutSurface"],
+.shell-action-button[data-surface-toggle="helpSurface"] {
+  border-color: var(--help-border);
+  background: var(--help-tint);
+  color: var(--help-accent-strong);
+}
+
+.shell-action-button[data-surface-toggle="aboutSurface"][aria-expanded="true"],
+.shell-action-button[data-surface-toggle="helpSurface"][aria-expanded="true"] {
+  background: var(--help-accent);
+  border-color: var(--help-accent);
+  color: var(--help-on-accent);
+}
+
+.reference-drawer[open] .reference-drawer-summary {
+  background: color-mix(in srgb, var(--ut-navy) 4%, var(--ut-white));
+}
+
+.reference-drawer.is-open {
+  border-color: color-mix(in srgb, var(--ut-navy) 18%, var(--ut-border));
+}
+
+.form-section[data-workflow-state="read_only"] {
+  background: color-mix(in srgb, var(--section-tint) 45%, var(--workflow-read-only-tint));
+  border-style: dashed;
+}
+
+.form-section[data-workflow-state="system_skipped"] {
+  background: color-mix(in srgb, var(--section-tint) 20%, var(--workflow-system-skipped-tint));
+  border-style: dashed;
+}
+
+.rating-scale[aria-disabled="true"] {
+  background: var(--workflow-system-skipped-tint);
+}
+
+.rating-option[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: default;
+  pointer-events: none;
+}
+
+.is-page-hidden,
+.is-context-hidden {
+  display: none;
+}
+
+/* Page crossfade transition */
+.form-section[data-page-id] {
+  transition:
+    opacity var(--duration-fast) var(--ease-out-quart);
+}
+
+.form-section.is-page-transitioning-out {
+  opacity: 0;
+}
+
+.form-section.is-page-transitioning-in {
+  opacity: 0;
+}
+
+/* Rating selection confirmation pulse */
+.rating-option.is-just-selected .rating-dot {
+  animation: ratingDotConfirm var(--duration-fast) var(--ease-out-quint);
+}
+
+@keyframes ratingDotConfirm {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.rating-option.is-just-selected {
+  border-left-width: 5px;
+}
+
+/* Evidence item entrance animation */
+.evidence-item {
+  animation: evidenceItemEnter var(--duration-normal) var(--ease-out-quart);
+}
+
+@keyframes evidenceItemEnter {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.evidence-item.is-removing {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity var(--duration-fast) var(--ease-out-quart),
+    transform var(--duration-fast) var(--ease-out-quart);
+}
+
+/* Pager button opacity transition */
+.pager-button {
+  transition:
+    opacity var(--duration-fast) var(--ease-out-quart);
+}
+
+/* Wave 4 validation / attention / blocked states */
+
+.form-section[data-page-validation-state="attention"] {
+  border-top-color: var(--state-warning-border);
+  border-right-color: var(--state-warning-border);
+  border-bottom-color: var(--state-warning-border);
+  background: color-mix(in srgb, var(--section-tint) 72%, var(--state-warning-tint));
+}
+
+.form-section[data-page-validation-state="invalid"],
+.form-section[data-page-validation-state="blocked"] {
+  border-top-color: var(--state-error-border);
+  border-right-color: var(--state-error-border);
+  border-bottom-color: var(--state-error-border);
+  background: color-mix(in srgb, var(--section-tint) 66%, var(--state-error-tint));
+}
+
+.criterion-card[data-criterion-validation-state="attention"] {
+  border-top-color: var(--state-warning-border);
+  border-right-color: var(--state-warning-border);
+  border-bottom-color: var(--state-warning-border);
+  background: color-mix(in srgb, var(--section-tint) 70%, var(--state-warning-tint));
+}
+
+.criterion-card[data-criterion-validation-state="invalid"],
+.criterion-card[data-criterion-validation-state="blocked"] {
+  border-top-color: var(--state-error-border);
+  border-right-color: var(--state-error-border);
+  border-bottom-color: var(--state-error-border);
+  background: color-mix(in srgb, var(--section-tint) 64%, var(--state-error-tint));
+}
+
+.field-group[data-field-validation-state="attention"] > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+.field-group[data-field-validation-state="attention"] .date-range-control .mock-control {
+  border-color: var(--state-warning-border);
+  background: var(--state-warning-tint);
+}
+
+.field-group[data-field-validation-state="invalid"] > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+.field-group[data-field-validation-state="invalid"] .date-range-control .mock-control,
+.field-group[data-field-validation-state="blocked"] > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+.field-group[data-field-validation-state="blocked"] .date-range-control .mock-control {
+  border-color: var(--state-error-border);
+  background: var(--state-error-tint);
+}
+
+.field-group[data-field-validation-state="attention"] .field-label,
+.criterion-card[data-criterion-validation-state="attention"] h3 {
+  color: var(--state-warning);
+}
+
+.field-group[data-field-validation-state="invalid"] .field-label,
+.field-group[data-field-validation-state="blocked"] .field-label,
+.criterion-card[data-criterion-validation-state="invalid"] h3,
+.criterion-card[data-criterion-validation-state="blocked"] h3 {
+  color: var(--state-error);
+}
+
+.field-group[data-field-validation-state="blocked"] .condition-tag,
+.field-group[data-field-validation-state="blocked"] .display-tag,
+.field-group[data-field-validation-state="invalid"] .condition-tag,
+.field-group[data-field-validation-state="invalid"] .display-tag {
+  border-color: var(--state-error-border);
+  background: var(--state-error-tint);
+  color: var(--state-error);
+}
+
+/* Wave 4 completion / progress states */
+
+.header-progress-summary {
+  display: grid;
+  gap: 4px;
+  min-width: min(24rem, 100%);
+  max-width: 28rem;
+  flex: 1 1 24rem;
+  padding: 8px 10px;
+  border: 1px solid var(--ut-border);
+  background: var(--ut-white);
+}
+
+.header-progress-title,
+.header-progress-body,
+.header-progress-meta,
+.page-index-group-summary {
+  margin: 0;
+}
+
+.header-progress-title {
+  color: var(--ut-muted);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  font-family: var(--ff-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.header-progress-body,
+.header-progress-meta,
+.page-index-group-summary {
+  font-size: var(--text-xs);
+  font-family: var(--ff-mono);
+}
+
+.header-progress-body {
+  color: var(--ut-navy);
+}
+
+.header-progress-meta,
+.page-index-group-summary {
+  color: var(--ut-muted);
+}
+
+.header-progress-summary[data-progress-state="complete"] {
+  border-color: var(--state-success-border);
+  background: var(--state-success-tint);
+}
+
+.header-progress-summary[data-progress-state="in_progress"] {
+  border-color: var(--state-info-border);
+  background: var(--state-info-tint);
+}
+
+.header-progress-summary[data-progress-state="invalid_attention"] {
+  border-color: var(--state-warning-border);
+  background: var(--state-warning-tint);
+}
+
+.header-progress-summary[data-progress-state="blocked_escalated"] {
+  border-color: var(--state-blocked-border);
+  background: color-mix(in srgb, var(--state-blocked-tint) 82%, var(--ut-white));
+}
+
+.header-progress-summary[data-progress-state="skipped"] {
+  border-color: var(--state-skipped-border);
+  background: var(--state-skipped-tint);
+}
+
+.nav-button[data-page-id][data-accent-key] {
+  border-color: var(--section-border);
+  box-shadow: inset 0 -2px 0 var(--section-accent);
+}
+
+.nav-button[data-page-id].active {
+  background: var(--section-accent-strong);
+  border-color: var(--section-accent-strong);
+  color: var(--section-on-accent);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--section-on-accent) 24%, transparent);
+}
+
+.nav-button[data-progress-state="complete"]:not(.active) {
+  border-color: var(--section-border);
+  background: color-mix(in srgb, var(--section-tint) 78%, var(--ut-white));
+  color: var(--section-accent-strong);
+}
+
+.nav-button[data-progress-state="in_progress"]:not(.active) {
+  border-color: var(--section-border);
+  background: var(--section-tint);
+  box-shadow: inset 0 3px 0 var(--state-info), inset 0 -2px 0 var(--section-accent);
+}
+
+.nav-button[data-progress-state="invalid_attention"]:not(.active) {
+  border-color: var(--section-border);
+  background: var(--section-tint);
+  box-shadow: inset 0 3px 0 var(--state-warning), inset 0 -2px 0 var(--section-accent);
+}
+
+.nav-button[data-progress-state="blocked_escalated"]:not(.active) {
+  border-color: var(--section-border);
+  background: color-mix(in srgb, var(--section-tint) 72%, var(--state-blocked-tint));
+  box-shadow: inset 0 3px 0 var(--state-error), inset 0 -2px 0 var(--section-accent);
+}
+
+.nav-button[data-progress-state="skipped"]:not(.active) {
+  border-color: var(--state-skipped-border);
+  background: var(--state-skipped-tint);
+  color: var(--state-skipped);
+  border-style: dashed;
+  box-shadow: inset 0 -2px 0 var(--section-border);
+}
+
+.strip-cell[data-accent-key] {
+  border-color: var(--section-border);
+  background: var(--ut-white);
+  box-shadow: inset 0 -2px 0 var(--section-border);
+}
+
+.strip-cell.is-active {
+  outline: 1px solid var(--section-accent-strong);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.strip-cell[data-progress-state="not_started"] {
+  color: var(--ut-muted);
+}
+
+.strip-cell[data-progress-state="skipped"] {
+  background: var(--state-skipped-tint);
+  border-color: var(--state-skipped-border);
+  border-style: dashed;
+  box-shadow: inset 0 -2px 0 var(--section-border);
+  color: var(--state-skipped);
+}
+
+.strip-cell[data-progress-state="invalid_attention"] {
+  background: color-mix(in srgb, var(--section-tint) 76%, var(--ut-white));
+  border-color: var(--section-border);
+  box-shadow: inset 0 3px 0 var(--state-warning), inset 0 -2px 0 var(--section-accent);
+  color: var(--state-warning);
+}
+
+.strip-cell[data-progress-state="blocked_escalated"] {
+  background: color-mix(in srgb, var(--section-tint) 68%, var(--state-blocked-tint));
+  border-color: var(--section-border);
+  box-shadow: inset 0 3px 0 var(--state-error), inset 0 -2px 0 var(--section-accent);
+  color: var(--state-error);
+}
+
+.strip-cell[data-progress-state="in_progress"] {
+  background: var(--section-tint);
+  border-color: var(--section-border);
+  box-shadow: inset 0 -3px 0 var(--section-accent);
+  color: var(--section-accent-strong);
+}
+
+.strip-cell[data-progress-state="complete"] {
+  background: var(--section-accent);
+  border-color: var(--section-accent-strong);
+  box-shadow: none;
+  color: var(--section-on-accent);
+}
+
+.completion-badge[data-progress-state="not_started"] {
+  color: var(--state-skipped);
+  border-color: var(--state-skipped-border);
+  background: color-mix(in srgb, var(--state-skipped-tint) 86%, var(--ut-white));
+}
+
+.completion-badge[data-progress-state="in_progress"] {
+  color: var(--section-accent-strong);
+  border-color: var(--section-border);
+  background: var(--section-tint);
+}
+
+.completion-badge[data-progress-state="invalid_attention"] {
+  color: var(--state-warning);
+  border-color: var(--state-warning-border);
+  background: var(--state-warning-tint);
+}
+
+.completion-badge[data-progress-state="blocked_escalated"] {
+  color: var(--state-error);
+  border-color: var(--state-error-border);
+  background: var(--state-error-tint);
+}
+
+.completion-badge[data-progress-state="skipped"] {
+  color: var(--state-skipped);
+  border-color: var(--state-skipped-border);
+  background: var(--state-skipped-tint);
+}
+
+.page-index-group-header {
+  display: grid;
+  gap: 2px;
+}
+
+.page-index-group[data-progress-state="complete"] .page-index-group-label {
+  color: var(--state-success);
+}
+
+.page-index-group[data-progress-state="in_progress"] .page-index-group-label {
+  color: var(--state-info);
+}
+
+.page-index-group[data-progress-state="invalid_attention"] .page-index-group-label {
+  color: var(--state-warning);
+}
+
+.page-index-group[data-progress-state="blocked_escalated"] .page-index-group-label {
+  color: var(--state-error);
+}
+
+.page-index-group[data-progress-state="skipped"] .page-index-group-label {
+  color: var(--state-skipped);
+}
+
+.page-index-button[data-progress-state="complete"]:not(.is-active) {
+  background: color-mix(in srgb, var(--section-tint) 78%, var(--ut-white));
+}
+
+.page-index-button[data-progress-state="in_progress"]:not(.is-active) {
+  background: var(--section-tint);
+  box-shadow: inset 0 2px 0 var(--state-info);
+}
+
+.page-index-button[data-progress-state="invalid_attention"]:not(.is-active) {
+  background: var(--section-tint);
+  box-shadow: inset 0 2px 0 var(--state-warning);
+}
+
+.page-index-button[data-progress-state="blocked_escalated"]:not(.is-active) {
+  background: color-mix(in srgb, var(--section-tint) 72%, var(--state-blocked-tint));
+  box-shadow: inset 0 2px 0 var(--state-error);
+}
+
+.page-index-button[data-progress-state="skipped"]:not(.is-active) {
+  background: var(--state-skipped-tint);
+  border-style: dashed;
+}
+
+.page-index-status[data-progress-state="not_started"],
+.page-index-progress[data-progress-state="not_started"] {
+  border-color: var(--state-skipped-border);
+  background: color-mix(in srgb, var(--state-skipped-tint) 88%, var(--ut-white));
+  color: var(--state-skipped);
+}
+
+.page-index-status[data-progress-state="complete"],
+.page-index-progress[data-progress-state="complete"] {
+  border-color: var(--state-success-border);
+  background: var(--state-success-tint);
+  color: var(--state-success);
+}
+
+.page-index-status[data-progress-state="in_progress"],
+.page-index-progress[data-progress-state="in_progress"] {
+  border-color: var(--state-info-border);
+  background: var(--state-info-tint);
+  color: var(--state-info);
+}
+
+.page-index-status[data-progress-state="invalid_attention"],
+.page-index-progress[data-progress-state="invalid_attention"] {
+  border-color: var(--state-warning-border);
+  background: var(--state-warning-tint);
+  color: var(--state-warning);
+}
+
+.page-index-status[data-progress-state="blocked_escalated"],
+.page-index-progress[data-progress-state="blocked_escalated"] {
+  border-color: var(--state-error-border);
+  background: var(--state-error-tint);
+  color: var(--state-error);
+}
+
+.page-index-status[data-progress-state="skipped"],
+.page-index-progress[data-progress-state="skipped"] {
+  border-color: var(--state-skipped-border);
+  background: var(--state-skipped-tint);
+  color: var(--state-skipped);
+}
+
+.form-section[data-page-progress-state="skipped"] {
+  opacity: 0.9;
+}
+
+.form-section[data-page-progress-state="invalid_attention"] {
+  border-left-color: var(--section-accent);
+  box-shadow: inset 0 3px 0 var(--state-warning);
+}
+
+.form-section[data-page-progress-state="blocked_escalated"] {
+  border-left-color: var(--section-accent);
+  box-shadow: inset 0 3px 0 var(--state-error);
+}
+
+@media (max-width: 1160px) {
+  .header-progress-summary {
+    min-width: 0;
+    max-width: none;
+    flex-basis: 100%;
+  }
 }
