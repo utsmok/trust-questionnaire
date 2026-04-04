@@ -8,10 +8,19 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:install": "playwright install chromium firefox",
-    "test": "npm run validate:html && npm run test:e2e"
+    "format": "prettier --write 'static/js/**/*.js' 'static/css/**/*.css'",
+    "format:check": "prettier --check 'static/js/**/*.js' 'static/css/**/*.css'",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test": "npm run validate:html && vitest run && npm run test:e2e"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
-    "html-validate": "^9.3.0"
+    "html-validate": "^9.3.0",
+    "prettier": "^3.5.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
