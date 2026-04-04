@@ -1,0 +1,17 @@
+{
+  "name": "trust-questionnaire",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve:static": "python3 -m http.server 4173 --bind 127.0.0.1",
+    "validate:html": "html-validate trust-framework.html",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:install": "playwright install chromium firefox",
+    "test": "npm run validate:html && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "html-validate": "^9.3.0"
+  }
+}
