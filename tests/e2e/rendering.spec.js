@@ -9,7 +9,7 @@ test('renders the canonical schema-driven questionnaire inventory', async ({ pag
 	await expect(page.locator('#questionnaireRenderRoot')).toHaveAttribute('data-rendered-page-count', '13');
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id]')).toHaveCount(13);
 	await expect(page.locator('.criterion-card[data-criterion]')).toHaveCount(16);
-	await expect(page.locator('.field-group[data-field-id]')).toHaveCount(135);
+	await expect(page.locator('.field-group[data-field-id]')).toHaveCount(139);
 	await expect(page.locator('[data-evidence-block="true"]')).toHaveCount(17);
 
 	const pageIds = await page.locator('#questionnaireRenderRoot > [data-page-id]').evaluateAll((elements) =>
@@ -26,23 +26,20 @@ test('renders explicit completion-strip labels without native tooltips', async (
 	const stripCells = strip.locator('.strip-cell');
 
 	await expect(strip).toHaveAttribute('aria-labelledby', 'completionStripLabel');
-	await expect(strip).toHaveAttribute('aria-describedby', 'headerProgressSummary');
-	await expect(page.locator('#headerProgressSummary')).toBeVisible();
 	await expect(stripCells).toHaveCount(CANONICAL_PAGE_IDS.length);
 	await expect(strip.locator('[title]')).toHaveCount(0);
 	await expect(strip.locator('.strip-cell[data-page-id="S0"] .strip-cell-code')).toHaveText('S0');
 	await expect(strip.locator('.strip-cell[data-page-id="TR"] .strip-cell-code')).toHaveText('TR');
 	await expect(strip.locator('.strip-cell[data-page-id="S10C"] .strip-cell-code')).toHaveText('S10C');
-	await expect(strip.locator('.strip-cell[data-page-id="TR"] .strip-cell-description')).toContainText('Transparent');
-	await expect(strip.locator('.strip-cell[data-page-id="S9"] .strip-cell-description')).toContainText('Overall Recommendation');
-	await expect(page.locator('.header-progress-title')).toContainText('Questionnaire progress');
+	await expect(strip.locator('.strip-cell[data-page-id="TR"]')).toHaveAttribute('aria-label', /Transparent/);
+	await expect(strip.locator('.strip-cell[data-page-id="S9"]')).toHaveAttribute('aria-label', /Overall Recommendation/);
 });
 
 test('adapts shell and rating scales across responsive breakpoints', async ({ page }) => {
 	await page.setViewportSize({ width: 1400, height: 980 });
 	await gotoApp(page);
 	await setWorkflow(page, 'primary_evaluation');
-	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('.strip-cell[data-page-id="TR"]'));
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id="TR"]')).toHaveClass(/is-active/);
 
 	const shell = page.locator('#trustShell');

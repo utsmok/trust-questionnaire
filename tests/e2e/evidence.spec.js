@@ -86,7 +86,7 @@ test('supports criterion add, reuse, replace, unlink, and remove-everywhere flow
 	await evaluationBlock.locator('[data-evidence-action="add-files"]').click();
 	await expect(evaluationBlock.locator('[data-evidence-role="count"]')).toHaveText('2 files');
 
-	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('.strip-cell[data-page-id="TR"]'));
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id="TR"]')).toHaveClass(/is-active/);
 
 	const block = page.locator('[data-evidence-level="criterion"][data-evidence-criterion-code="TR1"]');
@@ -133,7 +133,7 @@ test('supports criterion add, reuse, replace, unlink, and remove-everywhere flow
 	await replacedItem.locator('[data-evidence-action="remove-asset"]').click();
 	await page.locator('.confirm-overlay .confirm-btn[data-primary="true"]').click();
 	await expect(block.locator('[data-evidence-role="count"]')).toHaveText('0 files');
-	await expect(block).toContainText('No criterion-level evidence attached yet.');
+	await expect(block).toContainText('No evidence attached. Attach source documentation.');
 	await expect(evaluationBlock.locator('[data-evidence-role="count"]')).toHaveText('1 file');
 	await expect(evaluationBlock.locator('.evidence-item').filter({ hasText: 'evaluation-b.png' })).toHaveCount(0);
 });

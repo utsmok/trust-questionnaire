@@ -59,7 +59,7 @@ test('flags typed validation issues and low-score blocker rules', async ({ page 
 	await expect(page.locator('.page-index-button[data-page-id="S0"]')).toHaveAttribute('data-progress-state', 'invalid_attention');
 
 	await setWorkflow(page, 'primary_evaluation');
-	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('.strip-cell[data-page-id="TR"]'));
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id="TR"]')).toHaveClass(/is-active/);
 
 	const blockerGroup = page.locator('.field-group[data-field-id="tr1.uncertaintyOrBlockers"]');

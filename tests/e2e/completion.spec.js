@@ -9,7 +9,7 @@ test('tracks page progress through not-started, in-progress, invalid, complete, 
 	await gotoApp(page);
 	await setWorkflow(page, 'primary_evaluation');
 
-	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('.strip-cell[data-page-id="TR"]'));
 	await expectPageProgress(page, 'TR', 'not_started');
 
 	await page.locator('select[data-section-record-key="sectionSkipReasonCode"][data-section-id="TR"]').selectOption('test_not_performed');
@@ -27,13 +27,16 @@ test('tracks page progress through not-started, in-progress, invalid, complete, 
 	await page.locator('input[data-field-id="s0.toolName"]').fill('TRUST evaluation harness');
 	await page.locator('input[data-field-id="s0.toolUrl"]').fill('https://example.org/tool');
 	await page.locator('select[data-field-id="s0.responderRole"]').selectOption('information_specialist');
+	await page.locator('input[data-field-id="s0.reviewerName"]').fill('Jane Doe');
+	await page.locator('input[data-field-id="s0.reviewerEmail"]').fill('jane.doe@example.org');
+	await page.locator('input[data-field-id="s0.reviewDate"]').fill('2026-04-04');
 	await expectPageProgress(page, 'S0', 'complete');
 });
 
 test('criterion skip uses explicit skip controls and suppresses child criterion requirements until resumed', async ({ page }) => {
 	await gotoApp(page);
 	await setWorkflow(page, 'primary_evaluation');
-	await clickElement(page.locator('#quickJumpMount .nav-button[data-page-id="TR"]'));
+	await clickElement(page.locator('.strip-cell[data-page-id="TR"]'));
 
 	const card = page.locator('.criterion-card[data-criterion="TR1"]');
 	const scoreGroup = card.locator('.field-group[data-field-id="tr1.score"]');
@@ -72,6 +75,4 @@ test('surfaces blocked or escalated overall progress when critical fails require
 	await page.locator('textarea[data-field-id="s8.criticalFailNotes"]').fill('Critical fail note with enough detail to keep the flag active while governance follow-up remains unresolved.');
 
 	await expect(page.locator('#trustShell')).toHaveAttribute('data-progress-state', 'blocked_escalated');
-	await expect(page.locator('.header-progress-summary')).toHaveAttribute('data-progress-state', 'blocked_escalated');
-	await expect(page.locator('.header-progress-summary')).toContainText('1 escalated');
 });
