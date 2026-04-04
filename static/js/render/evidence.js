@@ -3,17 +3,27 @@ import { SECTION_IDS } from '../config/sections.js';
 import {
   appendChildren,
   createElement,
+  createSelectControl,
+  createTextareaControl,
 } from './dom-factories.js';
+import { createEvidenceManifest, serializeEvidenceManifest } from '../adapters/evidence-storage.js';
 import {
-  createEvidenceManifest,
-  serializeEvidenceManifest,
-} from '../adapters/evidence-storage.js';
-import { EMPTY_ARRAY, isPlainObject, toArray, inferMimeTypeFromName, extractEvidenceItems, normalizeTextValue, isImageMimeType } from '../utils/shared.js';
+  EMPTY_ARRAY,
+  isPlainObject,
+  toArray,
+  inferMimeTypeFromName,
+  extractEvidenceItems,
+  normalizeTextValue,
+  isImageMimeType,
+} from '../utils/shared.js';
 import { confirmDialog } from '../utils/confirm-dialog.js';
+import { createFocusTrap } from '../utils/focus-trap.js';
 
 const EVIDENCE_BLOCK_SELECTOR = '[data-evidence-block="true"]';
 const LIGHTBOX_ELEMENT_ID = 'questionnaire-evidence-lightbox';
 const MANIFEST_DOWNLOAD_NAME = 'trust-evidence-manifest.json';
+
+let lightboxFocusTrap = null;
 
 export const EVIDENCE_TYPE_OPTIONS = Object.freeze([
   Object.freeze({ value: 'screenshot', label: 'Screenshot' }),
@@ -28,8 +38,7 @@ const EVIDENCE_TYPE_LABELS = Object.freeze(
   Object.fromEntries(EVIDENCE_TYPE_OPTIONS.map((option) => [option.value, option.label])),
 );
 
-const hasMeaningfulText = (value) =>
-  typeof value === 'string' && value.trim().length > 0;
+const hasMeaningfulText = (value) => typeof value === 'string' && value.trim().length > 0;
 
 const formatFileSize = (value) => {
   const size = Number(value);
@@ -49,8 +58,7 @@ const formatFileSize = (value) => {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const getEvidenceTypeLabel = (value) =>
-  EVIDENCE_TYPE_LABELS[value] ?? value ?? 'Unknown';
+const getEvidenceTypeLabel = (value) => EVIDENCE_TYPE_LABELS[value] ?? value ?? 'Unknown';
 
 const createEmptyDraftState = () => ({
   evidenceType: '',
@@ -83,15 +91,22 @@ const getEvidenceFieldGroupLabel = (scope) =>
     ? 'Evaluation evidence intake'
     : `${scope.criterionCode} evidence association`;
 
-const getEvidenceBlockDescription = (scope) =>
-  scope.level === 'evaluation'
-    ? 'Capture evaluation-level screenshots, exports, and supporting files. Files stay frontend-only and are included in the exported manifest.'
-    : 'Attach files to this criterion. Each stored association requires an evidence type and an explanatory note.';
+const PRINCIPLE_EVIDENCE_HINTS = Object.freeze({
+  tr: 'No evidence attached. Attach source documentation.',
+  re: 'No evidence attached. Attach verification records.',
+  uc: 'No evidence attached. Attach usability observations.',
+  se: 'No evidence attached. Attach compliance records.',
+  tc: 'No evidence attached. Attach provenance records.',
+});
 
-const getEvidenceEmptyStateText = (scope) =>
-  scope.level === 'evaluation'
-    ? 'No evaluation-level evidence attached yet.'
-    : 'No criterion-level evidence attached yet.';
+const getEvidenceEmptyStateText = (scope) => {
+  if (scope.level === 'evaluation') {
+    return 'No evidence attached.';
+  }
+
+  const principleKey = scope.criterionCode?.slice(0, 2).toLowerCase();
+  return PRINCIPLE_EVIDENCE_HINTS[principleKey] ?? 'No evidence attached.';
+};
 
 const getEvidenceScopeKey = ({ criterionCode = null } = {}) =>
   criterionCode ? `criterion:${criterionCode}` : 'evaluation';
@@ -133,11 +148,11 @@ const getScopeEditableState = (state, scope) =>
 const getAllEvidenceItems = (state) => [
   ...extractEvidenceItems(state.evaluation.evidence?.evaluation),
   ...Object.values(state.evaluation.evidence?.criteria ?? {}).flatMap((items) =>
-    Array.isArray(items) ? items : []),
+    Array.isArray(items) ? items : [],
+  ),
 ];
 
-const getEvidenceAssetId = (item) =>
-  normalizeTextValue(item?.assetId ?? item?.id);
+const getEvidenceAssetId = (item) => normalizeTextValue(item?.assetId ?? item?.id);
 
 const getEvidenceItemUsageCount = (state, assetId) =>
   getAllEvidenceItems(state).filter((item) => getEvidenceAssetId(item) === assetId).length;
@@ -149,7 +164,10 @@ const getEvidenceItemByAssetId = ({ state, assetId } = {}) => {
     return null;
   }
 
-  return getAllEvidenceItems(state).find((item) => getEvidenceAssetId(item) === normalizedAssetId) ?? null;
+  return (
+    getAllEvidenceItems(state).find((item) => getEvidenceAssetId(item) === normalizedAssetId) ??
+    null
+  );
 };
 
 const getReusableEvidenceItemsForScope = (state, scope, { replaceItemId = null } = {}) => {
@@ -179,9 +197,7 @@ const getReusableEvidenceItemsForScope = (state, scope, { replaceItemId = null }
 };
 
 const describeEvidenceSource = (item) =>
-  item?.criterionCode
-    ? `${item.criterionCode}`
-    : 'Evaluation';
+  item?.criterionCode ? `${item.criterionCode}` : 'Evaluation';
 
 const createReusableEvidenceOptionLabel = (item, state) => {
   const assetId = getEvidenceAssetId(item);
@@ -191,12 +207,7 @@ const createReusableEvidenceOptionLabel = (item, state) => {
   return `${item.name ?? 'Unnamed evidence'} — ${describeEvidenceSource(item)}${usageText}`;
 };
 
-const syncReusableEvidenceSelect = ({
-  select,
-  items,
-  selectedAssetId,
-  state,
-} = {}) => {
+const syncReusableEvidenceSelect = ({ select, items, selectedAssetId, state } = {}) => {
   if (!(select instanceof HTMLSelectElement)) {
     return '';
   }
@@ -206,7 +217,8 @@ const syncReusableEvidenceSelect = ({
   const options = [
     createElement('option', {
       documentRef,
-      text: items.length > 0 ? 'Select existing evidence to reuse' : 'No reusable evidence available',
+      text:
+        items.length > 0 ? 'Select existing evidence to reuse' : 'No reusable evidence available',
       attributes: {
         value: '',
       },
@@ -218,7 +230,8 @@ const syncReusableEvidenceSelect = ({
         attributes: {
           value: getEvidenceAssetId(item),
         },
-      })),
+      }),
+    ),
   ];
 
   select.replaceChildren(...options);
@@ -230,65 +243,36 @@ const syncReusableEvidenceSelect = ({
   return nextValue;
 };
 
-const createEvidenceSelect = ({ documentRef, value = '', disabled = false } = {}) => {
-  const select = createElement('select', {
+const createEvidenceSelect = ({ documentRef, value = '', disabled = false } = {}) =>
+  createSelectControl({
     documentRef,
-    className: 'evidence-select',
+    options: [...EVIDENCE_TYPE_OPTIONS],
+    valueText: value,
+    placeholderText: 'Select evidence type',
     dataset: {
       evidenceControl: 'type',
     },
     attributes: {
       'aria-label': 'Evidence type',
-      disabled: disabled ? true : null,
     },
+    disabled,
   });
-
-  select.appendChild(
-    createElement('option', {
-      documentRef,
-      text: 'Select evidence type',
-      attributes: {
-        value: '',
-      },
-    }),
-  );
-
-  EVIDENCE_TYPE_OPTIONS.forEach((option) => {
-    select.appendChild(
-      createElement('option', {
-        documentRef,
-        text: option.label,
-        attributes: {
-          value: option.value,
-        },
-      }),
-    );
-  });
-
-  select.value = value;
-
-  return select;
-};
 
 const createReusableEvidenceSelect = ({ documentRef, disabled = false } = {}) =>
-  createElement('select', {
+  createSelectControl({
     documentRef,
-    className: 'evidence-select',
+    options: [],
+    placeholderText: 'No reusable evidence available',
     dataset: {
       evidenceControl: 'existing-asset',
     },
     attributes: {
       'aria-label': 'Reuse existing evidence',
-      disabled: disabled ? true : null,
     },
+    disabled,
   });
 
-const createEvidenceInputGroup = ({
-  documentRef,
-  label,
-  control,
-  className = '',
-} = {}) =>
+const createEvidenceInputGroup = ({ documentRef, label, control, className = '' } = {}) =>
   createElement('label', {
     documentRef,
     className: ['evidence-input-group', className],
@@ -311,38 +295,33 @@ const createEvidenceItemsContainer = ({ documentRef } = {}) =>
     },
   });
 
-export const createEvidenceBlockElement = ({
-  documentRef,
-  scope,
-  editable = true,
-} = {}) => {
+export const createEvidenceBlockElement = ({ documentRef, scope, editable = true } = {}) => {
   const typeControl = createEvidenceSelect({
     documentRef,
     disabled: !editable,
   });
-  const existingAssetControl = scope.level === 'criterion'
-    ? createReusableEvidenceSelect({
-      documentRef,
-      disabled: !editable,
-    })
-    : null;
-  const noteControl = createElement('textarea', {
+  const existingAssetControl =
+    scope.level === 'criterion'
+      ? createReusableEvidenceSelect({
+          documentRef,
+          disabled: !editable,
+        })
+      : null;
+  const noteControl = createTextareaControl({
     documentRef,
-    className: 'evidence-textarea',
+    placeholderText: 'Required note: why this file supports the evaluation or criterion.',
     dataset: {
       evidenceControl: 'note',
     },
     attributes: {
       rows: 3,
-      placeholder: 'Required note: why this file supports the evaluation or criterion.',
       'aria-label': 'Evidence note',
-      readonly: editable ? null : true,
-      'aria-readonly': editable ? null : 'true',
     },
+    readOnly: !editable,
   });
-  const fileControl = createElement('input', {
+
+  const fileInput = createElement('input', {
     documentRef,
-    className: 'evidence-file-input',
     dataset: {
       evidenceControl: 'files',
     },
@@ -351,7 +330,37 @@ export const createEvidenceBlockElement = ({
       multiple: true,
       disabled: !editable ? true : null,
       'aria-label': 'Upload evidence files',
+      style: 'display:none',
     },
+  });
+
+  const fileButton = createElement('span', {
+    documentRef,
+    className: 'evidence-file-button',
+    text: 'Choose files…',
+    attributes: {
+      role: 'button',
+      tabindex: '0',
+    },
+  });
+
+  fileButton.addEventListener('click', () => fileInput.click());
+  fileButton.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
+  const fileNameSpan = createElement('span', {
+    documentRef,
+    className: 'evidence-file-name',
+  });
+
+  const fileControl = createElement('div', {
+    documentRef,
+    className: 'mock-control evidence-file-control',
+    children: [fileInput, fileButton, fileNameSpan],
   });
 
   const actionButtons = [
@@ -416,7 +425,11 @@ export const createEvidenceBlockElement = ({
 
   return createElement('section', {
     documentRef,
-    className: ['field-group', 'evidence-block', scope.level === 'criterion' ? 'criterion' : 'evaluation'],
+    className: [
+      'field-group',
+      'evidence-block',
+      scope.level === 'criterion' ? 'criterion' : 'evaluation',
+    ],
     dataset: {
       evidenceBlock: 'true',
       evidenceKey: scope.key,
@@ -452,11 +465,6 @@ export const createEvidenceBlockElement = ({
                   }),
                 ],
               }),
-              createElement('p', {
-                documentRef,
-                className: 'evidence-block-description',
-                text: getEvidenceBlockDescription(scope),
-              }),
             ],
           }),
         ],
@@ -482,10 +490,10 @@ export const createEvidenceBlockElement = ({
               }),
               existingAssetControl
                 ? createEvidenceInputGroup({
-                  documentRef,
-                  label: 'Reuse existing file',
-                  control: existingAssetControl,
-                })
+                    documentRef,
+                    label: 'Reuse existing file',
+                    control: existingAssetControl,
+                  })
                 : null,
               createEvidenceInputGroup({
                 documentRef,
@@ -603,11 +611,7 @@ const createEvidenceDownloadLink = ({ documentRef, item } = {}) => {
   });
 };
 
-const createEvidenceItemElement = ({
-  documentRef,
-  item,
-  editable = true,
-} = {}) => {
+const createEvidenceItemElement = ({ documentRef, item, editable = true } = {}) => {
   const metaItems = [
     createEvidenceMetaItem({
       documentRef,
@@ -644,19 +648,21 @@ const createEvidenceItemElement = ({
     );
   }
 
-  const fileLead = item.isImage === true || isImageMimeType(item.mimeType)
-    ? createEvidencePreviewButton({ documentRef, item })
-    : createElement('div', {
-        documentRef,
-        className: 'evidence-file-row',
-        children: [
-          createEvidenceDownloadLink({ documentRef, item }),
-        ],
-      });
+  const fileLead =
+    item.isImage === true || isImageMimeType(item.mimeType)
+      ? createEvidencePreviewButton({ documentRef, item })
+      : createElement('div', {
+          documentRef,
+          className: 'evidence-file-row',
+          children: [createEvidenceDownloadLink({ documentRef, item })],
+        });
 
   return createElement('article', {
     documentRef,
-    className: ['evidence-item', item.isImage === true || isImageMimeType(item.mimeType) ? 'is-image' : 'is-file'],
+    className: [
+      'evidence-item',
+      item.isImage === true || isImageMimeType(item.mimeType) ? 'is-image' : 'is-file',
+    ],
     dataset: {
       evidenceItemId: item.id,
     },
@@ -689,64 +695,65 @@ const createEvidenceItemElement = ({
               createElement('div', {
                 documentRef,
                 className: 'evidence-action-strip',
-                children: item.scope === 'criterion'
-                  ? [
-                    createElement('button', {
-                      documentRef,
-                      className: 'evidence-button',
-                      text: 'Replace',
-                      dataset: {
-                        evidenceAction: 'start-replace',
-                        evidenceItemId: item.id,
-                      },
-                      attributes: {
-                        type: 'button',
-                        disabled: editable ? null : true,
-                      },
-                    }),
-                    createElement('button', {
-                      documentRef,
-                      className: 'evidence-button',
-                      text: 'Unlink',
-                      dataset: {
-                        evidenceAction: 'unlink-item',
-                        evidenceItemId: item.id,
-                      },
-                      attributes: {
-                        type: 'button',
-                        disabled: editable ? null : true,
-                      },
-                    }),
-                    createElement('button', {
-                      documentRef,
-                      className: 'evidence-remove-button',
-                      text: 'Remove file everywhere',
-                      dataset: {
-                        evidenceAction: 'remove-asset',
-                        evidenceItemId: item.id,
-                        evidenceAssetId: item.assetId,
-                      },
-                      attributes: {
-                        type: 'button',
-                        disabled: editable ? null : true,
-                      },
-                    }),
-                  ]
-                  : [
-                    createElement('button', {
-                      documentRef,
-                      className: 'evidence-remove-button',
-                      text: 'Remove',
-                      dataset: {
-                        evidenceAction: 'remove-item',
-                        evidenceItemId: item.id,
-                      },
-                      attributes: {
-                        type: 'button',
-                        disabled: editable ? null : true,
-                      },
-                    }),
-                  ],
+                children:
+                  item.scope === 'criterion'
+                    ? [
+                        createElement('button', {
+                          documentRef,
+                          className: 'evidence-button',
+                          text: 'Replace',
+                          dataset: {
+                            evidenceAction: 'start-replace',
+                            evidenceItemId: item.id,
+                          },
+                          attributes: {
+                            type: 'button',
+                            disabled: editable ? null : true,
+                          },
+                        }),
+                        createElement('button', {
+                          documentRef,
+                          className: 'evidence-button',
+                          text: 'Unlink',
+                          dataset: {
+                            evidenceAction: 'unlink-item',
+                            evidenceItemId: item.id,
+                          },
+                          attributes: {
+                            type: 'button',
+                            disabled: editable ? null : true,
+                          },
+                        }),
+                        createElement('button', {
+                          documentRef,
+                          className: 'evidence-remove-button',
+                          text: 'Remove file everywhere',
+                          dataset: {
+                            evidenceAction: 'remove-asset',
+                            evidenceItemId: item.id,
+                            evidenceAssetId: item.assetId,
+                          },
+                          attributes: {
+                            type: 'button',
+                            disabled: editable ? null : true,
+                          },
+                        }),
+                      ]
+                    : [
+                        createElement('button', {
+                          documentRef,
+                          className: 'evidence-remove-button',
+                          text: 'Remove',
+                          dataset: {
+                            evidenceAction: 'remove-item',
+                            evidenceItemId: item.id,
+                          },
+                          attributes: {
+                            type: 'button',
+                            disabled: editable ? null : true,
+                          },
+                        }),
+                      ],
               }),
             ],
           }),
@@ -773,12 +780,7 @@ const createEvidenceEmptyState = ({ documentRef, scope } = {}) =>
     text: getEvidenceEmptyStateText(scope),
   });
 
-const renderEvidenceItems = ({
-  container,
-  items,
-  scope,
-  editable,
-} = {}) => {
+const renderEvidenceItems = ({ container, items, scope, editable } = {}) => {
   if (!(container instanceof HTMLElement)) {
     return;
   }
@@ -786,9 +788,7 @@ const renderEvidenceItems = ({
   const documentRef = container.ownerDocument ?? document;
 
   if (!Array.isArray(items) || items.length === 0) {
-    container.replaceChildren(
-      createEvidenceEmptyState({ documentRef, scope }),
-    );
+    container.replaceChildren(createEvidenceEmptyState({ documentRef, scope }));
     return;
   }
 
@@ -798,7 +798,8 @@ const renderEvidenceItems = ({
         documentRef,
         item,
         editable,
-      })),
+      }),
+    ),
   );
 };
 
@@ -811,7 +812,10 @@ const describeSelectedFiles = (files) => {
     return `1 file selected: ${files[0].name}`;
   }
 
-  return `${files.length} files selected: ${files.slice(0, 3).map((file) => file.name).join(', ')}${files.length > 3 ? ', …' : ''}`;
+  return `${files.length} files selected: ${files
+    .slice(0, 3)
+    .map((file) => file.name)
+    .join(', ')}${files.length > 3 ? ', …' : ''}`;
 };
 
 const ensureEvidenceLightbox = (documentRef) => {
@@ -931,6 +935,14 @@ const openEvidenceLightbox = ({ documentRef, item, trigger } = {}) => {
     closeButton.focus();
   }
 
+  if (lightboxFocusTrap) lightboxFocusTrap.deactivate();
+  lightboxFocusTrap = createFocusTrap(lightbox, {
+    onEscape: () => {
+      closeEvidenceLightbox(document);
+    },
+  });
+  lightboxFocusTrap.activate();
+
   lightbox._returnFocusTarget = trigger instanceof HTMLElement ? trigger : null;
 };
 
@@ -939,6 +951,11 @@ const closeEvidenceLightbox = (documentRef) => {
 
   if (!(lightbox instanceof HTMLElement) || lightbox.hidden) {
     return;
+  }
+
+  if (lightboxFocusTrap) {
+    lightboxFocusTrap.deactivate();
+    lightboxFocusTrap = null;
   }
 
   const image = lightbox.querySelector('.evidence-lightbox-image');
@@ -976,11 +993,7 @@ const exportEvidenceManifest = ({ documentRef, evaluation } = {}) => {
   URL.revokeObjectURL(objectUrl);
 };
 
-const syncEvidenceBlock = ({
-  block,
-  state,
-  draftsByKey,
-} = {}) => {
+const syncEvidenceBlock = ({ block, state, draftsByKey } = {}) => {
   if (!(block instanceof HTMLElement)) {
     return;
   }
@@ -990,7 +1003,7 @@ const syncEvidenceBlock = ({
   const editable = getScopeEditableState(state, scope);
   const items = getEvidenceItemsForScope(state, scope);
   const replaceTarget = draftState.replaceItemId
-    ? items.find((item) => item?.id === draftState.replaceItemId) ?? null
+    ? (items.find((item) => item?.id === draftState.replaceItemId) ?? null)
     : null;
   if (draftState.replaceItemId && !replaceTarget) {
     draftState.replaceItemId = null;
@@ -1024,13 +1037,13 @@ const syncEvidenceBlock = ({
   }
 
   if (statusElement instanceof HTMLElement) {
-    statusElement.textContent = draftState.message || (
-      replaceTarget
+    statusElement.textContent =
+      draftState.message ||
+      (replaceTarget
         ? `Replace mode active for ${replaceTarget.name ?? 'selected evidence'}. Select one new file or one existing evidence item.`
         : decoratedItems.length > 0
           ? `${decoratedItems.length} ${decoratedItems.length === 1 ? 'file is' : 'files are'} attached.`
-          : getEvidenceEmptyStateText(scope)
-    );
+          : getEvidenceEmptyStateText(scope));
   }
 
   if (typeControl instanceof HTMLSelectElement && typeControl.value !== draftState.evidenceType) {
@@ -1052,6 +1065,7 @@ const syncEvidenceBlock = ({
 
   if (typeControl instanceof HTMLSelectElement) {
     typeControl.disabled = !editable || draftState.busy;
+    typeControl.setAttribute('aria-disabled', String(Boolean(!editable || draftState.busy)));
   }
 
   if (noteControl instanceof HTMLTextAreaElement) {
@@ -1061,7 +1075,10 @@ const syncEvidenceBlock = ({
 
   if (existingAssetControl instanceof HTMLSelectElement) {
     existingAssetControl.disabled = !editable || draftState.busy || reusableItems.length === 0;
-    existingAssetControl.setAttribute('aria-disabled', String(Boolean(!editable || draftState.busy || reusableItems.length === 0)));
+    existingAssetControl.setAttribute(
+      'aria-disabled',
+      String(Boolean(!editable || draftState.busy || reusableItems.length === 0)),
+    );
   }
 
   if (fileControl instanceof HTMLInputElement) {
@@ -1073,12 +1090,13 @@ const syncEvidenceBlock = ({
   }
 
   if (addButton instanceof HTMLButtonElement) {
-    addButton.disabled = !editable
-      || draftState.busy
-      || draftState.files.length === 0
-      || !hasMeaningfulText(draftState.note)
-      || !hasMeaningfulText(draftState.evidenceType)
-      || (draftState.replaceItemId !== null && draftState.files.length !== 1);
+    addButton.disabled =
+      !editable ||
+      draftState.busy ||
+      draftState.files.length === 0 ||
+      !hasMeaningfulText(draftState.note) ||
+      !hasMeaningfulText(draftState.evidenceType) ||
+      (draftState.replaceItemId !== null && draftState.files.length !== 1);
     addButton.textContent = draftState.busy
       ? draftState.replaceItemId !== null
         ? 'Replacing…'
@@ -1089,14 +1107,16 @@ const syncEvidenceBlock = ({
   }
 
   if (reuseButton instanceof HTMLButtonElement) {
-    reuseButton.disabled = !editable
-      || draftState.busy
-      || !hasMeaningfulText(draftState.note)
-      || !hasMeaningfulText(draftState.evidenceType)
-      || !hasMeaningfulText(draftState.existingAssetId);
-    reuseButton.textContent = draftState.replaceItemId !== null
-      ? 'Replace with selected evidence'
-      : 'Reuse selected evidence';
+    reuseButton.disabled =
+      !editable ||
+      draftState.busy ||
+      !hasMeaningfulText(draftState.note) ||
+      !hasMeaningfulText(draftState.evidenceType) ||
+      !hasMeaningfulText(draftState.existingAssetId);
+    reuseButton.textContent =
+      draftState.replaceItemId !== null
+        ? 'Replace with selected evidence'
+        : 'Reuse selected evidence';
   }
 
   if (cancelReplaceButton instanceof HTMLButtonElement) {
@@ -1140,15 +1160,11 @@ const readFileAsDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
-const createStoredEvidenceItem = async ({
-  file,
-  scope,
-  evidenceType,
-  note,
-} = {}) => {
+const createStoredEvidenceItem = async ({ file, scope, evidenceType, note } = {}) => {
   const dataUrl = await readFileAsDataUrl(file);
   const normalizedNote = note.trim();
-  const mimeType = normalizeTextValue(file.type) ?? inferMimeTypeFromName(file.name) ?? 'application/octet-stream';
+  const mimeType =
+    normalizeTextValue(file.type) ?? inferMimeTypeFromName(file.name) ?? 'application/octet-stream';
 
   return {
     id: createEvidenceId(),
@@ -1167,11 +1183,7 @@ const createStoredEvidenceItem = async ({
   };
 };
 
-const getEvidenceItemById = ({
-  state,
-  scope,
-  itemId,
-} = {}) =>
+const getEvidenceItemById = ({ state, scope, itemId } = {}) =>
   getEvidenceItemsForScope(state, scope).find((item) => item?.id === itemId) ?? null;
 
 export const initializeEvidenceUi = ({ root = document, store } = {}) => {
@@ -1237,7 +1249,10 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
   const handleChange = (event) => {
     const control = event.target;
 
-    if (control instanceof HTMLSelectElement && control.dataset.evidenceControl === 'existing-asset') {
+    if (
+      control instanceof HTMLSelectElement &&
+      control.dataset.evidenceControl === 'existing-asset'
+    ) {
       const block = control.closest(EVIDENCE_BLOCK_SELECTOR);
       if (!(block instanceof HTMLElement)) {
         return;
@@ -1273,9 +1288,8 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
   };
 
   const handleClick = async (event) => {
-    const actionTarget = event.target instanceof HTMLElement
-      ? event.target.closest('[data-evidence-action]')
-      : null;
+    const actionTarget =
+      event.target instanceof HTMLElement ? event.target.closest('[data-evidence-action]') : null;
 
     if (!(actionTarget instanceof HTMLElement)) {
       return;
@@ -1433,9 +1447,10 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
         assetId,
       });
       const usageCount = getEvidenceItemUsageCount(store.getState(), normalizeTextValue(assetId));
-      const confirmMessage = usageCount > 1
-        ? `Remove “${sourceItem?.name ?? 'this evidence file'}” everywhere? This will remove ${usageCount} linked associations.`
-        : `Remove “${sourceItem?.name ?? 'this evidence file'}” from this questionnaire?`;
+      const confirmMessage =
+        usageCount > 1
+          ? `Remove “${sourceItem?.name ?? 'this evidence file'}” everywhere? This will remove ${usageCount} linked associations.`
+          : `Remove “${sourceItem?.name ?? 'this evidence file'}” from this questionnaire?`;
       const shouldRemove = await confirmDialog(confirmMessage, { documentRef });
 
       if (!shouldRemove) {
@@ -1444,11 +1459,14 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
 
       store.actions.removeEvidenceAsset(assetId);
 
-      if (draftState.replaceItemId && getEvidenceItemById({
-        state: store.getState(),
-        scope,
-        itemId: draftState.replaceItemId,
-      }) === null) {
+      if (
+        draftState.replaceItemId &&
+        getEvidenceItemById({
+          state: store.getState(),
+          scope,
+          itemId: draftState.replaceItemId,
+        }) === null
+      ) {
         clearReplaceMode();
       }
 
@@ -1466,8 +1484,13 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
         return;
       }
 
-      if (!hasMeaningfulText(draftState.note) || !hasMeaningfulText(draftState.evidenceType) || !hasMeaningfulText(draftState.existingAssetId)) {
-        draftState.message = 'Select existing evidence, an evidence type, and a note before linking it to this criterion.';
+      if (
+        !hasMeaningfulText(draftState.note) ||
+        !hasMeaningfulText(draftState.evidenceType) ||
+        !hasMeaningfulText(draftState.existingAssetId)
+      ) {
+        draftState.message =
+          'Select existing evidence, an evidence type, and a note before linking it to this criterion.';
         updateBlockFromElement(actionTarget);
         return;
       }
@@ -1502,8 +1525,13 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
       return;
     }
 
-    if (!draftState.files.length || !hasMeaningfulText(draftState.note) || !hasMeaningfulText(draftState.evidenceType)) {
-      draftState.message = 'Select at least one file, an evidence type, and a note before adding evidence.';
+    if (
+      !draftState.files.length ||
+      !hasMeaningfulText(draftState.note) ||
+      !hasMeaningfulText(draftState.evidenceType)
+    ) {
+      draftState.message =
+        'Select at least one file, an evidence type, and a note before adding evidence.';
       updateBlockFromElement(actionTarget);
       return;
     }
@@ -1515,7 +1543,9 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     }
 
     draftState.busy = true;
-    draftState.message = draftState.replaceItemId ? 'Reading replacement file…' : 'Reading selected file(s)…';
+    draftState.message = draftState.replaceItemId
+      ? 'Reading replacement file…'
+      : 'Reading selected file(s)…';
     updateBlockFromElement(actionTarget);
 
     try {
@@ -1526,7 +1556,8 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
             scope,
             evidenceType: draftState.evidenceType,
             note: draftState.note,
-          })),
+          }),
+        ),
       );
 
       const addedCount = nextItems.length;
@@ -1561,9 +1592,7 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
       draftState.evidenceType = '';
     } catch (error) {
       draftState.busy = false;
-      draftState.message = error instanceof Error
-        ? error.message
-        : 'Failed to add evidence.';
+      draftState.message = error instanceof Error ? error.message : 'Failed to add evidence.';
       updateBlockFromElement(actionTarget);
     }
   };
@@ -1586,13 +1615,16 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     documentRef.removeEventListener('keydown', handleKeydown);
   });
 
-  const unsubscribe = store.subscribe((state) => {
-    syncEvidenceBlocks({
-      questionnaireRoot,
-      state,
-      draftsByKey,
-    });
-  }, { immediate: true });
+  const unsubscribe = store.subscribe(
+    (state) => {
+      syncEvidenceBlocks({
+        questionnaireRoot,
+        state,
+        draftsByKey,
+      });
+    },
+    { immediate: true },
+  );
 
   cleanup.push(unsubscribe);
 

@@ -1,6 +1,13 @@
 import { CRITERIA, CRITERIA_BY_CODE } from '../config/questionnaire-schema.js';
 import { PRINCIPLE_SECTION_IDS, SECTION_IDS } from '../config/sections.js';
-import { EMPTY_ARRAY, isPlainObject, normalizeTextValue, extractEvidenceItems, inferMimeTypeFromName, isImageMimeType } from '../utils/shared.js';
+import {
+  EMPTY_ARRAY,
+  isPlainObject,
+  normalizeTextValue,
+  extractEvidenceItems,
+  inferMimeTypeFromName,
+  isImageMimeType,
+} from '../utils/shared.js';
 
 export const EVIDENCE_MANIFEST_VERSION = 1;
 
@@ -15,31 +22,26 @@ const normalizeNumberValue = (value) => {
 
 export const serializeEvidenceItem = (
   item,
-  {
-    scope = 'evaluation',
-    criterionCode = null,
-    sectionId = null,
-  } = {},
+  { scope = 'evaluation', criterionCode = null, sectionId = null } = {},
 ) => {
   if (!isPlainObject(item)) {
     return null;
   }
 
   const resolvedCriterionCode = normalizeTextValue(criterionCode ?? item.criterionCode);
-  const resolvedName = normalizeTextValue(item.name ?? item.filename ?? item.fileName ?? item.label);
-  const resolvedMimeType = normalizeTextValue(item.mimeType) ?? inferMimeTypeFromName(resolvedName);
-  const resolvedSectionId =
-    resolvedCriterionCode
-      ? CRITERIA_BY_CODE[resolvedCriterionCode]?.sectionId ?? normalizeTextValue(sectionId ?? item.sectionId)
-      : normalizeTextValue(sectionId ?? item.sectionId) ?? SECTION_IDS.S2;
-  const resolvedScope =
-    resolvedCriterionCode || scope === 'criterion'
-      ? 'criterion'
-      : 'evaluation';
-  const resolvedDataUrl = normalizeTextValue(item.dataUrl ?? item.url ?? item.href);
-  const resolvedPreviewDataUrl = normalizeTextValue(item.previewDataUrl) ?? (
-    resolvedMimeType && isImageMimeType(resolvedMimeType) ? resolvedDataUrl : null
+  const resolvedName = normalizeTextValue(
+    item.name ?? item.filename ?? item.fileName ?? item.label,
   );
+  const resolvedMimeType = normalizeTextValue(item.mimeType) ?? inferMimeTypeFromName(resolvedName);
+  const resolvedSectionId = resolvedCriterionCode
+    ? (CRITERIA_BY_CODE[resolvedCriterionCode]?.sectionId ??
+      normalizeTextValue(sectionId ?? item.sectionId))
+    : (normalizeTextValue(sectionId ?? item.sectionId) ?? SECTION_IDS.S2);
+  const resolvedScope = resolvedCriterionCode || scope === 'criterion' ? 'criterion' : 'evaluation';
+  const resolvedDataUrl = normalizeTextValue(item.dataUrl ?? item.url ?? item.href);
+  const resolvedPreviewDataUrl =
+    normalizeTextValue(item.previewDataUrl) ??
+    (resolvedMimeType && isImageMimeType(resolvedMimeType) ? resolvedDataUrl : null);
 
   return Object.freeze({
     id: normalizeTextValue(item.id),
@@ -66,7 +68,8 @@ const createCriterionManifestEntry = (criterion, evaluation) => {
         scope: 'criterion',
         criterionCode: criterion.code,
         sectionId: criterion.sectionId,
-      }))
+      }),
+    )
     .filter(Boolean);
 
   return Object.freeze({
@@ -79,21 +82,23 @@ const createCriterionManifestEntry = (criterion, evaluation) => {
 
 export const createEvidenceManifest = (
   evaluation,
-  {
-    generatedAt = new Date().toISOString(),
-  } = {},
+  { generatedAt = new Date().toISOString() } = {},
 ) => {
   const evaluationItems = extractEvidenceItems(evaluation?.evidence?.evaluation)
     .map((item) =>
       serializeEvidenceItem(item, {
         scope: 'evaluation',
         sectionId: SECTION_IDS.S2,
-      }))
+      }),
+    )
     .filter(Boolean);
 
   const criteria = Object.freeze(
     Object.fromEntries(
-      CRITERIA.map((criterion) => [criterion.code, createCriterionManifestEntry(criterion, evaluation)]),
+      CRITERIA.map((criterion) => [
+        criterion.code,
+        createCriterionManifestEntry(criterion, evaluation),
+      ]),
     ),
   );
 
@@ -119,7 +124,9 @@ export const createEvidenceManifest = (
       criterionCodes: Object.freeze(sectionCriteria.map((criterion) => criterion.code)),
       itemCount: sectionItemCount,
       criteria: Object.freeze(
-        Object.fromEntries(sectionCriteria.map((criterion) => [criterion.code, criteria[criterion.code]])),
+        Object.fromEntries(
+          sectionCriteria.map((criterion) => [criterion.code, criteria[criterion.code]]),
+        ),
       ),
     });
   });
