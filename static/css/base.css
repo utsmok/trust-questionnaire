@@ -14,6 +14,9 @@ body {
   margin: 0;
   font-family: var(--ff-body);
   font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   color: var(--ut-text);
   background: var(--ut-canvas);
   overflow: auto;
@@ -26,7 +29,7 @@ body {
   background: var(--ut-darkblue);
   color: var(--section-on-accent, #fff);
   padding: 8px 16px;
-  z-index: 50;
+  z-index: var(--z-skip-link);
   font-weight: 700;
   text-decoration: none;
   border-radius: 0 0 2px 0;
@@ -87,14 +90,10 @@ li {
 
 ul,
 ol {
-  margin: 10px 0 0;
-  padding-left: 20px;
+  margin: var(--space-3) 0 0;
+  padding-left: var(--space-5);
 }
 
 .muted {
   color: var(--ut-muted);
-}
-
-.small {
-  font-size: var(--text-body);
 }

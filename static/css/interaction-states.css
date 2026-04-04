@@ -1,35 +1,20 @@
 .top-accent {
-  background: var(--active-section-accent-strong);
-  transition: background var(--duration-fast) var(--ease-out-quart);
+  background: var(--top-accent-color);
+  transition: --top-accent-color 400ms ease;
 }
 
-.strip-cell.filled.tr {
-  background: color-mix(in srgb, var(--tr) 30%, var(--ut-white));
-  border-color: var(--tr);
-}
-
-.strip-cell.filled.re {
-  background: color-mix(in srgb, var(--re) 30%, var(--ut-white));
-  border-color: var(--re);
-}
-
-.strip-cell.filled.uc {
-  background: color-mix(in srgb, var(--uc) 30%, var(--ut-white));
-  border-color: var(--uc);
-}
-
-.strip-cell.filled.se {
-  background: color-mix(in srgb, var(--se) 30%, var(--ut-white));
-  border-color: var(--se);
-}
-
-.strip-cell.filled.tc {
-  background: color-mix(in srgb, var(--tc) 30%, var(--ut-white));
-  border-color: var(--tc);
+.strip-cell:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .strip-cell:hover {
   border-color: var(--ut-darkblue);
+}
+
+.strip-cell:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .strip-cell.just-filled {
@@ -47,37 +32,12 @@
 }
 
 .nav-button:active {
-  filter: brightness(0.92);
+  background: color-mix(in srgb, var(--ut-grey) 80%, var(--ut-border));
 }
 
 .nav-button.active {
   color: var(--section-on-accent);
   box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--ut-white) 20%, transparent);
-}
-
-.nav-button.active[data-target="tr"] {
-  background: var(--tr);
-  border-color: var(--tr);
-}
-
-.nav-button.active[data-target="re"] {
-  background: var(--re);
-  border-color: var(--re);
-}
-
-.nav-button.active[data-target="uc"] {
-  background: var(--uc);
-  border-color: var(--uc);
-}
-
-.nav-button.active[data-target="se"] {
-  background: var(--se-dark);
-  border-color: var(--se-dark);
-}
-
-.nav-button.active[data-target="tc"] {
-  background: var(--tc-dark);
-  border-color: var(--tc-dark);
 }
 
 .panel-title-section.tr {
@@ -102,7 +62,9 @@
 
 .doc-section,
 .form-section {
-  transition: border-left-color var(--duration-fast) var(--ease-out-quart);
+  transition:
+    border-left-color var(--duration-fast) var(--ease-out-quart),
+    background var(--duration-fast) var(--ease-out-quart);
   opacity: 0;
   animation: sectionEnter 120ms var(--ease-out-quart) forwards;
 }
@@ -111,98 +73,106 @@
 .form-section.is-active {
   background: color-mix(in srgb, var(--ut-navy) 3%, var(--ut-white));
   border-left-width: 8px;
+  border-bottom-width: 2px;
   border-color: color-mix(in srgb, var(--ut-navy) 12%, var(--ut-border));
 }
 
-.doc-section.is-active[data-section="tr"],
-.form-section.is-active[data-section="tr"] {
+.doc-section.is-active[data-section='tr'],
+.form-section.is-active[data-section='tr'] {
   border-top-color: color-mix(in srgb, var(--tr) 10%, var(--ut-border));
   border-right-color: color-mix(in srgb, var(--tr) 10%, var(--ut-border));
   border-bottom-color: color-mix(in srgb, var(--tr) 10%, var(--ut-border));
   border-left-color: var(--tr);
 }
 
-.doc-section.is-active[data-section="re"],
-.form-section.is-active[data-section="re"] {
+.doc-section.is-active[data-section='re'],
+.form-section.is-active[data-section='re'] {
   border-top-color: color-mix(in srgb, var(--re) 10%, var(--ut-border));
   border-right-color: color-mix(in srgb, var(--re) 10%, var(--ut-border));
   border-bottom-color: color-mix(in srgb, var(--re) 10%, var(--ut-border));
   border-left-color: var(--re);
 }
 
-.doc-section.is-active[data-section="uc"],
-.form-section.is-active[data-section="uc"] {
+.doc-section.is-active[data-section='uc'],
+.form-section.is-active[data-section='uc'] {
   border-top-color: color-mix(in srgb, var(--uc) 10%, var(--ut-border));
   border-right-color: color-mix(in srgb, var(--uc) 10%, var(--ut-border));
   border-bottom-color: color-mix(in srgb, var(--uc) 10%, var(--ut-border));
   border-left-color: var(--uc);
 }
 
-.doc-section.is-active[data-section="se"],
-.form-section.is-active[data-section="se"] {
+.doc-section.is-active[data-section='se'],
+.form-section.is-active[data-section='se'] {
   border-top-color: color-mix(in srgb, var(--se) 10%, var(--ut-border));
   border-right-color: color-mix(in srgb, var(--se) 10%, var(--ut-border));
   border-bottom-color: color-mix(in srgb, var(--se) 10%, var(--ut-border));
   border-left-color: var(--se);
 }
 
-.doc-section.is-active[data-section="tc"],
-.form-section.is-active[data-section="tc"] {
+.doc-section.is-active[data-section='tc'],
+.form-section.is-active[data-section='tc'] {
   border-top-color: color-mix(in srgb, var(--tc) 10%, var(--ut-border));
   border-right-color: color-mix(in srgb, var(--tc) 10%, var(--ut-border));
   border-bottom-color: color-mix(in srgb, var(--tc) 10%, var(--ut-border));
   border-left-color: var(--tc);
 }
 
-.doc-section[data-section="intro"],
-.form-section[data-section="intro"],
-.doc-section[data-section="governance"],
-.form-section[data-section="governance"] {
+@starting-style {
+  .doc-section.is-active,
+  .form-section.is-active {
+    border-left-width: 6px;
+  }
+}
+
+.doc-section[data-section='intro'],
+.form-section[data-section='intro'],
+.doc-section[data-section='governance'],
+.form-section[data-section='governance'] {
   border-left-color: var(--ut-darkblue);
 }
 
-.doc-section[data-section="scope"],
-.form-section[data-section="scope"] {
+.doc-section[data-section='scope'],
+.form-section[data-section='scope'] {
   border-left-color: var(--ut-blue);
 }
 
-.doc-section[data-section="scoring"],
-.form-section[data-section="scoring"] {
+.doc-section[data-section][data-section='scoring'],
+.form-section[data-section][data-section='scoring'] {
   border-left-color: var(--ut-pink);
   border-top: 3px solid var(--ut-pink);
 }
 
-.doc-section[data-section="evidence"],
-.form-section[data-section="evidence"] {
+.doc-section[data-section='evidence'],
+.form-section[data-section='evidence'] {
   border-left-color: var(--section-default);
 }
 
-.doc-section[data-section="tr"],
-.form-section[data-section="tr"],
+.doc-section[data-section='tr'],
+.form-section[data-section='tr'],
 .criterion-card.tr {
   border-left-color: var(--tr);
 }
 
-.doc-section[data-section="re"],
-.form-section[data-section="re"],
+.doc-section[data-section='re'],
+.form-section[data-section='re'],
 .criterion-card.re {
   border-left-color: var(--re);
 }
 
-.doc-section[data-section="uc"],
-.form-section[data-section="uc"],
+.doc-section[data-section='uc'],
+.form-section[data-section='uc'],
 .criterion-card.uc {
   border-left-color: var(--uc);
 }
 
-.doc-section[data-section="se"],
-.form-section[data-section="se"],
+.doc-section[data-section='se'],
+.form-section[data-section='se'],
 .criterion-card.se {
   border-left-color: var(--se);
 }
 
-.doc-section[data-section="tc"],
-.form-section[data-section="tc"],
+.doc-section[data-section='tc'],
+.form-section[data-section='tc'],
 .criterion-card.tc {
   border-left-color: var(--tc);
 }
@@ -257,8 +227,8 @@
   background: color-mix(in srgb, var(--tc) 10%, var(--ut-white));
 }
 
-.doc-section[data-section="scoring"] .section-kicker,
-.form-section[data-section="scoring"] .section-kicker {
+.doc-section[data-section='scoring'] .section-kicker,
+.form-section[data-section='scoring'] .section-kicker {
   color: var(--ut-pink);
   background: color-mix(in srgb, var(--ut-pink) 10%, var(--ut-white));
 }
@@ -315,158 +285,158 @@
   color: var(--tc);
 }
 
-.chip[data-score="0"] {
+.chip[data-score='0'] {
   background: var(--score-0-tint);
   border-color: var(--score-0-border);
   color: var(--score-0);
 }
 
-.chip[data-score="1"] {
+.chip[data-score='1'] {
   background: var(--score-1-tint);
   border-color: var(--score-1-border);
   color: var(--score-1);
 }
 
-.chip[data-score="2"] {
+.chip[data-score='2'] {
   background: var(--score-2-tint);
   border-color: var(--score-2-border);
   color: var(--score-2);
 }
 
-.chip[data-score="3"] {
+.chip[data-score='3'] {
   background: var(--score-3-tint);
   border-color: var(--score-3-border);
   color: var(--score-3);
 }
 
-.chip[data-workflow-state="editable"] {
+.chip[data-workflow-state='editable'] {
   background: var(--workflow-editable-tint);
   border-color: var(--workflow-editable-border);
   color: var(--workflow-editable);
 }
 
-.chip[data-workflow-state="read_only"] {
+.chip[data-workflow-state='read_only'] {
   background: var(--workflow-read-only-tint);
   border-color: var(--workflow-read-only-border);
   color: var(--workflow-read-only);
 }
 
-.chip[data-workflow-state="system_skipped"] {
+.chip[data-workflow-state='system_skipped'] {
   background: var(--workflow-system-skipped-tint);
   border-color: var(--workflow-system-skipped-border);
   color: var(--workflow-system-skipped);
 }
 
-.chip[data-judgment="pass"] {
+.chip[data-judgment='pass'] {
   background: var(--judgment-pass-tint);
   border-color: var(--judgment-pass-border);
   color: var(--judgment-pass);
 }
 
-.chip[data-judgment="conditional_pass"] {
+.chip[data-judgment='conditional_pass'] {
   background: var(--judgment-conditional-tint);
   border-color: var(--judgment-conditional-border);
   color: var(--judgment-conditional);
 }
 
-.chip[data-judgment="fail"] {
+.chip[data-judgment='fail'] {
   background: var(--judgment-fail-tint);
   border-color: var(--judgment-fail-border);
   color: var(--judgment-fail);
 }
 
-.chip[data-recommendation-state="recommended"] {
+.chip[data-recommendation-state='recommended'] {
   background: var(--recommendation-recommended-tint);
   border-color: var(--recommendation-recommended-border);
   color: var(--recommendation-recommended);
 }
 
-.chip[data-recommendation-state="recommended_with_caveats"] {
+.chip[data-recommendation-state='recommended_with_caveats'] {
   background: var(--recommendation-recommended-with-caveats-tint);
   border-color: var(--recommendation-recommended-with-caveats-border);
   color: var(--recommendation-recommended-with-caveats);
 }
 
-.chip[data-recommendation-state="needs_review_provisional"] {
+.chip[data-recommendation-state='needs_review_provisional'] {
   background: var(--recommendation-needs-review-provisional-tint);
   border-color: var(--recommendation-needs-review-provisional-border);
   color: var(--recommendation-needs-review-provisional);
 }
 
-.chip[data-recommendation-state="pilot_only"] {
+.chip[data-recommendation-state='pilot_only'] {
   background: var(--recommendation-pilot-only-tint);
   border-color: var(--recommendation-pilot-only-border);
   color: var(--recommendation-pilot-only);
 }
 
-.chip[data-recommendation-state="not_recommended"] {
+.chip[data-recommendation-state='not_recommended'] {
   background: var(--recommendation-not-recommended-tint);
   border-color: var(--recommendation-not-recommended-border);
   color: var(--recommendation-not-recommended);
 }
 
-.chip[data-recommendation-state="out_of_scope"] {
+.chip[data-recommendation-state='out_of_scope'] {
   background: var(--recommendation-out-of-scope-tint);
   border-color: var(--recommendation-out-of-scope-border);
   color: var(--recommendation-out-of-scope);
 }
 
-.chip[data-confidence-level="high"] {
+.chip[data-confidence-level='high'] {
   background: var(--state-success-tint);
   border-color: var(--state-success-border);
   color: var(--state-success);
 }
 
-.chip[data-confidence-level="medium"] {
+.chip[data-confidence-level='medium'] {
   background: var(--state-info-tint);
   border-color: var(--state-info-border);
   color: var(--state-info);
 }
 
-.chip[data-confidence-level="low"] {
+.chip[data-confidence-level='low'] {
   background: var(--state-skipped-tint);
   border-color: var(--state-skipped-border);
   color: var(--state-skipped);
 }
 
-.chip[data-help-role="context"],
-.chip[data-help-role="info"] {
+.chip[data-help-role='context'],
+.chip[data-help-role='info'] {
   background: var(--help-tint);
   border-color: var(--help-border);
   color: var(--help-accent-strong);
 }
 
-.chip[data-help-role="help"] {
+.chip[data-help-role='help'] {
   background: var(--help-accent);
   border-color: var(--help-accent);
   color: var(--help-on-accent);
 }
 
-.form-section[data-section="tr"] .condition-tag {
+.form-section[data-section='tr'] .condition-tag {
   color: var(--tr);
   background: color-mix(in srgb, var(--tr) 8%, var(--ut-white));
   border-color: color-mix(in srgb, var(--tr) 15%, var(--ut-border));
 }
 
-.form-section[data-section="re"] .condition-tag {
+.form-section[data-section='re'] .condition-tag {
   color: var(--re);
   background: color-mix(in srgb, var(--re) 8%, var(--ut-white));
   border-color: color-mix(in srgb, var(--re) 15%, var(--ut-border));
 }
 
-.form-section[data-section="uc"] .condition-tag {
+.form-section[data-section='uc'] .condition-tag {
   color: var(--uc);
   background: color-mix(in srgb, var(--uc) 8%, var(--ut-white));
   border-color: color-mix(in srgb, var(--uc) 15%, var(--ut-border));
 }
 
-.form-section[data-section="se"] .condition-tag {
+.form-section[data-section='se'] .condition-tag {
   color: var(--se);
   background: color-mix(in srgb, var(--se) 8%, var(--ut-white));
   border-color: color-mix(in srgb, var(--se) 15%, var(--ut-border));
 }
 
-.form-section[data-section="tc"] .condition-tag {
+.form-section[data-section='tc'] .condition-tag {
   color: var(--tc);
   background: color-mix(in srgb, var(--tc) 8%, var(--ut-white));
   border-color: color-mix(in srgb, var(--tc) 15%, var(--ut-border));
@@ -683,24 +653,24 @@
   border-left: 4px solid var(--recommendation-out-of-scope);
 }
 
-.form-section[data-section="scoring"] .checkbox-block:first-of-type .checkbox-item input {
+.form-section[data-section='scoring'] .checkbox-block:first-of-type .checkbox-item input {
   accent-color: var(--ut-red);
 }
 
-.form-section[data-section="scoring"] .checkbox-block:last-of-type .checkbox-item input {
+.form-section[data-section='scoring'] .checkbox-block:last-of-type .checkbox-item input {
   accent-color: var(--ut-green);
 }
 
-.form-section[data-section="scope"] .checkbox-block .checkbox-item input {
+.form-section[data-section='scope'] .checkbox-block .checkbox-item input {
   accent-color: var(--ut-blue);
 }
 
-.form-section[data-section="scoring"] .checkbox-block:first-of-type {
+.form-section[data-section='scoring'] .checkbox-block:first-of-type {
   border-color: var(--state-error-border);
   background: color-mix(in srgb, var(--ut-red) 2%, var(--ut-white));
 }
 
-.form-section[data-section="scoring"] .checkbox-block:last-of-type {
+.form-section[data-section='scoring'] .checkbox-block:last-of-type {
   border-color: var(--state-success-border);
   background: color-mix(in srgb, var(--ut-green) 2%, var(--ut-white));
 }
@@ -723,7 +693,7 @@
 
 .checkbox-item:has(input:checked) {
   color: var(--ut-navy);
-  font-weight: 500;
+  font-weight: 700;
   background: color-mix(in srgb, var(--ut-navy) 3%, var(--ut-white));
   border-radius: 2px;
   margin: -2px -4px;
@@ -733,7 +703,7 @@
 
 .checkbox-item.has-checked {
   color: var(--ut-navy);
-  font-weight: 500;
+  font-weight: 700;
   background: color-mix(in srgb, var(--ut-navy) 3%, var(--ut-white));
   border-radius: 2px;
   margin: -2px -4px;
@@ -747,9 +717,13 @@
 }
 
 .mock-control:focus-within,
-.textarea-mock:focus-within,
-.field-group:focus-within {
+.textarea-mock:focus-within {
   border-color: var(--ut-blue);
+}
+
+.field-group:focus-within {
+  border-color: var(--section-border, var(--ut-blue));
+  border-left: 3px solid var(--section-accent, var(--ut-blue));
 }
 
 .rating-option:hover {
@@ -758,7 +732,7 @@
 }
 
 .rating-option:focus-visible {
-  outline: 2px solid var(--ut-blue);
+  outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
 
@@ -823,7 +797,6 @@
 
 .criterion-card {
   transition:
-    border-left-width var(--duration-fast) var(--ease-out-quart),
     border-color var(--duration-fast) var(--ease-out-quart),
     box-shadow var(--duration-fast) var(--ease-out-quart);
 }
@@ -896,9 +869,10 @@
 .pager-button:focus-visible,
 .reference-drawer-summary:focus-visible,
 .shell-action-button:focus-visible,
-.surface-card .nav-button:focus-visible {
+.nav-button:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
+  background: color-mix(in srgb, var(--section-tint, var(--ut-grey)) 28%, var(--ut-white));
 }
 
 .page-index-button:hover,
@@ -919,12 +893,19 @@
   background: var(--section-tint);
   border-color: var(--section-border);
   border-left-color: var(--section-accent);
-  box-shadow: inset 0 2px 0 var(--section-accent);
+  box-shadow: inset 0 3px 0 var(--section-accent);
 }
 
 .page-index-button.is-active .page-index-code,
 .page-index-button.is-active .page-index-label {
   color: var(--section-accent-strong);
+}
+
+@starting-style {
+  .page-index-button.is-active {
+    background: var(--ut-white);
+    box-shadow: none;
+  }
 }
 
 .page-index-button:disabled,
@@ -933,81 +914,82 @@
   cursor: default;
 }
 
-.page-index-button[data-workflow-state="read_only"] {
+.page-index-button[data-workflow-state='read_only'] {
   border-style: dashed;
 }
 
-.page-index-button[data-workflow-state="system_skipped"] {
+.page-index-button[data-workflow-state='system_skipped'] {
   background: var(--workflow-system-skipped-tint);
 }
 
-.page-index-state[data-workflow-state="editable"] {
+.page-index-state[data-workflow-state='editable'] {
   border-color: var(--workflow-editable-border);
   background: var(--workflow-editable-tint);
   color: var(--workflow-editable);
 }
 
-.page-index-state[data-workflow-state="read_only"] {
+.page-index-state[data-workflow-state='read_only'] {
   border-color: var(--workflow-read-only-border);
   background: var(--workflow-read-only-tint);
   color: var(--workflow-read-only);
 }
 
-.page-index-state[data-workflow-state="system_skipped"] {
+.page-index-state[data-workflow-state='system_skipped'] {
   border-color: var(--workflow-system-skipped-border);
   background: var(--workflow-system-skipped-tint);
   color: var(--workflow-system-skipped);
 }
 
-.page-index-status[data-section-status="complete"] {
+.page-index-status[data-section-status='complete'] {
   border-color: var(--state-success-border);
   background: var(--state-success-tint);
   color: var(--state-success);
 }
 
-.page-index-status[data-section-status="in_progress"] {
+.page-index-status[data-section-status='in_progress'] {
   border-color: var(--state-info-border);
   background: var(--state-info-tint);
   color: var(--state-info);
 }
 
-.page-index-status[data-section-status="attention_required"],
-.page-index-status[data-section-status="blocked"] {
+.page-index-status[data-section-status='attention_required'],
+.page-index-status[data-section-status='blocked'] {
   border-color: var(--state-error-border);
   background: var(--state-error-tint);
   color: var(--state-error);
 }
 
-.page-index-status[data-section-status="skipped"],
-.page-index-status[data-section-status="system_skipped"] {
+.page-index-status[data-section-status='skipped'],
+.page-index-status[data-section-status='system_skipped'] {
   border-color: var(--state-skipped-border);
   background: var(--state-skipped-tint);
   color: var(--state-skipped);
 }
 
 .pager-button:disabled {
-  opacity: 0.45;
+  opacity: 0.55;
   cursor: default;
 }
 
-.shell-action-button[aria-expanded="true"] {
+.pager-button:active {
+  background: color-mix(in srgb, var(--ut-grey) 80%, var(--ut-border));
+}
+
+.shell-action-button[aria-expanded='true'] {
   background: var(--ut-darkblue);
   border-color: var(--ut-darkblue);
   color: var(--section-on-accent);
 }
 
-.shell-action-button[data-surface-toggle="aboutSurface"],
-.shell-action-button[data-surface-toggle="helpSurface"] {
-  border-color: var(--help-border);
-  background: var(--help-tint);
-  color: var(--help-accent-strong);
+.shell-action-button[data-sidebar-toggle] {
+  --section-on-accent: var(--ut-white);
+  border-color: var(--active-section-border);
+  background: var(--active-section-tint);
+  color: var(--active-section-accent-strong);
 }
 
-.shell-action-button[data-surface-toggle="aboutSurface"][aria-expanded="true"],
-.shell-action-button[data-surface-toggle="helpSurface"][aria-expanded="true"] {
-  background: var(--help-accent);
-  border-color: var(--help-accent);
-  color: var(--help-on-accent);
+.shell-action-button[data-sidebar-toggle][aria-expanded='true'] {
+  --section-on-accent: var(--ut-white);
 }
 
 .reference-drawer[open] .reference-drawer-summary {
@@ -1018,21 +1000,21 @@
   border-color: color-mix(in srgb, var(--ut-navy) 18%, var(--ut-border));
 }
 
-.form-section[data-workflow-state="read_only"] {
+.form-section[data-workflow-state='read_only'] {
   background: color-mix(in srgb, var(--section-tint) 45%, var(--workflow-read-only-tint));
   border-style: dashed;
 }
 
-.form-section[data-workflow-state="system_skipped"] {
+.form-section[data-workflow-state='system_skipped'] {
   background: color-mix(in srgb, var(--section-tint) 20%, var(--workflow-system-skipped-tint));
   border-style: dashed;
 }
 
-.rating-scale[aria-disabled="true"] {
+.rating-scale[aria-disabled='true'] {
   background: var(--workflow-system-skipped-tint);
 }
 
-.rating-option[aria-disabled="true"] {
+.rating-option[aria-disabled='true'] {
   opacity: 0.6;
   cursor: default;
   pointer-events: none;
@@ -1044,8 +1026,7 @@
 }
 
 .form-section[data-page-id] {
-  transition:
-    opacity var(--duration-fast) var(--ease-out-quart);
+  transition: opacity var(--duration-fast) var(--ease-out-quart);
 }
 
 .form-section.is-page-transitioning-out {
@@ -1061,7 +1042,7 @@
 }
 
 .rating-option.is-just-selected {
-  border-left-width: 5px;
+  animation: ratingBorderConfirm 200ms var(--ease-out-quint);
 }
 
 .evidence-item {
@@ -1077,73 +1058,87 @@
 }
 
 .pager-button {
-  transition:
-    opacity var(--duration-fast) var(--ease-out-quart);
+  transition: opacity var(--duration-fast) var(--ease-out-quart);
 }
 
-.form-section[data-page-validation-state="attention"] {
+.form-section[data-page-validation-state='attention'] {
   border-top-color: var(--state-warning-border);
   border-right-color: var(--state-warning-border);
   border-bottom-color: var(--state-warning-border);
   background: color-mix(in srgb, var(--section-tint) 72%, var(--state-warning-tint));
 }
 
-.form-section[data-page-validation-state="invalid"],
-.form-section[data-page-validation-state="blocked"] {
+.form-section[data-page-validation-state='invalid'],
+.form-section[data-page-validation-state='blocked'] {
   border-top-color: var(--state-error-border);
   border-right-color: var(--state-error-border);
   border-bottom-color: var(--state-error-border);
   background: color-mix(in srgb, var(--section-tint) 66%, var(--state-error-tint));
 }
 
-.criterion-card[data-criterion-validation-state="attention"] {
+.criterion-card[data-criterion-validation-state='attention'] {
   border-top-color: var(--state-warning-border);
   border-right-color: var(--state-warning-border);
   border-bottom-color: var(--state-warning-border);
   background: color-mix(in srgb, var(--section-tint) 70%, var(--state-warning-tint));
 }
 
-.criterion-card[data-criterion-validation-state="invalid"],
-.criterion-card[data-criterion-validation-state="blocked"] {
+.criterion-card[data-criterion-validation-state='invalid'],
+.criterion-card[data-criterion-validation-state='blocked'] {
   border-top-color: var(--state-error-border);
   border-right-color: var(--state-error-border);
   border-bottom-color: var(--state-error-border);
   background: color-mix(in srgb, var(--section-tint) 64%, var(--state-error-tint));
 }
 
-.field-group[data-field-validation-state="attention"] > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
-.field-group[data-field-validation-state="attention"] .date-range-control .mock-control {
+.field-group[data-field-validation-state='attention']
+  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+.field-group[data-field-validation-state='attention'] .date-range-control .mock-control {
   border-color: var(--state-warning-border);
   background: var(--state-warning-tint);
 }
 
-.field-group[data-field-validation-state="invalid"] > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
-.field-group[data-field-validation-state="invalid"] .date-range-control .mock-control,
-.field-group[data-field-validation-state="blocked"] > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
-.field-group[data-field-validation-state="blocked"] .date-range-control .mock-control {
+.field-group[data-field-validation-state='invalid']
+  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+.field-group[data-field-validation-state='invalid'] .date-range-control .mock-control,
+.field-group[data-field-validation-state='blocked']
+  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+.field-group[data-field-validation-state='blocked'] .date-range-control .mock-control {
   border-color: var(--state-error-border);
   background: var(--state-error-tint);
 }
 
-.field-group[data-field-validation-state="attention"] .field-label,
-.criterion-card[data-criterion-validation-state="attention"] h3 {
+.field-group[data-field-validation-state='attention'] .field-label,
+.criterion-card[data-criterion-validation-state='attention'] h3 {
   color: var(--state-warning);
 }
 
-.field-group[data-field-validation-state="invalid"] .field-label,
-.field-group[data-field-validation-state="blocked"] .field-label,
-.criterion-card[data-criterion-validation-state="invalid"] h3,
-.criterion-card[data-criterion-validation-state="blocked"] h3 {
+.field-group[data-field-validation-state='invalid'] .field-label,
+.field-group[data-field-validation-state='blocked'] .field-label,
+.criterion-card[data-criterion-validation-state='invalid'] h3,
+.criterion-card[data-criterion-validation-state='blocked'] h3 {
   color: var(--state-error);
 }
 
-.field-group[data-field-validation-state="blocked"] .condition-tag,
-.field-group[data-field-validation-state="blocked"] .display-tag,
-.field-group[data-field-validation-state="invalid"] .condition-tag,
-.field-group[data-field-validation-state="invalid"] .display-tag {
+.field-group[data-field-validation-state='blocked'] .condition-tag,
+.field-group[data-field-validation-state='blocked'] .display-tag,
+.field-group[data-field-validation-state='invalid'] .condition-tag,
+.field-group[data-field-validation-state='invalid'] .display-tag {
   border-color: var(--state-error-border);
   background: var(--state-error-tint);
   color: var(--state-error);
+}
+
+.validation-message {
+  color: var(--state-error);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  margin-top: 4px;
+  font-family: var(--ff-mono);
+}
+
+.field-group[data-field-validation-state='attention'] .validation-message {
+  color: var(--state-warning);
 }
 
 .header-progress-summary {
@@ -1167,10 +1162,10 @@
 .header-progress-title {
   color: var(--ut-muted);
   font-size: var(--text-xs);
-  font-weight: 800;
+  font-weight: 700;
   font-family: var(--ff-heading);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-kicker);
 }
 
 .header-progress-body,
@@ -1189,27 +1184,27 @@
   color: var(--ut-muted);
 }
 
-.header-progress-summary[data-progress-state="complete"] {
+.header-progress-summary[data-progress-state='complete'] {
   border-color: var(--state-success-border);
   background: var(--state-success-tint);
 }
 
-.header-progress-summary[data-progress-state="in_progress"] {
+.header-progress-summary[data-progress-state='in_progress'] {
   border-color: var(--state-info-border);
   background: var(--state-info-tint);
 }
 
-.header-progress-summary[data-progress-state="invalid_attention"] {
+.header-progress-summary[data-progress-state='invalid_attention'] {
   border-color: var(--state-warning-border);
   background: var(--state-warning-tint);
 }
 
-.header-progress-summary[data-progress-state="blocked_escalated"] {
+.header-progress-summary[data-progress-state='blocked_escalated'] {
   border-color: var(--state-blocked-border);
   background: color-mix(in srgb, var(--state-blocked-tint) 82%, var(--ut-white));
 }
 
-.header-progress-summary[data-progress-state="skipped"] {
+.header-progress-summary[data-progress-state='skipped'] {
   border-color: var(--state-skipped-border);
   background: var(--state-skipped-tint);
 }
@@ -1226,31 +1221,37 @@
   box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--section-on-accent) 24%, transparent);
 }
 
-.nav-button[data-progress-state="complete"]:not(.active) {
+.nav-button[data-progress-state='complete']:not(.active) {
   border-color: var(--section-border);
   background: color-mix(in srgb, var(--section-tint) 78%, var(--ut-white));
   color: var(--section-accent-strong);
 }
 
-.nav-button[data-progress-state="in_progress"]:not(.active) {
+.nav-button[data-progress-state='in_progress']:not(.active) {
   border-color: var(--section-border);
   background: var(--section-tint);
-  box-shadow: inset 0 3px 0 var(--state-info), inset 0 -2px 0 var(--section-accent);
+  box-shadow:
+    inset 0 3px 0 var(--state-info),
+    inset 0 -2px 0 var(--section-accent);
 }
 
-.nav-button[data-progress-state="invalid_attention"]:not(.active) {
+.nav-button[data-progress-state='invalid_attention']:not(.active) {
   border-color: var(--section-border);
   background: var(--section-tint);
-  box-shadow: inset 0 3px 0 var(--state-warning), inset 0 -2px 0 var(--section-accent);
+  box-shadow:
+    inset 0 3px 0 var(--state-warning),
+    inset 0 -2px 0 var(--section-accent);
 }
 
-.nav-button[data-progress-state="blocked_escalated"]:not(.active) {
+.nav-button[data-progress-state='blocked_escalated']:not(.active) {
   border-color: var(--section-border);
   background: color-mix(in srgb, var(--section-tint) 72%, var(--state-blocked-tint));
-  box-shadow: inset 0 3px 0 var(--state-error), inset 0 -2px 0 var(--section-accent);
+  box-shadow:
+    inset 0 3px 0 var(--state-error),
+    inset 0 -2px 0 var(--section-accent);
 }
 
-.nav-button[data-progress-state="skipped"]:not(.active) {
+.nav-button[data-progress-state='skipped']:not(.active) {
   border-color: var(--state-skipped-border);
   background: var(--state-skipped-tint);
   color: var(--state-skipped);
@@ -1265,15 +1266,19 @@
 }
 
 .strip-cell.is-active {
-  outline: 1px solid var(--section-accent-strong);
-  outline-offset: var(--focus-ring-offset);
+  border-color: var(--section-accent-strong);
+  box-shadow: inset 0 -3px 0 var(--section-accent-strong);
+  transition:
+    background var(--duration-normal) var(--ease-out-quart),
+    border-color var(--duration-normal) var(--ease-out-quart),
+    box-shadow var(--duration-normal) var(--ease-out-quart);
 }
 
-.strip-cell[data-progress-state="not_started"] {
+.strip-cell[data-progress-state='not_started'] {
   color: var(--ut-muted);
 }
 
-.strip-cell[data-progress-state="skipped"] {
+.strip-cell[data-progress-state='skipped'] {
   background: var(--state-skipped-tint);
   border-color: var(--state-skipped-border);
   border-style: dashed;
@@ -1281,59 +1286,63 @@
   color: var(--state-skipped);
 }
 
-.strip-cell[data-progress-state="invalid_attention"] {
+.strip-cell[data-progress-state='invalid_attention'] {
   background: color-mix(in srgb, var(--section-tint) 76%, var(--ut-white));
   border-color: var(--section-border);
-  box-shadow: inset 0 3px 0 var(--state-warning), inset 0 -2px 0 var(--section-accent);
+  box-shadow:
+    inset 0 3px 0 var(--state-warning),
+    inset 0 -2px 0 var(--section-accent);
   color: var(--state-warning);
 }
 
-.strip-cell[data-progress-state="blocked_escalated"] {
+.strip-cell[data-progress-state='blocked_escalated'] {
   background: color-mix(in srgb, var(--section-tint) 68%, var(--state-blocked-tint));
   border-color: var(--section-border);
-  box-shadow: inset 0 3px 0 var(--state-error), inset 0 -2px 0 var(--section-accent);
+  box-shadow:
+    inset 0 3px 0 var(--state-error),
+    inset 0 -2px 0 var(--section-accent);
   color: var(--state-error);
 }
 
-.strip-cell[data-progress-state="in_progress"] {
+.strip-cell[data-progress-state='in_progress'] {
   background: var(--section-tint);
   border-color: var(--section-border);
   box-shadow: inset 0 -3px 0 var(--section-accent);
   color: var(--section-accent-strong);
 }
 
-.strip-cell[data-progress-state="complete"] {
+.strip-cell[data-progress-state='complete'] {
   background: var(--section-accent);
   border-color: var(--section-accent-strong);
   box-shadow: none;
   color: var(--section-on-accent);
 }
 
-.completion-badge[data-progress-state="not_started"] {
+.completion-badge[data-progress-state='not_started'] {
   color: var(--state-skipped);
   border-color: var(--state-skipped-border);
   background: color-mix(in srgb, var(--state-skipped-tint) 86%, var(--ut-white));
 }
 
-.completion-badge[data-progress-state="in_progress"] {
+.completion-badge[data-progress-state='in_progress'] {
   color: var(--section-accent-strong);
   border-color: var(--section-border);
   background: var(--section-tint);
 }
 
-.completion-badge[data-progress-state="invalid_attention"] {
+.completion-badge[data-progress-state='invalid_attention'] {
   color: var(--state-warning);
   border-color: var(--state-warning-border);
   background: var(--state-warning-tint);
 }
 
-.completion-badge[data-progress-state="blocked_escalated"] {
+.completion-badge[data-progress-state='blocked_escalated'] {
   color: var(--state-error);
   border-color: var(--state-error-border);
   background: var(--state-error-tint);
 }
 
-.completion-badge[data-progress-state="skipped"] {
+.completion-badge[data-progress-state='skipped'] {
   color: var(--state-skipped);
   border-color: var(--state-skipped-border);
   background: var(--state-skipped-tint);
@@ -1344,102 +1353,102 @@
   gap: 2px;
 }
 
-.page-index-group[data-progress-state="complete"] .page-index-group-label {
+.page-index-group[data-progress-state='complete'] .page-index-group-label {
   color: var(--state-success);
 }
 
-.page-index-group[data-progress-state="in_progress"] .page-index-group-label {
+.page-index-group[data-progress-state='in_progress'] .page-index-group-label {
   color: var(--state-info);
 }
 
-.page-index-group[data-progress-state="invalid_attention"] .page-index-group-label {
+.page-index-group[data-progress-state='invalid_attention'] .page-index-group-label {
   color: var(--state-warning);
 }
 
-.page-index-group[data-progress-state="blocked_escalated"] .page-index-group-label {
+.page-index-group[data-progress-state='blocked_escalated'] .page-index-group-label {
   color: var(--state-error);
 }
 
-.page-index-group[data-progress-state="skipped"] .page-index-group-label {
+.page-index-group[data-progress-state='skipped'] .page-index-group-label {
   color: var(--state-skipped);
 }
 
-.page-index-button[data-progress-state="complete"]:not(.is-active) {
+.page-index-button[data-progress-state='complete']:not(.is-active) {
   background: color-mix(in srgb, var(--section-tint) 78%, var(--ut-white));
 }
 
-.page-index-button[data-progress-state="in_progress"]:not(.is-active) {
+.page-index-button[data-progress-state='in_progress']:not(.is-active) {
   background: var(--section-tint);
-  box-shadow: inset 0 2px 0 var(--state-info);
+  box-shadow: inset 0 3px 0 var(--state-info);
 }
 
-.page-index-button[data-progress-state="invalid_attention"]:not(.is-active) {
+.page-index-button[data-progress-state='invalid_attention']:not(.is-active) {
   background: var(--section-tint);
-  box-shadow: inset 0 2px 0 var(--state-warning);
+  box-shadow: inset 0 3px 0 var(--state-warning);
 }
 
-.page-index-button[data-progress-state="blocked_escalated"]:not(.is-active) {
+.page-index-button[data-progress-state='blocked_escalated']:not(.is-active) {
   background: color-mix(in srgb, var(--section-tint) 72%, var(--state-blocked-tint));
-  box-shadow: inset 0 2px 0 var(--state-error);
+  box-shadow: inset 0 3px 0 var(--state-error);
 }
 
-.page-index-button[data-progress-state="skipped"]:not(.is-active) {
+.page-index-button[data-progress-state='skipped']:not(.is-active) {
   background: var(--state-skipped-tint);
   border-style: dashed;
 }
 
-.page-index-status[data-progress-state="not_started"],
-.page-index-progress[data-progress-state="not_started"] {
+.page-index-status[data-progress-state='not_started'],
+.page-index-progress[data-progress-state='not_started'] {
   border-color: var(--state-skipped-border);
   background: color-mix(in srgb, var(--state-skipped-tint) 88%, var(--ut-white));
   color: var(--state-skipped);
 }
 
-.page-index-status[data-progress-state="complete"],
-.page-index-progress[data-progress-state="complete"] {
+.page-index-status[data-progress-state='complete'],
+.page-index-progress[data-progress-state='complete'] {
   border-color: var(--state-success-border);
   background: var(--state-success-tint);
   color: var(--state-success);
 }
 
-.page-index-status[data-progress-state="in_progress"],
-.page-index-progress[data-progress-state="in_progress"] {
+.page-index-status[data-progress-state='in_progress'],
+.page-index-progress[data-progress-state='in_progress'] {
   border-color: var(--state-info-border);
   background: var(--state-info-tint);
   color: var(--state-info);
 }
 
-.page-index-status[data-progress-state="invalid_attention"],
-.page-index-progress[data-progress-state="invalid_attention"] {
+.page-index-status[data-progress-state='invalid_attention'],
+.page-index-progress[data-progress-state='invalid_attention'] {
   border-color: var(--state-warning-border);
   background: var(--state-warning-tint);
   color: var(--state-warning);
 }
 
-.page-index-status[data-progress-state="blocked_escalated"],
-.page-index-progress[data-progress-state="blocked_escalated"] {
+.page-index-status[data-progress-state='blocked_escalated'],
+.page-index-progress[data-progress-state='blocked_escalated'] {
   border-color: var(--state-error-border);
   background: var(--state-error-tint);
   color: var(--state-error);
 }
 
-.page-index-status[data-progress-state="skipped"],
-.page-index-progress[data-progress-state="skipped"] {
+.page-index-status[data-progress-state='skipped'],
+.page-index-progress[data-progress-state='skipped'] {
   border-color: var(--state-skipped-border);
   background: var(--state-skipped-tint);
   color: var(--state-skipped);
 }
 
-.form-section[data-page-progress-state="skipped"] {
+.form-section[data-page-progress-state='skipped'] {
   opacity: 0.9;
 }
 
-.form-section[data-page-progress-state="invalid_attention"] {
+.form-section[data-page-progress-state='invalid_attention'] {
   border-left-color: var(--section-accent);
   box-shadow: inset 0 3px 0 var(--state-warning);
 }
 
-.form-section[data-page-progress-state="blocked_escalated"] {
+.form-section[data-page-progress-state='blocked_escalated'] {
   border-left-color: var(--section-accent);
   box-shadow: inset 0 3px 0 var(--state-error);
 }

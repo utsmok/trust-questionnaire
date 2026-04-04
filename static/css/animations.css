@@ -42,23 +42,49 @@
 
 @keyframes completePulse {
   0% {
-    border-color: var(--ut-navy);
+    border-color: var(--section-accent-strong, var(--ut-navy));
+    background: var(--section-tint, color-mix(in srgb, var(--ut-navy) 10%, var(--ut-white)));
   }
 
   100% {
-    border-color: var(--ut-border);
+    border-color: var(--section-border, var(--ut-border));
+    background: var(--section-tint, var(--ut-white));
   }
 }
 
 @keyframes ratingDotConfirm {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.25); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ratingBorderConfirm {
+  0% {
+    box-shadow: inset 4px 0 0 0 var(--ut-white);
+  }
+  40% {
+    box-shadow: inset 6px 0 0 0 var(--section-accent-strong, var(--ut-navy));
+  }
+  100% {
+    box-shadow: none;
+  }
 }
 
 @keyframes evidenceItemEnter {
-  0%   { opacity: 0; transform: translateY(4px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -68,6 +94,10 @@
 
   .evidence-item {
     opacity: 1 !important;
+    animation: none !important;
+  }
+
+  .rating-option.is-just-selected {
     animation: none !important;
   }
 }

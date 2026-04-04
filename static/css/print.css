@@ -4,6 +4,7 @@
 @media print {
   @page {
     margin: 1.5cm;
+    size: A4;
   }
 
   .top-accent,
@@ -13,8 +14,11 @@
   .completion-strip,
   .page-index-column,
   #pagerMount,
-  .shell-toolbar,
-  .shell-surface {
+  .shell-toolbar {
+    display: none;
+  }
+
+  .sidebar-tab-bar {
     display: none;
   }
 
@@ -49,8 +53,7 @@
 
   .workspace-layout,
   .questionnaire-workspace,
-  .reference-drawer-stack,
-  .surface-body {
+  .reference-drawer-stack {
     display: block;
   }
 
@@ -92,35 +95,56 @@
     border-left-width: revert;
   }
 
-  .shell-surface:not([hidden]),
-  .shell-surface:not([hidden]) .surface-card {
-    animation: none;
+  .rating-option.score-0 {
+    border: 2px solid var(--score-0);
   }
-
-  .rating-option.score-0,
-  .rating-option.score-1,
-  .rating-option.score-2,
+  .rating-option.score-1 {
+    border: 2px solid var(--score-1);
+  }
+  .rating-option.score-2 {
+    border: 2px solid var(--score-2);
+  }
   .rating-option.score-3 {
-    border: 2px solid #000;
+    border: 2px solid var(--score-3);
   }
 
   .doc-section[data-section] .section-kicker::before,
   .form-section[data-section] .section-kicker::before {
-    font-weight: 800;
+    font-weight: 700;
     font-family: var(--ff-mono);
     font-size: 12pt;
   }
 
-  .doc-section[data-section="tr"] .section-kicker::before { content: "TR "; }
-  .doc-section[data-section="re"] .section-kicker::before { content: "RE "; }
-  .doc-section[data-section="uc"] .section-kicker::before { content: "UC "; }
-  .doc-section[data-section="se"] .section-kicker::before { content: "SE "; }
-  .doc-section[data-section="tc"] .section-kicker::before { content: "TC "; }
-  .form-section[data-section="tr"] .section-kicker::before { content: "TR "; }
-  .form-section[data-section="re"] .section-kicker::before { content: "RE "; }
-  .form-section[data-section="uc"] .section-kicker::before { content: "UC "; }
-  .form-section[data-section="se"] .section-kicker::before { content: "SE "; }
-  .form-section[data-section="tc"] .section-kicker::before { content: "TC "; }
+  .doc-section[data-section='tr'] .section-kicker::before {
+    content: 'TR ';
+  }
+  .doc-section[data-section='re'] .section-kicker::before {
+    content: 'RE ';
+  }
+  .doc-section[data-section='uc'] .section-kicker::before {
+    content: 'UC ';
+  }
+  .doc-section[data-section='se'] .section-kicker::before {
+    content: 'SE ';
+  }
+  .doc-section[data-section='tc'] .section-kicker::before {
+    content: 'TC ';
+  }
+  .form-section[data-section='tr'] .section-kicker::before {
+    content: 'TR ';
+  }
+  .form-section[data-section='re'] .section-kicker::before {
+    content: 'RE ';
+  }
+  .form-section[data-section='uc'] .section-kicker::before {
+    content: 'UC ';
+  }
+  .form-section[data-section='se'] .section-kicker::before {
+    content: 'SE ';
+  }
+  .form-section[data-section='tc'] .section-kicker::before {
+    content: 'TC ';
+  }
 
   body {
     color: #000;
@@ -141,11 +165,11 @@
     -webkit-print-color-adjust: exact;
   }
 
-  .form-section[data-section="tr"],
-  .form-section[data-section="re"],
-  .form-section[data-section="uc"],
-  .form-section[data-section="se"],
-  .form-section[data-section="tc"] {
+  .form-section[data-section='tr'],
+  .form-section[data-section='re'],
+  .form-section[data-section='uc'],
+  .form-section[data-section='se'],
+  .form-section[data-section='tc'] {
     page-break-before: always;
   }
 
