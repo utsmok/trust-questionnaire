@@ -3,6 +3,7 @@
     --duration-instant: 0ms;
     --duration-fast: 0ms;
     --duration-normal: 0ms;
+    --duration-slow: 0ms;
   }
 
   *,
@@ -66,13 +67,15 @@
 
 @keyframes ratingBorderConfirm {
   0% {
-    box-shadow: inset 4px 0 0 0 var(--ut-white);
+    border-left-width: 2px;
   }
+
   40% {
-    box-shadow: inset 6px 0 0 0 var(--section-accent-strong, var(--ut-navy));
+    border-left-width: 5px;
   }
+
   100% {
-    box-shadow: none;
+    border-left-width: 3px;
   }
 }
 
