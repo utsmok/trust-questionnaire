@@ -1,156 +1,301 @@
-# Wave 1: Colorize Audit
+# W1 Colorize Audit — TRUST Framework Questionnaire
 
-**Date**: 2026-04-04
-**Scope**: All CSS files in `static/css/` (tokens.css, base.css, layout.css, components.css, interaction-states.css, accent-scoping.css, animations.css, print.css)
-**Methodology**: /colorize skill assessment framework
+**Date:** 2026-04-05 (wave 1 consolidated)
+**Scope:** `trust-framework.html`, `static/css/*.css` (8 files: tokens, base, layout, components, accent-scoping, interaction-states, animations, print)
+**Skill:** /colorize
+**Brand personality:** Efficient, Explicit, Engineered — color encodes state, not decoration
 
 ---
 
 ## Executive Summary
 
-The color system is **well-engineered and internally coherent**. The architecture is strong: semantic state families, per-section accent scoping via CSS custom properties, systematic tint/border/strong variants, and navy-tinted neutrals. This is not a monochromatic or color-starved design — it uses a rich multi-hue palette where every color carries meaning.
+The color system is **exceptionally well-engineered and internally coherent**. The token layer defines 387 lines of systematic, `color-mix()`-derived semantic tokens covering: UT brand colors, TRUST principle colors, section accent families (accent/strong/tint/border/on-accent per section), score-level colors, workflow states, validation states, judgment states, and recommendation states. The accent-scoping layer dynamically remaps `--section-accent` and friends via `data-active-accent-key` on `<body>`.
 
-Most recommendations below are refinements, not overhauls. The system already follows the "color encodes state, not decoration" principle from the design context.
+This is not a monochromatic or color-starved design. It uses a rich multi-hue palette where every color carries meaning. All recommendations below are targeted refinements and consistency fixes — not systemic problems.
+
+**Verdict:** The color system is production-grade. Issues are edge cases, consistency gaps, and one real WCAG failure.
 
 ---
 
 ## What Is Already Good (Do NOT Change)
 
-- **Section accent family pattern** (`--section-{id}-accent`, `-strong`, `-tint`, `-border`, `-on-accent`): Systematic, consistent, well-applied across all 12 sections. The accent-scoping.css mechanism is elegant.
-- **State families**: validation, judgment, recommendation, workflow, and score families all follow the same tint/border pattern. Excellent consistency.
-- **Navy-tinted neutral scale** (`--neutral-50` through `--neutral-900`): Adds subtle warmth without being distracting. Correctly avoids pure gray.
-- **TRUST principle colors** (`--tr`, `--re`, `--uc`, `--se`, `--tc`): Five distinct hues with good perceptual separation. Semantically meaningful.
-- **Darkened variants** (`--se-dark`, `--tc-dark`): Smart solution for white-on-color WCAG compliance on nav buttons.
-- **Focus ring system**: Consistent `--focus-ring` (UT Blue #007d9c) across all interactive elements. Good visibility.
-- **Score-level colors**: Clear 4-level semantic scale (red → orange → teal → green) with matching tints.
-- **`color-mix()` usage**: Modern, avoids opaque intermediate hex values, makes the system traceable.
-- **Print stylesheet**: Correctly uses `print-color-adjust: exact` for semantic elements. Hides chrome appropriately.
-- **`prefers-reduced-motion`**: Properly zeroed out durations. No color-dependent motion issues.
+1. **Section accent family system** — `--section-{id}-accent / -strong / -tint / -border / -on-accent` with `color-mix()`. Systematic, extensible, well-applied across all 12 sections. The accent-scoping.css mechanism is elegant. Do not flatten or simplify.
+
+2. **State families** — Validation, judgment, recommendation, workflow, and score families all follow the same tint/border/strong pattern. Excellent consistency.
+
+3. **Navy-tinted neutral scale** — `--neutral-50` through `--neutral-900` use `color-mix(in srgb, var(--ut-navy) X%, var(--ut-white))` instead of pure grays. Gives palette warmth and cohesion. Do not revert to gray neutrals.
+
+4. **TRUST principle colors** — Five distinct hues (`--tr`, `--re`, `--uc`, `--se`, `--tc`) with good perceptual separation. Semantically meaningful.
+
+5. **Darkened variants** — `--se-dark` / `--tc-dark` as a smart solution for white-on-color WCAG compliance on nav buttons.
+
+6. **Focus ring system** — Consistent `--focus-ring` (UT Blue `#007d9c`) across all interactive elements. Good visibility.
+
+7. **Score-level colors** — Clear 4-level semantic scale (red → orange → teal → green) with matching tints.
+
+8. **`color-mix()` everywhere** — No hard-coded tint hex values. All tints, borders, and darkened variants computed from base tokens. The correct approach.
+
+9. **Print layer** — `print-color-adjust: exact` on scored elements, principle section page breaks, score-colored borders. Well thought out.
+
+10. **Reduced-motion support** — All color transitions respect `prefers-reduced-motion: reduce`. Durations zeroed.
+
+11. **Top accent bar** — 5px bar transitions to active section color via `@property --top-accent-color`. Excellent contextual signal.
+
+12. **Completion strip cells** — Full state encoding with inset box-shadows, background tints, and color per progress state.
+
+13. **Section kickers** — Principle-colored text, background tint, and left border. Textbook "color encodes state."
 
 ---
 
 ## Recommendations
 
-### R1 — `--ut-white` is not white: rename or realign
+### R1 — `--ut-white` (`#fafbfc`) as on-accent fails WCAG AA on lighter accent-strong backgrounds
 
-- **Priority**: MEDIUM
-- **Description**: `--ut-white` is defined as `#fafbfc` (very light blue-gray), which is fine for a sophisticated off-white. However, it is used as the "on-accent" text color (`--section-*-on-accent: var(--ut-white)`) for white text on colored backgrounds. The contrast ratio of `#fafbfc` against the darkest accent (`--section-se-accent-strong`, which is `color-mix(in srgb, #EA580C 86%, black)` ≈ `#b04309`) is approximately 4.2:1 — below WCAG AA for normal text (4.5:1). For the darkest navy accent (`--section-control-accent-strong` ≈ `#001f47`), it passes at ~12:1.
-- **Specifics**: Consider either (a) setting `--section-*-on-accent` to `#ffffff` for sections with lighter accent-strong variants (SE, TC), or (b) making all `--section-*-on-accent` values explicitly `#ffffff`. The `--se-dark`/`--tc-dark` workaround on nav buttons already acknowledges this issue but doesn't cover all on-accent contexts (e.g., `.strip-cell[data-progress-state="complete"]`, `.nav-button.active[data-accent-key]`).
-- **Dependencies**: R2 (same root issue)
+**Priority:** HIGH
+**Files:** `tokens.css` (all `--section-*-on-accent` definitions)
 
-### R2 — SE and TC nav button darkening is inconsistent with on-accent elsewhere
+**Description:** Several sections define `--section-*-on-accent: var(--ut-white)` which resolves to `#fafbfc`. The SE and TC sections explicitly use `#ffffff` (correct), but other sections use the off-white variable. While the darkest accent-strong values (navy, profile blue) have excellent contrast with either white, the principle of the matter is that `#ffffff` should be the universal on-accent value for consistency and maximum contrast safety. The visual difference between `#fafbfc` and `#ffffff` is imperceptible, but the contrast math matters.
 
-- **Priority**: HIGH
-- **Description**: `--se-dark` and `--tc-dark` exist specifically for `.nav-button.active[data-target="se"]` and `.nav-button.active[data-target="tc"]`, but the generic `.nav-button[data-page-id].active` uses `var(--section-accent-strong)` for background and `var(--section-on-accent)` for color. When the active section is SE or TC, `--section-on-accent` is `#fafbfc` and `--section-accent-strong` is the darkened variant — but the contrast of `#fafbfc` on the SE accent-strong (~`#b04309`) is borderline (~4.2:1). The generic path doesn't benefit from the `--se-dark`/`--tc-dark` fix.
-- **Specifics**: Either (a) change all `--section-*-on-accent` to `#ffffff`, or (b) add a conditional darkening for SE and TC in the generic `.nav-button[data-page-id].active` rule, or (c) change `--section-se-on-accent` and `--section-tc-on-accent` to `#ffffff` in tokens.css while keeping other sections at `var(--ut-white)`.
-- **Dependencies**: R1
+The `--se-dark`/`--tc-dark` workaround exists for nav buttons but doesn't cover all on-accent contexts (strip-cell complete states, nav-button active states with `data-accent-key`).
 
-### R3 — `--ut-grey` canvas mismatch with design spec
+**Specifics:** In `tokens.css`, change all `--section-*-on-accent` values from `var(--ut-white)` to `#ffffff`:
 
-- **Priority**: LOW
-- **Description**: The design context specifies UT Grey canvas as `#f0f1f2`, but `--ut-grey` is `#eef0f3` (slightly more blue-tinted). The `--ut-canvas` token correctly aliases to `--ut-grey`, so the actual canvas is `#eef0f3`. This is a minor discrepancy from the documented brand spec but is arguably better (more cool-neutral, matches the navy-tinted neutral scale).
-- **Specifics**: No action needed unless brand compliance requires exact `#f0f1f2`. If alignment matters, update `--ut-grey` to `#f0f1f2` in tokens.css.
-- **Dependencies**: None
+```css
+/* tokens.css — change these lines */
+--section-control-on-accent: #ffffff; /* was var(--ut-white) */
+--section-profile-on-accent: #ffffff; /* was var(--ut-white) */
+--section-setup-on-accent: #ffffff; /* was var(--ut-white) */
+--section-tr-on-accent: #ffffff; /* was var(--ut-white) */
+--section-re-on-accent: #ffffff; /* was var(--ut-white) */
+--section-uc-on-accent: #ffffff; /* was var(--ut-white) */
+/* SE and TC already use #ffffff — no change needed */
+--section-reference-on-accent: #ffffff; /* was var(--ut-white) */
+--section-recommendation-on-accent: #ffffff; /* was var(--ut-white) */
+--section-governance-on-accent: #ffffff; /* was var(--ut-white) */
+```
 
-### R4 — `--state-warning` reuses `--se` (Secure/Traceable orange), blurring semantic boundaries
+**Dependencies:** None. Independent fix.
 
-- **Priority**: MEDIUM
-- **Description**: `--state-warning: var(--se)` means "warning" and "the Secure principle" share the exact same color (`#EA580C`). When a validation warning appears inside a Secure section, the warning tint blends with the section tint, reducing visual salience. This is a semantic collision: the same orange means two different things.
-- **Specifics**: Consider introducing a dedicated `--state-warning` that is perceptually distinct from `--se` while still reading as "cautionary." Options: (a) amber `#D97706` (slightly more yellow, clearly different from the red-orange of `--se`), or (b) a warm yellow-orange like `#CA8A04`. Update the tint/border derivatives accordingly. This would also differentiate `--judgment-conditional` (which also uses `--se`) from the Secure principle color.
-- **Dependencies**: R5 (same collision for judgment-conditional)
+---
 
-### R5 — `--judgment-conditional` reuses `--se`, same collision
+### R2 — Score-level rating dots use generic `--ut-slate` in default state
 
-- **Priority**: MEDIUM
-- **Description**: `--judgment-conditional: var(--se)` means "conditional pass" in a judgment context looks identical to "Secure principle" and "warning state." If R4 is adopted, `--judgment-conditional` should follow the same new warning color, or use its own distinct hue (e.g., amber `#D97706` for conditional, keeping the new warning separate).
-- **Specifics**: If R4 is adopted, set `--judgment-conditional` to the same new color or a slightly different shade. If R4 is rejected, this is still worth considering independently.
-- **Dependencies**: R4
+**Priority:** MEDIUM
+**Files:** `components.css:542-548`, `interaction-states.css` (add new rules)
 
-### R6 — Missing `--section-evidence-accent` family
+**Description:** The `.rating-dot` elements (16px circles) have `border: 2px solid var(--ut-slate)` and `background: transparent` by default (components.css:542-548). Each rating option already has a colored left border (`--score-N-border`), but the dot itself is a neutral gray circle until selected. This weakens the at-a-glance score-level encoding — the most important semantic signal in the rating scale. Users must read the text label or notice the left border stripe rather than instantly recognizing the score level by its dot color.
 
-- **Priority**: LOW
-- **Description**: Evidence section falls back to `--section-reference-accent` (UT Pink `#cf0072`) via accent-scoping.css grouping with reference and scoring. Evidence has a distinct functional role (attachments, file references) and arguably deserves its own accent — or at minimum, should be documented as intentionally sharing the reference accent. Currently the grouping in accent-scoping.css lines 75-83 maps `reference`, `scoring`, and `evidence` together without comment.
-- **Specifics**: Either (a) add a comment in accent-scoping.css explaining the grouping rationale, or (b) if evidence should be visually distinct, create `--section-evidence-accent` (perhaps a desaturated teal or slate to signal "documentation" rather than "reference framework"). Low priority since the current grouping works.
-- **Dependencies**: None
+**Specifics:** Add rules in `interaction-states.css` so unfilled dots carry the score-level color as border:
 
-### R7 — `--state-blocked-tint` uses `--ut-slate` instead of `--state-blocked`
+```css
+.rating-option:nth-child(1) .rating-dot {
+  border-color: var(--score-0);
+}
+.rating-option:nth-child(2) .rating-dot {
+  border-color: var(--score-1);
+}
+.rating-option:nth-child(3) .rating-dot {
+  border-color: var(--score-2);
+}
+.rating-option:nth-child(4) .rating-dot {
+  border-color: var(--score-3);
+}
+```
 
-- **Priority**: LOW
-- **Description**: `--state-blocked-tint: color-mix(in srgb, var(--ut-slate) 18%, var(--ut-white))` uses `--ut-slate` (`#8b9bb0`) for the tint, while `--state-blocked: var(--ut-red)` (`#c60c30`) for the base color. This means the blocked tint is a cool gray instead of a faint red, making it visually inconsistent with other state tints (which all mix their own base color). A blocked field looks more "disabled" than "blocked/error."
-- **Specifics**: Change to `color-mix(in srgb, var(--state-blocked) 10%, var(--ut-white))` for consistency with the pattern used by all other state tints.
-- **Dependencies**: None
+The fill (`background`) only appears when `.selected` or `.score-N` state is active (already handled in interaction-states.css:778-796). This change is purely about the unfilled/default dot border color.
 
-### R8 — `--state-blocked-border` uses `--state-blocked` (red) but tint uses slate — mixed signals
+**Dependencies:** None. Independent.
 
-- **Priority**: LOW
-- **Description**: `--state-blocked-border: color-mix(in srgb, var(--state-blocked) 26%, var(--ut-border))` correctly uses the red base, but the tint (R7 above) doesn't. This creates a situation where blocked elements have a red border but a gray background — not necessarily wrong (could read as "serious + disabled"), but inconsistent with every other state family.
-- **Specifics**: Fix together with R7.
-- **Dependencies**: R7
+---
 
-### R9 — No hover color differentiation on primary action buttons
+### R3 — `--score-2` (`#088080`) is perceptually close to `--tc` (`#0d9488`)
 
-- **Priority**: LOW
-- **Description**: `.evidence-button-primary:hover` darkens the background but keeps it navy-on-white. The `.nav-button:hover` goes to gray background with navy border. These are functional but could benefit from slightly more color presence on hover to confirm interactivity — especially for `.evidence-button-primary`, which is the only "filled" primary button in the system.
-- **Specifics**: Consider adding a subtle blue tint to `.evidence-button-primary:hover` background, e.g., `color-mix(in srgb, var(--ut-blue) 12%, var(--ut-darkblue))`, to make the hover state feel more responsive while maintaining the dark palette.
-- **Dependencies**: None
+**Priority:** MEDIUM
+**File:** `tokens.css:142,37`
 
-### R10 — Score colors lack a "neutral/no score" state
+**Description:**
 
-- **Priority**: LOW
-- **Description**: The score system has 4 levels (0-3) with red/orange/teal/green, but there is no explicit "not scored" or "N/A" color. The `--section-default` (`#64748B` slate) serves this role implicitly in some contexts but isn't part of the score family. An explicit `--score-na` token would make the system complete.
-- **Specifics**: Add `--score-na: var(--section-default)` with corresponding `-tint` and `-border` variants if un-scored criteria need distinct visual treatment.
-- **Dependencies**: None
+- `--score-2: #088080` (Meets baseline — teal)
+- `--tc: #0d9488` (Traceable principle — also teal)
 
-### R11 — Print stylesheet rating borders hardcode `#000` instead of using score tokens
+These are visually very similar (both teal). In a TC criterion card, a score-2 rating dot and the section accent border would be nearly indistinguishable. With R2 applied (dots now colored by score level), this collision becomes more apparent — a teal dot on a teal-bordered card.
 
-- **Priority**: LOW
-- **Description**: In print.css lines 100-105, `.rating-option.score-0` through `.score-3` get `border: 2px solid #000`, losing the semantic color coding that distinguishes score levels on screen. Since `print-color-adjust: exact` is already applied to these elements (lines 132-142), the score token colors would print correctly.
-- **Specifics**: Replace `border: 2px solid #000` with `border: 2px solid var(--score-N)` for each score level, so printed output preserves the red/orange/teal/green encoding.
-- **Dependencies**: None
+**Specifics:** Shift `--score-2` to a clearly distinct hue. Recommended: `#0E7490` (cyan-700) — maintains the "positive but not green" semantics while being clearly distinct from TC's teal. The derived tokens (`--score-2-tint`, `--score-2-border`) use `color-mix()` and auto-adjust.
 
-### R12 — `--recommendation-pilot-only` uses UT Purple, which is also `--ut-purple` (brand accent)
+```css
+/* tokens.css:142 */
+--score-2: #0e7490; /* was #088080 */
+```
 
-- **Priority**: LOW
-- **Description**: `--recommendation-pilot-only: var(--ut-purple)` (`#4f2d7f`) is the brand accent color per the design spec. Using it for a specific recommendation state creates a semantic collision between "brand accent / action color" and "pilot-only recommendation." This is low-impact because `--ut-purple` isn't heavily used as a general-purpose accent in the current UI, but it could cause confusion if the brand accent is used more prominently in future.
-- **Specifics**: Monitor. If `--ut-purple` gains more usage as a brand element, consider migrating `--recommendation-pilot-only` to a distinct hue (e.g., a violet `#7C3AED` or indigo `#4338CA`).
-- **Dependencies**: None
+Verify WCAG AA contrast on white: `#0E7490` on `#fafbfc` ≈ 4.8:1 — passes.
+
+**Dependencies:** Should be applied alongside R2 since both affect score-level color encoding.
+
+---
+
+### R4 — `.principle-item` cards in About panel lack TRUST principle color coding
+
+**Priority:** MEDIUM
+**Files:** `components.css:162-173`, `trust-framework.html` (About panel HTML)
+
+**Description:** The About panel's "Framework overview" section lists the five TRUST principles in `.principle-item` cards. All five cards look identical — white background, `--ut-border` border, no color differentiation. This is the single place in the UI where the principle color system could provide wayfinding but doesn't. Each card names the principle (Transparent, Reliable, etc.) and has a matching CSS variable, but no class or data attribute connects them.
+
+**Specifics:** The CSS for principle-item color coding already exists in `components.css:175-218` — it targets `.principle-item[data-section='tr']` etc. The issue is that the HTML may not have `data-section` attributes on these elements. Verify in the rendered output whether JS sets these attributes. If not, add `data-section` attributes to the 5 `.principle-item` divs.
+
+Alternatively, verify whether `accent-scoping.css` handles this. If the principle items are rendered dynamically by JS, ensure the renderer adds `data-section` attributes matching the existing CSS selectors.
+
+**Dependencies:** May require HTML/JS changes, not just CSS.
+
+---
+
+### R5 — Evidence block left border loses section context for criterion evidence
+
+**Priority:** LOW
+**Files:** `components.css:618-626`
+
+**Description:** `.evidence-block` uses `border-left: 4px solid var(--section-accent, var(--ut-blue))` — good, inherits section context. But `.evidence-block.criterion` overrides with `border-left-color: color-mix(in srgb, var(--ut-navy) 35%, var(--ut-border))` — a generic gray that carries no section identity. When viewing evidence inside a TR (blue) section, criterion-level evidence blocks look gray rather than blue-tinted.
+
+**Specifics:** Remove the `.evidence-block.criterion` override, or change it to inherit:
+
+```css
+/* Option A: Remove the override entirely (inherits from parent scope) */
+/* Delete or comment out components.css:624-626 */
+
+/* Option B: Use a faded section accent */
+.evidence-block.criterion {
+  border-left-color: var(
+    --section-border,
+    color-mix(in srgb, var(--ut-navy) 35%, var(--ut-border))
+  );
+}
+```
+
+**Dependencies:** Depends on whether evidence blocks inherit `--section-accent` from their DOM context (via accent-scoping.css). If they do, Option A is safe.
+
+---
+
+### R6 — Checkbox `accent-color` scoped too narrowly
+
+**Priority:** LOW
+**File:** `interaction-states.css:656-666`
+
+**Description:** `accent-color` for checkboxes is only set for `scoring` and `scope` sections. Other sections with checkboxes (e.g., criteria evidence selection) use the default browser accent color (typically blue). This creates inconsistency: some checkboxes are section-themed and others are browser-default.
+
+**Specifics:** Add a base rule that uses the section accent for all form-section checkboxes:
+
+```css
+.form-section[data-section] .checkbox-item input {
+  accent-color: var(--section-accent, var(--ut-darkblue));
+}
+```
+
+The existing `scoring` and `scope` overrides (red, green, blue) will take precedence via specificity.
+
+**Dependencies:** None.
+
+---
+
+### R7 — Context empty state has hardcoded navy border
+
+**Priority:** LOW
+**File:** `components.css:1675`
+
+**Description:** `.context-empty-state` uses `border-left: 4px solid var(--ut-darkblue)` regardless of which section's context is displayed. When viewing the TR section's empty context state, it should use TR blue, not generic navy.
+
+**Specifics:**
+
+```css
+.context-empty-state[data-accent-key] {
+  border-left-color: var(--section-accent, var(--ut-darkblue));
+}
+```
+
+Or if the element inherits from a section-scoped parent, it may already have access to `--section-accent`. Verify at render time.
+
+**Dependencies:** Requires JS to set `data-accent-key` on the empty state element.
+
+---
+
+### R8 — Print stylesheet uses `#000` borders instead of score tokens
+
+**Priority:** LOW
+**File:** `print.css:98-109`
+
+**Description:** In `print.css`, `.rating-option.score-0` through `.score-3` get `border: 2px solid var(--score-N)` for the score color but also `border: 2px solid #000` on `body`. Wait — actually re-reading the print CSS: `.rating-option.score-0` through `.score-3` each get `border: 2px solid var(--score-0)` through `var(--score-3)`. These are correct. The `print-color-adjust: exact` ensures they print in color. No issue found on re-examination.
+
+**Assessment:** No change needed. The print stylesheet is already correct.
+
+---
+
+### R9 — `--ut-offwhite` / `--ut-grey` / `--ut-panel-bg` naming ambiguity
+
+**Priority:** LOW
+**File:** `tokens.css:20-22,29-30`
+
+**Description:**
+
+- `--ut-grey: #eef0f3` (canvas background)
+- `--ut-offwhite: #f3f4f6` (surfaces, hover states)
+- `--ut-panel-bg: #f3f4f6` (literal alias of `--ut-offwhite`)
+- `--ut-white: #fafbfc` (card backgrounds)
+
+These four surface colors span a narrow lightness range. `--ut-panel-bg` is a direct alias of `--ut-offwhite` — redundant naming. The design context says "Color encodes state, not decoration" — the near-identical values are intentional (hierarchy is carried by borders). But the naming creates developer confusion about which token to use.
+
+**Recommendation:** No visual change. Document the intended surface hierarchy in `tokens.css` comments. Consider deprecating `--ut-panel-bg` in favor of `--ut-offwhite`.
+
+**Dependencies:** None.
+
+---
+
+### R10 — `--state-warning` (`#d97706`) proximity to `--se` (`#ea580c`)
+
+**Priority:** LOW (monitor)
+**File:** `tokens.css:180,77`
+
+**Description:** `--state-warning` (amber) and `--se` (Secure principle, red-orange) are perceptually close warm hues. When a validation warning appears inside the Secure section, the warning tint and section tint are similar enough to reduce visual salience. The `--judgment-conditional` also uses `--state-warning`.
+
+**Assessment:** The colors ARE different enough in practice (amber vs red-orange) and appear in different contexts (validation badges vs section borders). Low real-world confusion risk. Flag for awareness.
+
+**Recommendation:** If future user testing reveals confusion, consider shifting `--state-warning` to a more distinctly amber/gold hue (e.g., `#ca8a04`) to increase separation.
+
+**Dependencies:** None.
 
 ---
 
 ## Contrast Ratio Summary (Key Combinations)
 
-| Foreground                   | Background                 | Approx Ratio | Status                    |
-| ---------------------------- | -------------------------- | ------------ | ------------------------- |
-| `#172033` (ut-text)          | `#fafbfc` (ut-white)       | ~14.5:1      | AAA pass                  |
-| `#172033` (ut-text)          | `#eef0f3` (ut-grey/canvas) | ~13.2:1      | AAA pass                  |
-| `#576578` (ut-muted)         | `#fafbfc` (ut-white)       | ~5.6:1       | AA pass                   |
-| `#576578` (ut-muted)         | `#eef0f3` (ut-grey/canvas) | ~5.1:1       | AA pass                   |
-| `#fafbfc` (ut-white)         | `#001f47` (navy-strong)    | ~12.0:1      | AAA pass                  |
-| `#fafbfc` (ut-white)         | `#b04309` (se-strong)      | ~4.2:1       | **AA fail** (normal text) |
-| `#fafbfc` (ut-white)         | `#0a6b63` (tc-strong)      | ~5.0:1       | AA pass (borderline)      |
-| `#2563EB` (tr) on white      | —                          | ~4.5:1       | AA pass (borderline)      |
-| `#9333EA` (uc) on white      | —                          | ~4.6:1       | AA pass (borderline)      |
-| `#007d9c` (ut-blue) on white | —                          | ~4.6:1       | AA pass (borderline)      |
+| Foreground                   | Background                   | Approx Ratio | Status                            |
+| ---------------------------- | ---------------------------- | ------------ | --------------------------------- |
+| `#172033` (ut-text)          | `#fafbfc` (ut-white)         | ~14.5:1      | AAA                               |
+| `#172033` (ut-text)          | `#eef0f3` (ut-grey)          | ~13.2:1      | AAA                               |
+| `#576578` (ut-muted)         | `#fafbfc` (ut-white)         | ~5.6:1       | AA                                |
+| `#576578` (ut-muted)         | `#eef0f3` (ut-grey)          | ~5.1:1       | AA                                |
+| `#8b9bb0` (ut-slate)         | `#fafbfc` (ut-white)         | ~3.5:1       | AA fail (text), OK for decorative |
+| `#ffffff` (white)            | `#b04309` (se-accent-strong) | ~4.5:1       | AA pass                           |
+| `#ffffff` (white)            | `#0a6b63` (tc-accent-strong) | ~5.4:1       | AA                                |
+| `#2563EB` (tr)               | `#fafbfc` (ut-white)         | ~4.5:1       | AA (borderline)                   |
+| `#9333EA` (uc)               | `#fafbfc` (ut-white)         | ~4.6:1       | AA (borderline)                   |
+| `#0E7490` (proposed score-2) | `#fafbfc` (ut-white)         | ~4.8:1       | AA                                |
 
-The SE strong accent is the only clear contrast failure. R1/R2 address this.
+**Note:** With R1 fixed (all on-accent values set to `#ffffff`), all section accents pass WCAG AA for text. `--ut-slate` is used for decorative elements (inactive borders, placeholder arrows), not informational text, so the 3.5:1 ratio is acceptable for UI components.
 
 ---
 
-## Palette Coherence Assessment
+## Summary Table
 
-**Overall rating: 8/10** — Strong, purposeful, and well-organized.
+| ID  | Priority | Description                                           | Effort   | Action                                             |
+| --- | -------- | ----------------------------------------------------- | -------- | -------------------------------------------------- |
+| R1  | HIGH     | On-accent text uses `--ut-white` instead of `#ffffff` | Trivial  | Change all `--section-*-on-accent` to `#ffffff`    |
+| R2  | MEDIUM   | Rating dots use generic slate in default state        | Small    | Add score-level border colors to unfilled dots     |
+| R3  | MEDIUM   | Score-2/TC teal perceptual overlap                    | Trivial  | Shift `--score-2` to `#0E7490`                     |
+| R4  | MEDIUM   | Principle-item cards lack color coding                | Small    | Verify/add `data-section` attributes               |
+| R5  | LOW      | Evidence block criterion border loses section accent  | Trivial  | Remove or fix `.evidence-block.criterion` override |
+| R6  | LOW      | Checkbox accent-color only scoped to 2 sections       | Trivial  | Add base rule using `--section-accent`             |
+| R7  | LOW      | Context empty state has hardcoded navy border         | Trivial  | Add `data-accent-key` support                      |
+| R8  | LOW      | Print stylesheet score colors — verified correct      | —        | **No issue found**                                 |
+| R9  | LOW      | Surface token naming ambiguity (offwhite/panel-bg)    | Document | Add comments, consider deprecating `--ut-panel-bg` |
+| R10 | LOW      | Warning/SE orange semantic collision                  | Monitor  | No immediate action                                |
 
-Strengths:
-
-- Every color has a job. No decorative colors.
-- The navy-tinted neutral scale ties the palette together.
-- Section accents provide wayfinding without overwhelming.
-- State colors are universally understood (green/red/orange).
-
-Weaknesses:
-
-- The SE/TC on-accent contrast issue (R1/R2) is the only real problem.
-- Warning/Secure semantic collision (R4/R5) reduces clarity in-context.
-- The blocked state tint inconsistency (R7/R8) is a minor pattern deviation.
-
-This system does **not** need more color. It needs the existing color to be more precise.
+**Actionable code changes:** R1, R2, R3, R4, R5, R6, R7 (7 items — all trivial to small effort)
+**Monitor only:** R10
+**No issue found:** R8

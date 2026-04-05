@@ -1,192 +1,323 @@
-# Wave 4 — /normalize Audit
+# Wave 4 — /normalize Audit (Fresh Reassessment)
 
-**Date**: 2026-04-04
-**Scope**: All CSS files in `static/css/` — token consistency, hardcoded values, naming conventions, cross-file patterns
-**Inputs**: .impeccable.md (design context), .audit/w3-plan.md (Wave 3 findings assigned to /normalize)
+**Date**: 2026-04-05  
+**Auditor**: impeccable /normalize skill  
+**Scope**: All CSS files in `static/css/` (8 files, ~4800 lines) + JS files with inline styles  
+**Inputs**: `.impeccable.md` (design context), `.audit/w3-audit.md`, `.audit/w3-critique.md`  
+**Previous w4-normalize.md**: Replaced — prior version was based on stale code state
 
 ---
 
 ## Already Good — Do NOT Change
 
-The following patterns are consistent and should be left alone:
+These patterns are exemplary and should be preserved:
 
-- **Color token usage is excellent.** 219 `color-mix()` calls across CSS, all consuming design tokens. Outside `tokens.css` and `print.css`, there is exactly one raw hex fallback (`base.css:30` — `#fff` as a safe fallback for `var(--section-on-accent)`). This is correct defensive CSS.
-- **Interaction states layer** uses tokens consistently for all semantic color families (score, judgment, recommendation, workflow, validation, progress).
-- **Typography tokens** (`--text-*`, `--lh-*`, `--ls-*`, `--ff-*`) are used correctly across components and interaction states. The 7-step type scale is well-defined.
-- **Spacing token scale** (`--space-1` through `--space-12`) is established. While not universally adopted (see R5), it is used correctly where present.
-- **Border radius tokens** (`--radius-lg/md/sm`) are defined and used in `.mock-control` (components.css:362). The few remaining hardcoded radii match the token values (0, 1, 2, 50% for circles).
-- **Focus ring tokens** (`--focus-ring`, `--focus-ring-offset`, `--focus-ring-width`) are used consistently for all `:focus-visible` states.
-- **Easing tokens** (`--ease-out-quart`, `--ease-out-quint`) and duration tokens (`--duration-instant/fast/normal`) are used consistently for all transitions.
-- **`--header-h`** is used as a calc operand throughout layout.css and overrides correctly at 760px.
-- **`@property --top-accent-color`** with `inherits: true` enables the smooth accent-color transition across the shell — a well-implemented pattern.
-- **Print stylesheet** correctly resets animations, hides chrome, and uses `print-color-adjust: exact` for scored elements. Hardcoded hex values in print (`#000`, `#fff`, `12pt`, `11pt`) are appropriate for print media.
-- **`prefers-reduced-motion`** in animations.css correctly zeros out durations and sets `opacity: 1` on animated elements.
+1. **z-index token system** — Fully tokenized. `tokens.css:374-386` defines 13 z-index layers (`--z-panel-shadow: 4` through `--z-lightbox: 1000`). All usages in `layout.css`, `components.css`, and `base.css` correctly reference `var(--z-*)` tokens. Zero hardcoded z-index values remain in CSS.
 
----
+2. **Border-radius token system** — Fully tokenized. All `1px`, `2px` radius values correctly use `var(--radius-sm)` or `var(--radius-md)`. Zero hardcoded radius values outside the intentional `border-radius: 50%` on `.rating-dot` and `.tooltip-trigger-btn`.
 
-## Findings
+3. **Tooltip timing** — `--duration-tooltip-leave: 75ms` token exists and is used at `components.css:1129`. Tooltip enter transitions correctly use `var(--duration-instant)`. Tooltip reduced-motion support is in place.
 
-### R1 — `font-weight: 800` regression (3 instances)
+4. **Score-table th** — Duplicate rule block has been consolidated into a single `.score-table th` rule at `components.css:270-279`. Clean.
 
-- **Priority**: HIGH
-- **Description**: Wave 1 intended to normalize all `font-weight: 800` to 700. Three instances were missed. Inter loads only 400 and 700; weight 800 triggers browser synthesis, producing a blurrier, heavier appearance than true 700.
-- **Specifics**:
-  - `components.css:919` — `.subhead { font-weight: 800; }` → `font-weight: 700;`
-  - `components.css:961` — `.form-section[data-section='governance'] .mock-control:first-of-type .value { font-weight: 800; }` → `font-weight: 700;`
-  - `print.css:122` — `.section-kicker::before { font-weight: 800; }` → `font-weight: 700;`
-- **Dependencies**: None. Pair with R2 (font import cleanup) for completeness.
+5. **Font-family tokens** — `--ff-body`, `--ff-heading`, `--ff-mono` used consistently everywhere. Zero hardcoded font-family values.
 
-### R2 — Unused `font-weight: 800` in Google Fonts import
+6. **Focus ring tokens** — `--focus-ring`, `--focus-ring-offset`, `--focus-ring-width` used uniformly across all `:focus-visible` declarations.
 
-- **Priority**: HIGH
-- **Description**: The HTML loads `Inter:wght@400;700;800` but weight 800 is not used in any screen CSS. After R1 fixes the print.css instance, 800 will be unused everywhere. Requesting it adds ~15-20KB to the font download with zero benefit.
-- **Specifics**:
-  - `trust-framework.html:9` — `Inter:wght@400;700;800` → `Inter:wght@400;700`
-- **Dependencies**: Depends on R1 (remove 800 from print.css first, then remove from import).
+7. **Accent scoping** — `accent-scoping.css` (207 lines) maps 12 section families via `data-accent-key`. All section-scoped components correctly consume `--section-accent`, `--section-tint`, `--section-border`, `--section-on-accent`, `--section-accent-strong`.
 
-### R3 — `.skip-link` z-index uses magic number instead of token
+8. **Print stylesheet** — Isolated and correct. Hardcoded `color: #000; background: #fff;` are intentional for maximum print contrast. `!important` usage limited to 2 necessary instances.
 
-- **Priority**: MEDIUM
-- **Description**: `z-index: 50` in base.css matches the token `--z-skip-link: 50` but bypasses it. If the token value ever changes, the skip-link won't follow.
-- **Specifics**:
-  - `base.css:32` — `z-index: 50;` → `z-index: var(--z-skip-link);`
-- **Dependencies**: None.
+9. **Reduced motion** — `animations.css` zeroes all duration tokens globally and forces `animation: none !important`. Thorough and correct.
 
-### R4 — `font-weight: 500` used without token — outside loaded weight set
-
-- **Priority**: MEDIUM
-- **Description**: Two instances of `font-weight: 500` appear in checkbox checked states. Inter loads 400 and 700. Weight 500 triggers intermediate synthesis, producing a weight between the two loaded faces. This creates visual inconsistency — the "checked" state has a different weight character than 700 used elsewhere for emphasis.
-- **Specifics**:
-  - `interaction-states.css:737` — `.checkbox-item:has(input:checked) { font-weight: 500; }` → `font-weight: 700;`
-  - `interaction-states.css:747` — `.checkbox-item.has-checked { font-weight: 500; }` → `font-weight: 700;`
-- **Dependencies**: None. Both selectors serve the same visual purpose (highlighting checked items).
-
-### R5 — Hardcoded spacing values should use `--space-*` tokens
-
-- **Priority**: LOW
-- **Description**: The spacing scale (`--space-1` through `--space-12`) is well-defined but only used sparingly. Most padding, margin, and gap values are hardcoded pixel values. Many of these map directly to existing tokens. This is the largest normalization gap but lowest visual risk — the values are already consistent, just not token-referenced.
-- **Mapping of common hardcoded values to tokens**:
-
-  | Hardcoded | Token                        | Occurrences (approx) |
-  | --------- | ---------------------------- | -------------------- |
-  | `4px`     | `--space-1`                  | ~15                  |
-  | `6px`     | (no token — between 1 and 2) | ~12                  |
-  | `8px`     | `--space-2`                  | ~30                  |
-  | `10px`    | (no token — between 2 and 3) | ~25                  |
-  | `12px`    | `--space-3`                  | ~20                  |
-  | `14px`    | (no token — between 3 and 4) | ~8                   |
-  | `16px`    | `--space-4`                  | ~10                  |
-  | `18px`    | (no token — between 4 and 5) | ~8                   |
-  | `20px`    | `--space-5`                  | ~8                   |
-  | `22px`    | (no token)                   | ~5                   |
-  | `24px`    | `--space-6`                  | ~5                   |
-  | `48px`    | `--space-12`                 | ~2                   |
-
-- **Recommendation**: This is a large mechanical change with zero visual impact. Two approaches:
-  1. **Incremental**: Tokenize only the most-repeated values (8px, 12px, 16px, 24px) in this wave.
-  2. **Systematic**: Add intermediate tokens (`--space-2.5: 10px`, `--space-3.5: 14px`, `--space-4.5: 18px`) and tokenize everything.
-- **Dependencies**: None. Can be done independently. Low risk.
-
-### R6 — `#ffffff` hardcoded in tokens.css for two section on-accent values
-
-- **Priority**: LOW
-- **Description**: `--section-se-on-accent` and `--section-tc-on-accent` use raw `#ffffff` instead of `var(--ut-white)`. All other `*-on-accent` tokens use `var(--ut-white)`. If `--ut-white` is ever changed (e.g., to a warmer white for a theme), these two will not follow.
-- **Specifics**:
-  - `tokens.css:81` — `--section-se-on-accent: #ffffff;` → `--section-se-on-accent: var(--ut-white);`
-  - `tokens.css:87` — `--section-tc-on-accent: #ffffff;` → `--section-tc-on-accent: var(--ut-white);`
-- **Dependencies**: None.
-
-### R7 — `font-size: 1.1rem` on `.brand-sep` — off the type scale
-
-- **Priority**: LOW
-- **Description**: The brand separator character uses `1.1rem`, which is between `--text-body: 1rem` and `--text-sub: 1.2rem`. This is the only `font-size` outside the type scale in screen CSS (excluding print). The value is a decorative separator glyph and likely intentional, but it breaks the scale discipline.
-- **Specifics**:
-  - `layout.css:62` — `.brand-sep { font-size: 1.1rem; }`
-- **Recommendation**: Either promote to `--text-sub` (1.2rem, next step up) or accept as intentional one-off for a decorative glyph. Low visual impact either way.
-- **Dependencies**: None.
-
-### R8 — `letter-spacing: 0.04em` repeated without token
-
-- **Priority**: LOW
-- **Description**: The value `0.04em` appears in 3 places but has no dedicated token. It sits between `--ls-label: 0.02em` and `--ls-uppercase: 0.08em`. Used for evidence labels and criterion card annotations.
-- **Specifics**:
-  - `components.css:347` — `.completion-badge { letter-spacing: 0; }` (explicit reset, fine)
-  - `components.css:549` — `.criterion-card::after { letter-spacing: 0.04em; }`
-  - `components.css:661` — evidence input labels `letter-spacing: 0.04em;`
-  - `interaction-states.css:962` — governance `.value { letter-spacing: 0.02em; }` (matches `--ls-label`, should use token)
-- **Recommendation**:
-  - Add `--ls-annotation: 0.04em;` to tokens.css
-  - Replace the two `0.04em` instances in components.css with `var(--ls-annotation)`
-  - Replace `0.02em` in interaction-states.css:962 with `var(--ls-label)`
-- **Dependencies**: None.
-
-### R9 — `line-height` hardcoded in several component styles
-
-- **Priority**: LOW
-- **Description**: Several components use inline `line-height` values that are not on the token scale. Most are for compact UI elements where the body/heading line heights would be too loose, so these are likely intentional. But they create inconsistency.
-- **Specifics**:
-  - `components.css:38` — `.strip-cell { line-height: 1; }` (compact chip — intentional)
-  - `components.css:386` — `.mock-control .arrow { line-height: 1; }` (icon — intentional)
-  - `components.css:944` — `.notice { line-height: 1.5; }` (between `--lh-body: 1.55` and `1`)
-  - `components.css:1126` — `.context-route-title { line-height: 1.25; }` (close to `--lh-heading: 1.2`)
-  - `components.css:1447` — `.reference-drawer-title { line-height: 1.3; }` (matches `--lh-sub: 1.3` — should use token)
-- **Recommendation**: Only `1447` is a clear normalization candidate (replace with `var(--lh-sub)`). The others are intentional compact values for specific contexts.
-- **Dependencies**: None.
-
-### R10 — Hardcoded border widths: 6px and 3px section accent pattern
-
-- **Priority**: LOW
-- **Description**: The "section accent" left-border pattern uses `6px` (default state) and `8px` (active state) in components.css, and `3px` for kickers. The token system has `--border-thin: 1px`, `--border-default: 2px`, `--border-medium: 3px`, `--border-thick: 4px` — none of which cover 6px or 8px. These values are deeply embedded in the design language (section cards, criterion cards, notice panels).
-- **Specifics**:
-  - `6px` appears 3 times (components.css:93, 532, 938)
-  - `8px` appears 4 times (interaction-states.css:116, 867, 871, and @starting-style:164)
-  - `3px` appears 10+ times (kicker borders, panel borders, score table rows)
-- **Recommendation**: Add `--border-accent: 6px;` and `--border-accent-active: 8px;` tokens. The 3px usage already maps to `--border-medium` in many places but is hardcoded. Consider a future pass to token-replace 3px with `var(--border-medium)`.
-- **Dependencies**: R5 (spacing tokenization) should be done first to establish the pattern of adding intermediate tokens.
-
-### R11 — `opacity` values used for disabled/attenuated states — no token
-
-- **Priority**: LOW
-- **Description**: Five opacity values are used for disabled/attenuated states: 0.6 (3×), 0.55, 0.45, 0.9. These are not tokens. If a consistent "disabled" or "attenuated" visual language is desired, these should be unified.
-- **Specifics**:
-  - `0.6` — components.css:763 (disabled controls), interaction-states.css:1058 (disabled rating option)
-  - `0.55` — interaction-states.css:954 (disabled nav/page-index buttons)
-  - `0.45` — interaction-states.css:1011 (disabled pager button)
-  - `0.9` — interaction-states.css:1467 (skipped section)
-- **Recommendation**: Unify disabled opacity to a single value. Consider adding `--opacity-disabled: 0.55;` and `--opacity-attenuated: 0.9;`. This would reduce 5 distinct values to 2.
-- **Dependencies**: None.
+10. **Color system** — Zero hardcoded hex colors in CSS outside `tokens.css` and `print.css`. All colors use `var(--*)` or `color-mix(in srgb, ...)`. The only non-token color is `base.css:30` `#fff` which is a valid CSS-variable fallback for the skip-link.
 
 ---
 
-## Implementation Priority Order
+## Recommendations
 
-| Rank | ID  | Priority | Effort  | Rationale                                                            |
-| ---- | --- | -------- | ------- | -------------------------------------------------------------------- |
-| 1    | R1  | HIGH     | Trivial | 3-line fix. Eliminates synthesized font weight.                      |
-| 2    | R2  | HIGH     | Trivial | 1-line fix. Saves ~15-20KB font download.                            |
-| 3    | R3  | MEDIUM   | Trivial | 1-line fix. Token consistency.                                       |
-| 4    | R4  | MEDIUM   | Trivial | 2-line fix. Eliminates synthesized font weight.                      |
-| 5    | R8  | LOW      | Low     | Add 1 token, replace 3 values. Typography consistency.               |
-| 6    | R6  | LOW      | Trivial | 2-line fix in tokens.css. On-accent consistency.                     |
-| 7    | R9  | LOW      | Trivial | 1-line fix. Use existing `--lh-sub` token.                           |
-| 8    | R10 | LOW      | Low     | Add 2 tokens, consider 3px→`--border-medium` migration.              |
-| 9    | R11 | LOW      | Low     | Add 2 tokens, unify 5 opacity values to 2.                           |
-| 10   | R7  | LOW      | Trivial | 1 value. Accept as-is or promote to `--text-sub`.                    |
-| 11   | R5  | LOW      | High    | ~150+ mechanical replacements. Zero visual impact. Batch separately. |
+### R1 — Apply existing `--duration-accent` token to accent-bar transition
+
+**Priority**: HIGH  
+**Category**: Token drift
+
+**Description**: `tokens.css:324` defines `--duration-accent: 400ms` but `interaction-states.css:3` still uses the hardcoded value `transition: --top-accent-color 400ms ease`. The token exists but is not consumed.
+
+**Specifics**:
+
+| File                       | Line                     | Current                                     | Should Be                                                                     |
+| -------------------------- | ------------------------ | ------------------------------------------- | ----------------------------------------------------------------------------- |
+| `interaction-states.css:3` | `.top-accent` transition | `transition: --top-accent-color 400ms ease` | `transition: --top-accent-color var(--duration-accent) var(--ease-out-quart)` |
+
+Also replaces the raw `ease` keyword with `--ease-out-quart` for consistency with all other transitions in the codebase. The `ease` keyword produces a gentler easing than `ease-out-quart`; if the accent bar specifically needs softer motion, document this decision with a comment.
+
+**Dependencies**: None. Zero visual change — `400ms` = `var(--duration-accent)`. The easing change from `ease` to `--ease-out-quart` is marginally different but aligns with system consistency.
 
 ---
 
-## Verification Checklist
+### R2 — Wire help-panel.js to existing `.help-shortcuts-*` CSS classes
 
-After implementation:
+**Priority**: HIGH  
+**Category**: Token system bypass / Dead CSS
 
-1. `npm run validate:html` — no regressions
-2. `npm run test:e2e` — all 5 suites pass
-3. Grep: zero `font-weight: 800` in any CSS file
-4. Grep: `Inter:wght@400;700` (no 800)
-5. Grep: `z-index: 50` only in tokens.css (not in base.css)
-6. Grep: zero `font-weight: 500` in screen CSS
-7. Grep: zero `#ffffff` in tokens.css outside of `--ut-white` definition
-8. Visual: skip-link still works correctly
-9. Visual: checked checkbox items still visually distinct (now 700 instead of 500)
-10. Visual: `.subhead` and governance `.value` look correct at 700
+**Description**: `components.css:1802-1826` already defines `.help-shortcuts-table`, `.help-shortcuts-row`, `.help-shortcuts-key`, `.help-shortcuts-action` classes. However, `help-panel.js:235-263` still uses `element.style.cssText` inline style strings instead of applying these classes. This means the CSS classes are dead code and the JS bypasses the stylesheet cascade.
+
+**Specifics**:
+
+| File                    | Line                                   | Current                                             | Should Be |
+| ----------------------- | -------------------------------------- | --------------------------------------------------- | --------- |
+| `help-panel.js:235-236` | `shortcutsTable.style.cssText = '...'` | `shortcutsTable.className = 'help-shortcuts-table'` |
+| `help-panel.js:255`     | `row.style.cssText = '...'`            | `row.className = 'help-shortcuts-row'`              |
+| `help-panel.js:258-259` | `keyCell.style.cssText = '...'`        | `keyCell.className = 'help-shortcuts-key'`          |
+| `help-panel.js:263-264` | `actionCell.style.cssText = '...'`     | `actionCell.className = 'help-shortcuts-action'`    |
+
+**Dependencies**: None. The CSS already matches exactly. This removes the JS→CSS duplication.
+
+---
+
+### R3 — Move confirm-dialog.js styles to a CSS file
+
+**Priority**: HIGH  
+**Category**: Token system bypass / Hardcoded colors in JS
+
+**Description**: `confirm-dialog.js:3-60` defines `DIALOG_STYLES` as a 60-line template literal injected via `<style>` element at runtime. This is the only JS file that defines visual styles with hardcoded hex fallback values and `rgba()` — patterns completely absent from the CSS codebase. The dialog also uses `z-index: 10000` which is 10x higher than `--z-lightbox: 1000` with no token.
+
+**Specifics**:
+
+| Line                      | Issue                                                                     | Fix                                                                                                                                                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `confirm-dialog.js:7`     | `z-index: 10000`                                                          | Add `--z-confirm: 10000` to `tokens.css`, or use `calc(var(--z-lightbox) + 1)`                                                                                                                                                           |
+| `confirm-dialog.js:11`    | `background: rgba(0, 0, 0, 0.4)`                                          | `background: color-mix(in srgb, var(--ut-text) 40%, transparent)`                                                                                                                                                                        |
+| `confirm-dialog.js:21`    | `box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)`                              | Remove — this is the only soft outer elevation shadow in the entire project. The `.impeccable.md` states "No soft shadows — flat with border delineation." Replace with a `2px solid var(--ut-border)` bottom border or remove entirely. |
+| `confirm-dialog.js:15-53` | Fallback hex values `#fafbfc`, `#bfc6cf`, `#172033`, `#c60c30`, `#007d9c` | Remove fallbacks — CSS variables are guaranteed available at injection time since the stylesheet cascade is already loaded.                                                                                                              |
+
+**Recommended approach**: Create `static/css/confirm-dialog.css` and load it via `<link>` in `trust-framework.html`. This moves all confirm-dialog styling into the stylesheet cascade where it belongs. If lazy-loading is needed, keep the injection pattern but strip fallbacks and use `color-mix()`.
+
+**Dependencies**: None. The confirm dialog is only used by evidence deletion.
+
+---
+
+### R4 — Resolve `--ut-grey` / `--ut-offwhite` visual ambiguity
+
+**Priority**: MEDIUM  
+**Category**: Visual system clarity
+
+**Description**: `--ut-grey` (#eef0f3, canvas) and `--ut-offwhite` (#f3f4f6) differ by only ~2% lightness. They're used for different semantic purposes (canvas background vs card accent background vs panel background) but are visually indistinguishable on most monitors. The critique flagged this: "If two surfaces look the same but represent different semantic layers, the visual system can't parse the hierarchy."
+
+Usage count:
+
+- `--ut-grey`: 10 instances (mock-control bg, chip bg, evidence-meta bg, tooltip btn hover, rating-scale bg, etc.)
+- `--ut-offwhite`: 5 instances (principle-item bg, evidence-block bg, evidence-file-row bg, reference-drawer-code bg, completion-strip bg)
+- `--ut-panel-bg`: 2 instances (framework-panel bg, form-section#standard-answer-sets bg) — value is `#f3f4f6`, same as `--ut-offwhite`
+
+`--ut-panel-bg` is defined as `#f3f4f6` at `tokens.css:29` — identical to `--ut-offwhite` at `tokens.css:22`. This is either intentional aliasing or redundancy.
+
+**Specifics**:
+
+| Token           | Current   | Usage                                       |
+| --------------- | --------- | ------------------------------------------- |
+| `--ut-grey`     | `#eef0f3` | Canvas, mock-controls, chips, meta items    |
+| `--ut-offwhite` | `#f3f4f6` | Principle items, evidence blocks, file rows |
+| `--ut-panel-bg` | `#f3f4f6` | Framework panel, standard answer sets       |
+
+**Fix**: Increase separation between canvas and card surfaces. Either:
+
+- (a) Push `--ut-offwhite` to `#f7f8fa` — clearer 5% gap from canvas
+- (b) Pull `--ut-grey` to `#eaecf0` — darker canvas emphasizes content cards
+- (c) If `--ut-panel-bg` = `--ut-offwhite` is intentional, add a comment documenting the alias
+
+**Dependencies**: None. Affects visual hierarchy but not layout or function.
+
+---
+
+### R5 — Add z-index scale documentation to tokens.css
+
+**Priority**: MEDIUM  
+**Category**: Maintainability / Documentation
+
+**Description**: `tokens.css:374-386` defines 13 z-index tokens with values from 4 to 1000. The scale is correct and fully tokenized, but lacks documentation explaining the layering intent. Three tokens share value 50 (`--z-top-accent`, `--z-tooltip`, `--z-skip-link`) which is fine but should be noted.
+
+**Specifics**: Add inline comments above the z-index block:
+
+```css
+/* Z-index scale — layered bottom to top.
+   Shared layer (50): top-accent, tooltip, skip-link — no conflict
+   because they occupy different screen regions. */
+```
+
+**Dependencies**: None.
+
+---
+
+### R6 — Document `color-mix()` and `@starting-style` browser floor
+
+**Priority**: MEDIUM  
+**Category**: Maintainability / Documentation
+
+**Description**: The codebase uses ~100+ `color-mix()` instances and 2 `@starting-style` blocks. These establish hard browser compatibility floors (Safari 16.2+, Chrome 111+, Firefox 113+ for `color-mix()`; no Firefox support for `@starting-style`). Neither is documented in `CLAUDE.md`.
+
+**Specifics**: Add to `CLAUDE.md` in the Code Style or Architecture section:
+
+```markdown
+## Browser Compatibility
+
+- **Minimum**: Chrome 111+, Safari 16.2+, Firefox 113+ (required by `color-mix()` usage)
+- **Graceful degradation**: `@starting-style` animations (Firefox unsupported — animations simply don't play)
+- **`@property` registration**: Firefox 128+ (July 2024) — accent bar color transitions fall back to instant color change
+```
+
+**Dependencies**: None.
+
+---
+
+### R7 — Address `--ut-panel-bg` / `--ut-offwhite` token aliasing
+
+**Priority**: LOW  
+**Category**: Token clarity
+
+**Description**: `tokens.css:29` defines `--ut-panel-bg: #f3f4f6` and `tokens.css:22` defines `--ut-offwhite: #f3f4f6` — identical hex values with different semantic names. `--ut-panel-bg` is used only twice (framework-panel, standard-answer-sets). Either:
+
+- (a) `--ut-panel-bg` should reference `--ut-offwhite` to make the alias explicit: `--ut-panel-bg: var(--ut-offwhite);`
+- (b) They should have different values (see R4)
+- (c) Add a comment documenting the intentional equality
+
+**Specifics**:
+
+| File            | Line                     | Current                                            | Fix |
+| --------------- | ------------------------ | -------------------------------------------------- | --- |
+| `tokens.css:29` | `--ut-panel-bg: #f3f4f6` | `--ut-panel-bg: var(--ut-offwhite)` or add comment |
+
+**Dependencies**: Related to R4 if values change.
+
+---
+
+### R8 — Address `.notice` line-height drift from `--lh-body`
+
+**Priority**: LOW  
+**Category**: Token drift
+
+**Description**: `components.css:1019` uses `line-height: 1.5` for `.notice`. The `--lh-body` token is `1.55`. The 0.05 difference is imperceptible but creates inconsistency.
+
+**Specifics**:
+
+| File                  | Line      | Selector           | Current                                                                         | Should Be |
+| --------------------- | --------- | ------------------ | ------------------------------------------------------------------------------- | --------- |
+| `components.css:1019` | `.notice` | `line-height: 1.5` | `line-height: var(--lh-body)` or add comment documenting intentional difference |
+
+**Dependencies**: None.
+
+---
+
+### R9 — Document `.brand-sep` `font-size: 1.1rem` as intentional
+
+**Priority**: LOW  
+**Category**: Token gap documentation
+
+**Description**: `layout.css:80` uses `font-size: 1.1rem` for `.brand-sep` — a decorative pipe separator between logos. This value doesn't map to any token in the type scale (xs→sm→md→body→sub→heading→display). The gap between `--text-body` (1rem) and `--text-sub` (1.2rem) is appropriate for a single decorative character.
+
+**Specifics**: Add comment `/* Intentional: decorative separator between logos */` at `layout.css:80`.
+
+**Dependencies**: None.
+
+---
+
+### R10 — Document `.pager-shell` box-shadow as known design outlier
+
+**Priority**: LOW  
+**Category**: Design direction documentation
+
+**Description**: `components.css:1534` uses `box-shadow: 0 1px 3px color-mix(in srgb, var(--ut-navy) 6%, transparent)` on `.pager-shell`. This is the only soft outer shadow in the entire interface. The `.impeccable.md` states "No soft shadows — flat with border delineation." The 3px blur is subtle but technically violates the principle.
+
+The W3 audit noted this as acceptable. The W3 critique suggested replacing with a hard shadow. Options:
+
+- (a) Keep and document as intentional exception
+- (b) Replace with `box-shadow: 0 1px 0 var(--ut-border)` — hard 1px bottom line
+
+**Specifics**: Add comment or replace at `components.css:1534`.
+
+**Dependencies**: None. Minor visual change only for option (b).
+
+---
+
+### R11 — Document `.tooltip-trigger-btn` border-radius: 50% as intentional
+
+**Priority**: LOW  
+**Category**: Design direction documentation
+
+**Description**: `components.css:1072` uses `border-radius: var(--radius-md)` on `.tooltip-trigger-btn` but the element is 44×44px, making `var(--radius-md)` (2px) produce a nearly-square shape. Wait — let me re-check. The W3 audit said `border-radius: 50%` but the current code shows `var(--radius-md)`. This discrepancy was already resolved — the button is now square (2px radius) which aligns with the design direction.
+
+**Status**: Already correct. The W3 audit flagged a circle button; the current code uses `var(--radius-md)` (2px) which produces a square button. No action needed.
+
+---
+
+### R12 — Verify `--space-4-5` (18px) and `--space-5-5` (22px) half-step tokens
+
+**Priority**: LOW  
+**Category**: Token system clarity
+
+**Description**: `tokens.css:358-359` defines `--space-4-5: 18px` and `--space-5-5: 22px` — non-standard half-steps in the otherwise 4px-grid spacing scale (4, 8, 12, 16, 20, 24, 28, 32, 40, 48). These are used in:
+
+- `--space-4-5` (18px): `layout.css:24` (header-inner gap), `layout.css:346` (panel-header gap)
+- `--space-5-5` (22px): `layout.css:370` (workspace-layout gap), `layout.css:383` (questionnaire-workspace gap)
+
+Both are used for layout gaps where 16px was too tight and 20px was too loose. These are legitimate intermediate values. Consider documenting the reason they exist.
+
+**Specifics**: Add comment at `tokens.css:358-359`:
+
+```css
+/* Half-step spacing for layout gaps where 4px grid is too coarse */
+```
+
+**Dependencies**: None.
+
+---
+
+## Summary Table
+
+| ID  | Priority | Category                         | Effort  | Files                             | Visual Change  |
+| --- | -------- | -------------------------------- | ------- | --------------------------------- | -------------- |
+| R1  | HIGH     | Token drift (accent-bar timing)  | Trivial | `interaction-states.css`          | None           |
+| R2  | HIGH     | Dead CSS / JS inline styles      | Small   | `help-panel.js`                   | None           |
+| R3  | HIGH     | Token bypass / hardcoded colors  | Small   | `confirm-dialog.js`, new CSS file | Shadow removal |
+| R4  | MEDIUM   | Visual ambiguity (grey/offwhite) | Small   | `tokens.css`                      | Subtle         |
+| R5  | MEDIUM   | Z-index documentation            | Trivial | `tokens.css`                      | None           |
+| R6  | MEDIUM   | Browser floor documentation      | Small   | `CLAUDE.md`                       | None           |
+| R7  | LOW      | Token aliasing (panel-bg)        | Trivial | `tokens.css`                      | None           |
+| R8  | LOW      | Line-height drift (notice)       | Trivial | `components.css`                  | Imperceptible  |
+| R9  | LOW      | Font-size gap documentation      | Trivial | `layout.css`                      | None           |
+| R10 | LOW      | Box-shadow design outlier        | Trivial | `components.css`                  | None/Minor     |
+| R11 | LOW      | Tooltip button radius (resolved) | None    | —                                 | None           |
+| R12 | LOW      | Half-step spacing documentation  | Trivial | `tokens.css`                      | None           |
+
+**Total recommendations**: 12 (3 HIGH, 3 MEDIUM, 6 LOW)  
+**Actionable**: 11 (R11 already resolved)  
+**Estimated total effort**: ~2 hours  
+**Zero visual changes**: R1, R2, R5, R6, R7, R9, R11, R12  
+**Minor visual changes**: R3 (shadow removal), R4 (surface separation), R8 (imperceptible), R10 (optional)
+
+---
+
+## Cross-reference with W3 Audit Findings
+
+| W3 Finding                                        | Status After This Audit                                                                                   |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| P1.1 — z-index drift                              | **RESOLVED** — All 13 tokens defined and used via `var(--z-*)`                                            |
+| P1.2 — Inline styles in JS                        | **PARTIAL** — `dom-factories.js` still uses inline (R3); `help-panel.js` classes exist but not wired (R2) |
+| P2.1 — aria-live regions not pre-declared         | Not in normalize scope — deferred to `/harden`                                                            |
+| P2.2 — Tab indicator layout read/write            | Not in normalize scope — deferred to `/optimize`                                                          |
+| P2.6 — Z-index token documentation                | **R5** — Documentation recommended                                                                        |
+| P3.1 — Duplicate .score-table th                  | **RESOLVED** — Single rule block now                                                                      |
+| P3.2 — Tooltip button radius                      | **RESOLVED** — Now uses `var(--radius-md)` (2px), not 50%                                                 |
+| P3.3 — .visually-hidden / .shell-focus-anchor DRY | Acknowledged — 12 shared declarations is acceptable overhead for independent utility classes              |
+| P3.4 — Print colors                               | **RESOLVED** — Documented as intentional in prior wave                                                    |
+
+New findings in this audit not in W3:
+
+- **R1** — `--duration-accent` token exists but isn't consumed (400ms hardcoded)
+- **R3** — Confirm dialog is the last JS file with inline styles, hardcoded hex, and `rgba()`
+- **R4** — `--ut-grey` and `--ut-offwhite` are ~2% apart — visually indistinguishable
+- **R6** — Browser compatibility floor not documented
+
+---
+
+_End of Wave 4 Normalize Audit (fresh reassessment)_

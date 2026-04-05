@@ -1,179 +1,233 @@
-# Wave 1 — Animate Assessment
+# Wave 1 — Animation Audit
 
-## Audit Summary
-
-The TRUST Framework Questionnaire already has a **well-considered motion foundation**. Token-based durations (`--duration-instant`, `--duration-fast`, `--duration-normal`) and easing curves (`--ease-out-quart`, `--ease-out-quint`) are defined and consistently used. `prefers-reduced-motion` is handled at both the token level (zeroing durations) and the keyframe level (cancelling animations). Print styles correctly reset all transitions and animations.
-
-This is a dense, instrument-like UI for domain experts. The motion philosophy should remain **functional feedback, not decoration**. Most of the findings below are refinements to an already-solid system rather than fundamental gaps.
+**Skill:** /animate
+**Target:** TRUST Framework Questionnaire SPA
+**Brand personality:** Efficient, Explicit, Engineered
+**Date:** 2026-04-05
+**Revised:** Deep re-analysis after initial audit
 
 ---
 
-## What's Already Good (Do NOT Change)
+## Executive Summary
 
-- **Token system**: Durations and easings in `tokens.css:217-221` are well-chosen values that match the skill's recommended ranges.
-- **`prefers-reduced-motion`**: Comprehensive coverage in `animations.css:1-21` — zeros CSS variables AND uses `!important` as a safety net. The second block at line 64 adds element-specific overrides. This is thorough.
-- **Print reset**: `print.css:84-98` correctly strips all transition/animation classes and resets opacity/transform.
-- **Progress bar**: `layout.css:95-105` uses `transform: scaleX()` (GPU-accelerated) with `will-change: transform` — textbook correct.
-- **Context drawer slide**: `layout.css:418-426` uses `transform: translateX()` for the drawer — correct GPU-only approach. The 280ms duration is appropriate for a panel slide.
-- **Surface overlay**: `layout.css:328-344` uses `@keyframes` with opacity and `translateY` — clean fade+slide pattern. Duration 150ms/200ms is well-calibrated for overlays.
-- **Rating dot confirm**: `animations.css:53-57` — the 1.25x scale pulse on rating selection is a subtle, purposeful confirmation. Exactly the kind of micro-interaction this UI needs.
-- **Evidence item enter**: `animations.css:59-62` — 4px translateY + fade on new evidence items gives spatial context without being distracting.
-- **Cell fill animation**: `animations.css:23-31` — scale(0.85) to scale(1) on completion strip cells is restrained and informative.
-- **Section enter animation**: `animations.css:33-41` — simple opacity fade at 120ms is appropriately fast for form sections.
-- **Page transitions**: `navigation.js:446-481` correctly checks `prefers-reduced-motion` before applying transition classes, with a 150ms timeout and double-RAF cleanup. The JS logic is clean.
-- **Design alignment**: No bounce/elastic easings anywhere. No `width`/`height`/`top`/`left` layout property animations. Everything uses `transform` and `opacity`. This is exactly right.
+The codebase already has a **well-considered motion foundation**. Token-based durations (`--duration-instant`, `--duration-fast`, `--duration-normal`) and easing curves (`--ease-out-quart`, `--ease-out-quint`) are defined in `tokens.css:317-321` and consistently used. `prefers-reduced-motion` is handled at the token level (zeroing durations), the keyframe level (cancelling animations), and in JS (`navigation.js:501`). Print styles correctly reset all transition and animation classes (`print.css:84-96`).
+
+This is a dense, instrument-like UI for domain experts. Motion should remain **functional feedback only — never decoration**. The findings below are refinements to an already-solid system.
+
+---
+
+## Existing Animation Inventory (GOOD — do not change unless noted)
+
+| Area                       | Implementation                                                                                                               | Location                                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Duration/easing tokens     | `--duration-instant` (100ms), `--duration-fast` (150ms), `--duration-normal` (200ms), `--ease-out-quart`, `--ease-out-quint` | `tokens.css:317-321`                                          |
+| Section enter              | `sectionEnter` keyframe — opacity 0→1, 120ms                                                                                 | `animations.css:33`, triggered in `interaction-states.css:69` |
+| Completion strip cell fill | `cellFill` keyframe — scale 0.85→1, 200ms                                                                                    | `animations.css:23`                                           |
+| Completion badge pulse     | `completePulse` keyframe — border/bg color sweep, 200ms                                                                      | `animations.css:43`                                           |
+| Rating dot confirm         | `ratingDotConfirm` — scale 1→1.25→1, 150ms                                                                                   | `animations.css:55`                                           |
+| Rating border confirm      | `ratingBorderConfirm` — inset box-shadow sweep, 200ms                                                                        | `animations.css:67`                                           |
+| Evidence item enter        | `evidenceItemEnter` — opacity + translateY(4px), 200ms                                                                       | `animations.css:79`                                           |
+| Evidence item remove       | `is-removing` class — opacity→0 + translateY(-4px), 150ms                                                                    | `interaction-states.css:1052-1058`                            |
+| Page transitions           | Fade-out (150ms) → hide → show → fade-in (double-rAF), respects reduced-motion                                               | `interaction-states.css:1028-1038`, `navigation.js:493-532`   |
+| Context drawer slide       | `transform: translateX(100%) → 0` + opacity, 280ms quint                                                                     | `layout.css:476-507`                                          |
+| Top accent bar color       | `@property --top-accent-color` registered property, 400ms transition                                                         | `interaction-states.css:3`                                    |
+| Progress bar               | `scaleX(0→value)` via transform, 200ms, `will-change: transform`                                                             | `layout.css:104-113`                                          |
+| Panel scroll shadows       | `::before`/`::after` pseudo-element opacity transition                                                                       | `layout.css:183-213`                                          |
+| Sidebar tab indicator      | `transform + width` transition, 200ms quint                                                                                  | `layout.css:427-438`                                          |
+| Tooltips                   | Opacity fade-in 100ms, fade-out 75ms                                                                                         | `components.css:1044-1061`                                    |
+| Section active state       | `@starting-style` for border-left-width 6→8px                                                                                | `interaction-states.css:120-125`                              |
+| Page index active state    | `@starting-style` for background/box-shadow transition                                                                       | `interaction-states.css:904-909`                              |
+| Checkbox item hover        | background-color transition at `--duration-instant`                                                                          | `interaction-states.css:679-681`                              |
+| `prefers-reduced-motion`   | Global token zeroing + element-specific overrides, JS check in page transition logic                                         | `animations.css:1-21,90-103`, `navigation.js:501`             |
+| Print                      | Resets all animation classes to no-op                                                                                        | `print.css:84-96`                                             |
 
 ---
 
 ## Recommendations
 
-### R1 — Surface overlay has no exit animation
+### R1 — Rating `is-just-selected` class IS already cleaned up (VERIFIED)
 
-**Priority**: MEDIUM  
-**Description**: When closing the About or Help surface overlay, `element.hidden` is set immediately (via `display: none`) in `navigation.js:602`, which kills any CSS transition. The `@keyframes surfaceFadeIn` and `surfaceSlideIn` only run on entry (`.shell-surface:not([hidden])`). The close is an instant disappear. For an overlay that users open/close frequently, the asymmetry is noticeable.  
-**Specifics**:
+**Priority:** N/A — PREVIOUS AUDIT INCORRECT
+**Description:** The previous audit claimed the `is-just-selected` class was never removed. This is incorrect. `field-handlers.js:232-236` shows:
 
-- In `navigation.js` `setOverlaySurfaceOpen`, when `isOpen` is `false`, do not immediately set `hidden`. Instead add a CSS class like `.is-closing` that triggers a reverse animation, then set `hidden` after the animation completes (via `animationend` or a timeout matching the entry duration of 150ms).
-- Add to `layout.css`:
-  ```css
-  .shell-surface.is-closing {
-    animation: surfaceFadeOut var(--duration-fast) var(--ease-out-quart) forwards;
-  }
-  .shell-surface.is-closing .surface-card {
-    animation: surfaceSlideOut var(--duration-normal) var(--ease-out-quart) forwards;
-  }
-  @keyframes surfaceFadeOut {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
-  }
-  @keyframes surfaceSlideOut {
-    from {
-      transform: translateY(0);
-      opacity: 1;
-    }
-    to {
-      transform: translateY(8px);
-      opacity: 0;
-    }
-  }
-  ```
-- Add `animation: none` reset for `.shell-surface.is-closing` in `print.css`.
-- Update `animations.css` `prefers-reduced-motion` block to also cancel `.shell-surface.is-closing` animations.
-  **Dependencies**: None. Self-contained.
+```js
+option.classList.add('is-just-selected');
+const removeClass = () => option.classList.remove('is-just-selected');
+option.addEventListener('animationend', removeClass, { once: true });
+setTimeout(removeClass, 200);
+```
 
-### R2 — Context drawer backdrop has no fade transition
+The class is removed both on `animationend` AND via a 200ms fallback `setTimeout`. This is robust, defensive code. **No issue exists.**
 
-**Priority**: LOW  
-**Description**: The context drawer backdrop (`layout.css:391-396`) appears/disappears instantly via `hidden` attribute toggling. The drawer itself slides smoothly, but the backdrop pops in/out. This creates a subtle visual disconnect.  
-**Specifics**:
+---
 
-- Add to `layout.css`:
-  ```css
-  .context-drawer-backdrop:not([hidden]) {
-    animation: backdropFadeIn var(--duration-fast) var(--ease-out-quart);
-  }
-  @keyframes backdropFadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-  ```
-- For the exit, apply the same pattern as R1: use a `.is-closing` class with a `backdropFadeOut` keyframe, then set `hidden` after the animation ends.
-- The drawer already has `transitionend` handling in `navigation.js:320-344`, so the backdrop close can piggyback on that same timer (320ms fallback).
-  **Dependencies**: None. Independent of R1 but follows the same pattern.
+### R2 — Context drawer backdrop has no transition (REAL ISSUE)
 
-### R3 — Rating option `is-just-selected` class is never removed
+**Priority:** HIGH
+**Description:** The context drawer slides in smoothly over 280ms (`layout.css:489-491`), but its backdrop (`context-drawer-backdrop`) uses `[hidden] { display: none }` (`layout.css:464-466`) which produces an instant show/hide. The drawer itself is a beautifully choreographed slide+fade, but the semi-transparent overlay behind it snaps on/off. This is the most visually jarring animation gap in the interface.
 
-**Priority**: HIGH  
-**Description**: The CSS at `interaction-states.css:1059-1065` applies a `border-left-width: 5px` and an animation to `.rating-option.is-just-selected`, but there is no mechanism to remove this class after the animation completes. Once a rating option is selected, it retains `is-just-selected` permanently, which means:
+**Specifics:**
 
-1. The `border-left-width: 5px` persists, visually conflicting with the `.selected` state's normal border.
-2. If the user selects a different option in the same rating scale, the previously selected option keeps the class.
-
-This should be a transient class removed after the animation ends (~150ms).  
-**Specifics**:
-
-- In `field-handlers.js` (or wherever rating option click is handled), after adding `is-just-selected`, schedule removal via `requestAnimationFrame` or a 150ms `setTimeout`:
-  ```js
-  option.classList.add('is-just-selected');
-  setTimeout(() => option.classList.remove('is-just-selected'), 200);
-  ```
-- Alternatively, use the `animationend` event on the rating dot element.
-  **Dependencies**: None. JS-only fix.
-
-### R4 — Missing transition on `completion-badge` base state
-
-**Priority**: LOW  
-**Description**: The `.completion-badge` has a `transition` declaration at `components.css:346-350` for `color`, `border-color`, and `background`, which is good. However, the `just-completed` animation in `interaction-states.css:589-591` (`completePulse`) animates `border-color` only. If the badge also changes `background` or `color` on completion (which it does — the `data-progress-state` attributes change those properties), those changes happen instantly while the border pulses.  
-**Specifics**: Consider either:
-a) Extending `completePulse` to also animate `background-color` (same `var(--ut-navy)` → `var(--ut-border)` keyframes for background), or
-b) Leaving as-is — the existing behavior is subtle enough that the inconsistency may not be perceptible. This is LOW priority.
-**Dependencies**: None.
-
-### R5 — `nav-button` active press state uses `filter: brightness()` instead of `background`
-
-**Priority**: LOW  
-**Description**: `interaction-states.css:49-51` uses `filter: brightness(0.92)` for `.nav-button:active`. This is functionally fine, but `filter` can trigger a separate compositing layer and may cause a brief paint on some browsers. Since `.nav-button` already has `background` and `border-color` in its transition list (`components.css:70-75`), a background darkening would be more consistent.  
-**Specifics**: Replace with:
+- File: `layout.css:457-466`
+- The JS at `navigation.js:654-656` sets `dom.contextBackdrop.hidden = !contextDrawerOpen` alongside `dataset.drawerState = contextDrawerOpen ? 'open' : 'closed'`.
+- **CSS change** — Replace the `display: none` approach with opacity + visibility:
 
 ```css
-.nav-button:active {
-  background: color-mix(in srgb, var(--ut-grey) 80%, var(--ut-border));
+.context-drawer-backdrop {
+  /* existing: position, inset, z-index, background remain unchanged */
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-normal) var(--ease-out-quart),
+    visibility 0ms var(--ease-out-quart) var(--duration-normal); /* visibility delays until opacity completes */
+}
+
+.context-drawer-backdrop[data-drawer-state='open'] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--duration-normal) var(--ease-out-quart),
+    visibility 0ms var(--ease-out-quart) 0ms; /* visibility:visible is instant */
 }
 ```
 
-**Dependencies**: None. CSS-only change.
+- **JS change** — In `navigation.js:654-656`, stop setting `hidden` on the backdrop. The `data-drawer-state` attribute already being set (`navigation.js:656`) drives the CSS transition.
+- The transition duration (200ms via `--duration-normal`) is shorter than the drawer's 280ms, so the backdrop will be at full opacity before the drawer finishes sliding — this is correct (backdrop should be fully visible before the drawer content arrives).
+- Reduced-motion is automatically handled because the global `prefers-reduced-motion` block in `animations.css:1-21` zeros `--duration-normal`, making both transitions instant.
 
-### R6 — Reference drawer open/close has no animation
+**Dependencies:** Requires coordinated CSS + JS change. The `hidden` attribute removal must only apply to the backdrop, not to other elements that depend on `display: none`.
 
-**Priority**: LOW  
-**Description**: Reference drawers (`<details>` elements) open/close instantly via the native browser disclosure behavior. The `<details>` element's `[open]` state change at `interaction-states.css:1013-1015` only changes `background` with no transition. The content panel appears/disappears without any motion.  
-**Specifics**: This is intentionally left as-is because:
+---
 
-1. The `<details>` element has limited animation support in CSS (no `height` auto-transition without JS).
-2. Adding JS-based height animation would add complexity for little UX gain — these are reference panels, not the primary interaction surface.
-3. The content is static reference material that users scan, not interactive.
+### R3 — Top accent color transition uses `ease` instead of design token
 
-**No action needed.** Noted for awareness. If animation is desired later, the modern approach would be `interpolate-size: allow-keywords` on the `<details>` content, but browser support is still limited.
+**Priority:** LOW
+**Description:** `.top-accent` in `interaction-states.css:3` uses `transition: --top-accent-color 400ms ease`. This is the only place in the entire codebase that uses the CSS `ease` keyword instead of a design-system token. The `ease` curve (`cubic-bezier(0.25, 0.1, 0.25, 1)`) has a slow start that makes the color change feel slightly delayed — inconsistent with the decisive feel of the rest of the UI. Additionally, 400ms is longer than any token-defined duration (max is `--duration-normal` at 200ms).
 
-### R7 — `sectionEnter` animation plays on every section on initial load
+**Specifics:**
 
-**Priority**: LOW  
-**Description**: `interaction-states.css:103-108` applies `opacity: 0; animation: sectionEnter 120ms ...` to ALL `.doc-section` and `.form-section` elements. On initial page load, every section in the DOM (including hidden ones) runs this animation. Since only one section is visible at a time (others have `.is-page-hidden` with `display: none`), the animations on hidden sections are wasted.  
-**Specifics**: This is harmless (browsers optimize animations on `display: none` elements), but for cleanliness, the initial `opacity: 0` could be scoped to only the initially-active section. The page transition system in `navigation.js:446-481` already handles showing/hiding correctly, so this is a very minor optimization.  
-**No action needed** unless initial load performance becomes a concern.
+- File: `interaction-states.css:3`
+- Change from: `transition: --top-accent-color 400ms ease;`
+- Change to: `transition: --top-accent-color 300ms var(--ease-out-quart);`
+- The 5px accent bar is a subtle element — 300ms is fast enough to feel responsive but long enough to register the color change. `ease-out-quart` matches every other color transition in the system.
+- Note: Since `--top-accent-color` uses `@property` registration (`tokens.css:4-8`) with `syntax: '<color>'`, the browser can interpolate the registered custom property. This works in Chrome/Edge/Safari. Firefox support for `@property` arrived in Firefox 128 (July 2024). In unsupported browsers, the color snaps — which is fine.
 
-### R8 — Consider a `--duration-slow` token for drawer/overlay exits
+**Dependencies:** None.
 
-**Priority**: LOW  
-**Description**: The current token set has `--duration-instant` (100ms), `--duration-fast` (150ms), and `--duration-normal` (200ms). The context drawer uses a hardcoded `280ms` in `layout.css:424`. The surface overlay fallback timer in `navigation.js:343` uses `320ms`. Having these as named tokens would improve consistency.  
-**Specifics**: Add to `tokens.css`:
+---
 
-```css
---duration-slow: 280ms;
-```
+### R4 — Checkbox checked state causes micro-layout-shift
 
-Then replace the hardcoded `280ms` in `layout.css:424` with `var(--duration-slow)`. The 320ms JS fallback timer could be derived as `Math.ceil(280 * 1.15)` or kept as-is since it's a JS safety margin.  
-**Dependencies**: None. Token addition is non-breaking.
+**Priority:** LOW
+**Description:** `.checkbox-item:has(input:checked)` in `interaction-states.css:694-701` changes `margin: -2px -4px` and adds `padding: 2px 4px` when a checkbox is checked. Only `background` is transitioned (line 701). The margin/padding change happens instantly, causing a 2px layout pop in each direction. While subtle, this is visible during rapid checkbox toggling and contradicts the principle of using only `transform` and `opacity` for animations.
+
+**Specifics:**
+
+- File: `interaction-states.css:694-701`
+- The `.has-checked` class at lines 704-711 duplicates this with the same margin/padding change but no transition at all.
+- **Recommended fix:** Apply the expanded margin/padding unconditionally to all `.checkbox-item` elements (compensating with negative padding), so the visual differentiation on checked state comes only from `background-color` and `color` changes (which are already transitioned). Alternatively, use `outline` or `box-shadow: inset` for the emphasis effect instead of margin/padding manipulation.
+- Since this is a 2px shift on items with ~44px touch targets, the impact is very small. LOW priority.
+
+**Dependencies:** None.
+
+---
+
+### R5 — Strip cell active state transition is slower than peer transitions
+
+**Priority:** LOW
+**Description:** `.strip-cell.is-active` uses `--duration-normal` (200ms) for its transitions (`interaction-states.css:1271-1275`), while all other strip-cell transitions use `--duration-fast` (150ms) (`components.css:45-48`, `interaction-states.css:1268-1270`). This may be intentional (active state change is more significant), but the 50ms difference makes the active cell feel slightly sluggish relative to hover/focus on neighboring cells.
+
+**Specifics:**
+
+- File: `interaction-states.css:1271-1275`
+- If intentional, add a comment explaining why the active state uses a longer duration. Otherwise, align to `--duration-fast`.
+
+**Dependencies:** None.
+
+---
+
+### R6 — Add `--duration-slow` token for panel-level animations
+
+**Priority:** LOW
+**Description:** The context drawer uses a hardcoded `280ms` in `layout.css:491`. The drawer's `transitionend` fallback timer in `navigation.js:384` uses `320ms`. These are the only non-token durations in the system. Adding a `--duration-slow` token would bring them into the token system.
+
+**Specifics:**
+
+- File: `tokens.css`, add: `--duration-slow: 280ms;`
+- File: `layout.css:491`, change `280ms` to `var(--duration-slow)`
+- This is non-breaking. The `prefers-reduced-motion` block in `animations.css:1-6` would need to also zero `--duration-slow`.
+
+**Dependencies:** None. Additive.
+
+---
+
+### R7 — Sidebar collapse/expand has no transition (ACCEPT AS-IS)
+
+**Priority:** NOT ACTIONABLE
+**Description:** When the sidebar collapses, `grid-template-columns` changes between `minmax(0, 1fr) 28rem` and `minmax(0, 1fr)` (`layout.css:242-261`). Grid properties are not animatable in CSS. The layout snaps in one frame.
+
+**Specifics:**
+
+- Options considered:
+  1. **Animate sidebar panel width with absolute positioning** — Fragile, creates layout complexity, doesn't match the grid-based architecture.
+  2. **Use `interpolate-size: allow-keywords`** — Too new, unreliable browser support.
+  3. **Fade the sidebar panel** — A 150ms opacity fade-out/in would soften the snap. But the framework panel already has `contain: layout style paint` (`layout.css:274`), which may interfere with opacity transitions on the element.
+  4. **Accept it** — The snap is instant, consistent with "calibrated instrument" personality. Power users toggle the sidebar rarely and expect immediate response.
+- **Recommendation:** Accept as-is. The instant layout change is fast and predictable. Do not add opacity hacks.
+
+**Dependencies:** None.
+
+---
+
+### R8 — Reference drawer expand/collapse has no content animation (ACCEPT AS-IS)
+
+**Priority:** NOT ACTIONABLE
+**Description:** Reference drawers use native `<details>` elements. The `<details>` disclosure widget has limited animation support. The summary state change is already styled (`.reference-drawer.is-open` changes border at `interaction-states.css:999-1001`). The panel content appears instantly.
+
+**Specifics:**
+
+- The `is-open` class toggling at `reference-drawers.js:207` correctly tracks state.
+- Content animation for `<details>` requires either JS height measurement or `interpolate-size` (experimental).
+- Reference drawers are secondary UI — users interact with them occasionally for context, not as primary workflow.
+- **Recommendation:** No action. The summary state change provides sufficient feedback.
+
+**Dependencies:** None.
+
+---
+
+## What's Already Good (Explicitly Do NOT Change)
+
+1. **No decorative animations** — No bounce, elastic, or spring easings anywhere. Everything uses `ease-out-quart` or `ease-out-quint`. This perfectly matches the "calibrated instrument" personality.
+
+2. **GPU-only properties** — All animations use `transform` and `opacity`. No `width`, `height`, `top`, `left`, `margin`, or `padding` animations (the checkbox issue in R4 is a layout shift, not an animation). The progress bar correctly uses `scaleX` with `will-change: transform`.
+
+3. **Button hover states** — Background and border-color transitions at `--duration-fast`. No scale, translate, or shadow lift. Correct per `.impeccable.md`: "No hover lift/translate effects."
+
+4. **Page transition logic** — The 150ms fade-out → double-rAF fade-in pattern in `navigation.js:493-532` is well-engineered. It checks `prefers-reduced-motion`, uses `activeTimers` set for cleanup, and handles the edge case where the outgoing element may be null.
+
+5. **Scroll behavior** — `scrollTo({ behavior: 'auto' })` in `navigation.js:736`. Smooth scrolling would feel laggy for power users. Correct.
+
+6. **No entrance choreography** — No staggered reveal on page load. The `sectionEnter` 120ms opacity is the right level.
+
+7. **Rating confirm animations** — `ratingDotConfirm` (scale pulse) + `ratingBorderConfirm` (box-shadow sweep) are purposeful, brief, and use `animationend` + fallback `setTimeout` for cleanup. Well-implemented.
+
+8. **`contain: layout style paint`** on framework panel — Good performance isolation.
+
+9. **Tooltip timing** — Entry at 100ms, exit at 75ms (faster exit than entry, per skill guidelines). Already handles `prefers-reduced-motion` with `transition: none` at `components.css:1068-1074`.
+
+10. **`@starting-style`** — Used correctly for transitioning into pseudo-classes that don't have a natural "from" state (active section border width, active page index button). Modern CSS, progressive enhancement.
 
 ---
 
 ## Priority Summary
 
-| ID  | Priority | Area                                   | Effort           |
-| --- | -------- | -------------------------------------- | ---------------- |
-| R3  | HIGH     | Rating selection feedback              | JS, small        |
-| R1  | MEDIUM   | Surface overlay exit animation         | JS + CSS, medium |
-| R2  | LOW      | Drawer backdrop fade                   | JS + CSS, small  |
-| R4  | LOW      | Completion badge animation consistency | CSS, trivial     |
-| R5  | LOW      | Button active state technique          | CSS, trivial     |
-| R6  | LOW      | Reference drawer (no action)           | —                |
-| R7  | LOW      | Section enter on load (no action)      | —                |
-| R8  | LOW      | Duration token consistency             | CSS, trivial     |
+| ID  | Priority | Area                                 | Effort                  |
+| --- | -------- | ------------------------------------ | ----------------------- |
+| R2  | HIGH     | Context drawer backdrop transition   | Small (CSS + 1 JS line) |
+| R3  | LOW      | Top accent easing alignment          | Trivial (1 CSS value)   |
+| R4  | LOW      | Checkbox checked micro-layout-shift  | Small (CSS refactor)    |
+| R5  | LOW      | Strip cell active timing consistency | Trivial (1 CSS value)   |
+| R6  | LOW      | `--duration-slow` token addition     | Trivial (add token)     |
+| R1  | N/A      | Rating cleanup (already correct)     | —                       |
+| R7  | N/A      | Sidebar collapse (accept as-is)      | —                       |
+| R8  | N/A      | Reference drawers (accept as-is)     | —                       |

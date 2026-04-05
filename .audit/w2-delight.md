@@ -1,342 +1,590 @@
-# Wave 2 — Delight Assessment
+# Wave 2 — Delight Assessment (Post-Wave 1)
 
 ## Audit Summary
 
-This is a professional academic instrument for the EIS-IS team at University of Twente — domain experts who evaluate AI search tools against the TRUST framework. The brand personality is **Efficient, Explicit, Engineered**. Delight here must amplify confidence and precision, never entertain. The tool should feel like a well-calibrated scientific instrument, not a consumer product.
+Post-Wave 1 assessment of micro-interaction opportunities for the TRUST Framework Questionnaire. Brand personality: **Efficient, Explicit, Engineered.** Delight = instrument-grade feedback that confirms user actions instantly and accurately. No playfulness, no celebration, no personality injection. Every recommendation must make the reviewer feel more in control, not entertained.
 
-The existing system already has several subtle feedback mechanisms that are well-suited to this domain: the `ratingDotConfirm` pulse, the `cellFill` scale on completion strip cells, the `evidenceItemEnter` slide-in, section enter fades, and the accent bar color shifts. These are exactly the right kind of functional feedback for an instrument UI.
-
-**Delight strategy for this tool: Helpful surprises that reinforce competence** — subtle confirmations that the system is working correctly, that progress is meaningful, and that the reviewer's expertise is respected.
+**Delight strategy: Precision confirmations.** Every state change in this tool — selecting a rating, checking a box, navigating pages, completing sections — should produce an immediate, unambiguous visual confirmation that the system registered the action correctly. Think laboratory instruments, aviation gauges, industrial control panels.
 
 ---
 
 ## What's Already Good (Do NOT Change)
 
-- **Rating dot confirm animation** (`animations.css:58-68`): The 1.25x scale pulse is perfect. Satisfying but clinical. Do not make it bigger or add color.
-- **Completion strip cell fill** (`animations.css:28-36`): The scale(0.85)→scale(1) pop is a clean progress indicator. Do not add particles or glow.
-- **Evidence item enter** (`animations.css:70-79`): 4px slide + fade is appropriately restrained.
-- **Accent bar color shift** (`interaction-states.css:1-4`): The top bar transitioning between TRUST principle colors as the user navigates is an excellent ambient wayfinding signal. Do not add gradient transitions or rainbow effects.
-- **Section enter fade** (`animations.css:38-46`): 120ms opacity fade is fast and professional.
-- **Validation state coloring** (`interaction-states.css:1082-1148`): The warning/error tint backgrounds on fields and sections give immediate, clear feedback without being alarming. The `inset box-shadow` top borders on strip cells and nav buttons are a strong, information-dense progress encoding.
-- **Context drawer mechanics**: The slide-in/out, backdrop blur, and surface overlay all feel professional and polished.
-- **Print styles**: Comprehensive and correct — the tool degrades gracefully to a static document.
-- **Skip link**: Present and functional — accessibility delight, invisible but important.
+1. **Rating dot scale pulse** (`animations.css:56-66`, `interaction-states.css:1053-1055`): The 1.25x scale pulse on `is-just-selected` is perfectly calibrated. Fast (150ms), subtle, clinical. Do not enlarge or add color.
+
+2. **Rating border-left confirm** (`animations.css:68-80`, `interaction-states.css:1057-1059`): The 2px → 5px → 3px border-left width pulse on selection is exactly right. The timing matches the dot pulse. Do not change.
+
+3. **Strip cell fill scale** (`animations.css:24-32`): The `cellFill` scale(0.85→1) pop when a cell gets `.just-filled` is clean and informative. Do not add glow or color shift.
+
+4. **Section enter fade** (`animations.css:34-42`, `interaction-states.css:68-69`): The 120ms opacity fade is fast and professional. Do not add translateY or scale.
+
+5. **Evidence item enter/exit** (`animations.css:82-91`, `interaction-states.css:1061-1071`): 4px slide-down + fade-in on enter, 4px slide-up + fade-out on remove. Both are restrained and correct.
+
+6. **Top accent bar color shift** (`interaction-states.css:1-4`): The `@property --top-accent-color` with 400ms transition between TRUST principle colors is the best ambient feedback in the tool. Perfect as-is.
+
+7. **Panel progress bar** (`layout.css:104-114`): The scaleX transform on `.panel-progress-bar` with smooth easing. Do not add color animation or glow.
+
+8. **Context drawer mechanics** (`layout.css:477-516`): The translateX slide-in, opacity fade, backdrop overlay, and visibility transitions are all professional-grade. The 280ms duration with ease-out-quint feels right.
+
+9. **Tooltip opacity transitions** (`components.css:1112-1130`): The 100ms appear / 75ms disappear is snappy. The `.is-flipped` bottom positioning is a good touch.
+
+10. **@starting-style for active page-index buttons** (`interaction-states.css:917-922`): The transition from white background to tinted with box-shadow inset is a sophisticated CSS detail. Keep it.
+
+11. **Section active border-left width transition** (`interaction-states.css:120-125`): Using `@starting-style` to animate from 6px to 8px on section activation is a precision touch. Do not increase the widths.
+
+12. **Reduced-motion support** (`animations.css:1-22`): Comprehensive zero-duration overrides for all animations and transitions. This is correct accessibility practice.
+
+13. **Validation state tint overlays** (`interaction-states.css:1077-1143`): The section/criterion/field validation backgrounds with warning/error tints are immediately legible. The inset top box-shadows on strip cells and nav buttons encode state without ambiguity.
 
 ---
 
 ## Recommendations
 
-### R1 — Completion badge pulse when a page reaches "Complete" state
+### R1 — Field-group focus should use section accent color, not generic blue
 
 **Priority**: HIGH  
-**Description**: When all required fields on a page are satisfied and the page transitions from `in_progress` to `complete`, the completion badge (`.completion-badge`) should briefly pulse to acknowledge the milestone. The `just-completed` class and `completePulse` animation already exist in the codebase (`interaction-states.css:589-591`, `animations.css:48-56`) but the pulse animation is weak — it only animates `border-color` from `--ut-navy` to `--ut-border`, which is barely perceptible and doesn't use the section's own accent color.
-
-This is a significant moment: completing a full TRUST principle section (or any page) is a meaningful step in a long evaluation. The feedback should be more visible — still clinical, but unambiguous.
+**Description**: When a field group receives keyboard focus, the border changes to `--ut-blue` (`interaction-states.css:724-727`). This ignores the powerful section accent system that colors everything else — strip cells, nav buttons, criterion cards, kickers, badges — all use `--section-accent`. The field group is the actual input target, yet it alone falls back to generic blue. This breaks the visual continuity and weakens spatial orientation. Reviewers scanning the form should see accent color and immediately know which principle section they're in.
 
 **Specifics**:
 
-- In `animations.css`, update `completePulse` to also briefly flash the background with the section tint:
-  ```css
-  @keyframes completePulse {
-    0% {
-      border-color: var(--section-accent-strong, var(--ut-navy));
-      background: var(--section-tint, color-mix(in srgb, var(--ut-navy) 10%, var(--ut-white)));
-    }
-    100% {
-      border-color: var(--section-border, var(--ut-border));
-      background: var(--section-tint, var(--ut-white));
-    }
-  }
-  ```
-- Duration stays at 200ms with `--ease-out-quint` — the existing timing is correct.
-- The `.just-completed` class application logic needs to be verified in `navigation.js` or `sidebar.js` — confirm that the class is being toggled when a page's progress state changes to `complete`. If the toggle only fires on initial render, it needs to fire on state-derived progress transitions.
+In `interaction-states.css`, replace `.field-group:focus-within`:
 
-**Dependencies**: None. Builds on existing animation infrastructure.
+```css
+.field-group:focus-within {
+  border-color: var(--section-border, var(--ut-blue));
+  border-left: 3px solid var(--section-accent, var(--ut-blue));
+}
+```
+
+Add `border-left` to the existing `.field-group` transition (currently only `border-color` at line 716):
+
+```css
+.mock-control,
+.textarea-mock,
+.field-group {
+  transition:
+    border-color var(--duration-fast) var(--ease-out-quart),
+    border-left var(--duration-fast) var(--ease-out-quart);
+}
+```
+
+This creates a consistent visual hierarchy: focused field group → thin 3px section accent left border → focused criterion card → thick 8px section accent left border.
+
+**Dependencies**: None. Uses existing `--section-accent` / `--section-border` custom properties from accent-scoping.css.
 
 ---
 
-### R2 — Rating option border-left flash on selection
+### R2 — Checkbox state-change confirmation pulse
 
 **Priority**: HIGH  
-**Description**: When a reviewer selects a rating (0–3), the `is-just-selected` class is applied and the dot does a scale pulse (good), but the border-left width jumps from 2px to 5px (`interaction-states.css:1063-1064`) without any transition. This abrupt width change looks like a rendering glitch rather than intentional feedback. The rating selection is the most frequent evaluative action in the tool — it deserves a clean, momentary emphasis.
+**Description**: Checking a checkbox triggers a background color shift and font-weight change (`interaction-states.css:694-702`), but there is no momentary visual pulse to confirm the state change. In a dense evaluation with many checklist items (critical-fail flags, evidence requirements, completion checklists), reviewers need instant confirmation that their check registered. The `:has(input:checked)` selector fires immediately but the visual change is purely chromatic — easy to miss in peripheral vision.
+
+A brief 100ms border-color flash from the default border to section-accent-adjacent and back would confirm the action without being playful.
 
 **Specifics**:
 
-- Add a transition to `.rating-option` for `border-left-width` in `components.css:465-468`:
-  ```css
-  .rating-option {
-    transition:
-      background var(--duration-instant) var(--ease-out-quart),
-      border-color var(--duration-instant) var(--ease-out-quart),
-      border-left-width var(--duration-instant) var(--ease-out-quart);
-  }
-  ```
-- In `animations.css`, add a `ratingBorderConfirm` keyframe that briefly widens then returns:
-  ```css
-  @keyframes ratingBorderConfirm {
-    0% {
-      border-left-width: 2px;
-    }
-    40% {
-      border-left-width: 5px;
-    }
-    100% {
-      border-left-width: 3px;
-    }
-  }
-  ```
-- Apply via `.rating-option.is-just-selected { animation: ratingBorderConfirm 200ms var(--ease-out-quint); }` in `interaction-states.css`.
-- Remove the static `border-left-width: 5px` from `.rating-option.is-just-selected` — the animation should handle the temporary emphasis, and the settled score state (`.score-0` through `.score-3`) already sets `border-left: 3px solid`.
+Add a new keyframe in `animations.css`:
 
-**Dependencies**: None. Self-contained in rating scale CSS.
+```css
+@keyframes checkboxConfirm {
+  0% {
+    border-color: var(--ut-border);
+  }
+  50% {
+    border-color: var(--section-accent, var(--ut-navy));
+  }
+  100% {
+    border-color: var(--ut-border);
+  }
+}
+```
+
+In `interaction-states.css`, add a `.just-checked` animation class (applied via JS, same pattern as `is-just-selected`):
+
+```css
+.checkbox-item.just-checked {
+  animation: checkboxConfirm 100ms var(--ease-out-quart);
+}
+```
+
+In `field-handlers.js`, in the checkbox change handler (wherever `.has-checked` is toggled — currently `syncCheckboxItem` at line 202-205), add the same transient-class pattern already used for rating options:
+
+```js
+const syncCheckboxItem = (item) => {
+  const input = item.querySelector('input[type="checkbox"]');
+  const wasChecked = item.classList.contains('has-checked');
+  item.classList.toggle('has-checked', Boolean(input?.checked));
+
+  if (input?.checked && !wasChecked) {
+    item.classList.add('just-checked');
+    const removeClass = () => item.classList.remove('just-checked');
+    item.addEventListener('animationend', removeClass, { once: true });
+    setTimeout(removeClass, 120);
+  }
+};
+```
+
+The 100ms duration is intentionally shorter than the rating pulse (150ms) — checkboxes are lower-stakes actions and should confirm faster.
+
+**Dependencies**: Requires a small JS change in `field-handlers.js:202-205`. Follows the exact same pattern as `syncRatingOption` (line 230-237).
 
 ---
 
-### R3 — Strip cell filled state should briefly glow before settling
+### R3 — Mock-control (select) value change should flash border-left
+
+**Priority**: HIGH  
+**Description**: When a reviewer changes a judgment (Pass / Conditional pass / Fail) or recommendation status via the mock-control select, the entire control background and text color change to the judgment/recommendation semantic colors (`interaction-states.css:563-654`). This is a significant state change — it affects the overall evaluation outcome. Yet the transition is purely chromatic with no momentary emphasis.
+
+The mock-control already has a 4px `border-left` in judgment/recommendation states (`interaction-states.css:598`). A brief flash of that border-left from 4px to 6px and back would draw the eye to the changed value.
+
+**Specifics**:
+
+Add a new keyframe in `animations.css`:
+
+```css
+@keyframes mockControlConfirm {
+  0% {
+    border-left-width: 4px;
+  }
+  40% {
+    border-left-width: 6px;
+  }
+  100% {
+    border-left-width: 4px;
+  }
+}
+```
+
+In `interaction-states.css`, add:
+
+```css
+.mock-control.just-changed {
+  animation: mockControlConfirm 150ms var(--ease-out-quint);
+}
+```
+
+In `field-handlers.js`, in the select sync logic (`syncSelectControl`, around line 275-290), detect when the value changes and add the transient class:
+
+```js
+// After: if (select.value !== nextValue) { select.value = nextValue; }
+if (select.value !== nextValue) {
+  select.value = nextValue;
+  const shell = select.closest('.mock-control');
+  if (shell instanceof HTMLElement) {
+    shell.classList.add('just-changed');
+    const removeClass = () => shell.classList.remove('just-changed');
+    shell.addEventListener('animationend', removeClass, { once: true });
+    setTimeout(removeClass, 180);
+  }
+}
+```
+
+**Dependencies**: Requires a small JS change in `field-handlers.js:syncSelectControl`. Same transient-class pattern.
+
+---
+
+### R4 — Validation state entry should flash the field-group border
 
 **Priority**: MEDIUM  
-**Description**: The `cellFill` animation (`animations.css:28-36`) scales from 0.85 to 1.0 when a strip cell gets the `.just-filled` class. However, the filled strip cells (`.strip-cell.filled.tr`, etc. in `interaction-states.css:6-29`) immediately jump to their final tinted background. For a moment after the scale animation, the cell still has the plain white background of `not_started` before JS updates the data attributes. This creates a visual disconnect — the scale happens but the color doesn't match yet.
+**Description**: When a field enters a validation state (`attention` or `invalid`), the field-group background shifts to a warning/error tint (`interaction-states.css:1107-1122`). This is clear, but it happens gradually via the existing `border-color` transition (150ms). For validation problems — which represent real issues the reviewer must address — the transition should include a brief border-width pulse to draw attention.
 
-The fix is to ensure the filled styling is applied before or simultaneously with the animation trigger.
+This is especially important for the `invalid` state, which appears when required fields are missing during evaluation finalization. The reviewer needs to notice these immediately.
 
 **Specifics**:
 
-- Verify in the JS that applies `.just-filled` (likely in `sidebar.js` or `navigation.js`) that `data-progress-state="complete"` (or `filled` + the principle class) is set on the same frame as `.just-filled` is added, so the background tint is already visible when the scale animation plays.
-- If the timing is correct and the issue is that `.filled` is applied after `.just-filled`, swap the order so the accent background is painted first.
-- Alternatively, add a brief background flash to `cellFill`:
-  ```css
-  @keyframes cellFill {
-    0% {
-      transform: scale(0.85);
-      background: var(--section-tint, var(--ut-white));
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-  ```
+Add a keyframe in `animations.css`:
 
-**Dependencies**: May require checking JS timing in sidebar rendering.
+```css
+@keyframes validationFlash {
+  0% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 0 2px var(--state-error);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
+@keyframes validationAttentionFlash {
+  0% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 0 2px var(--state-warning);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+```
+
+In `interaction-states.css`, add transient classes:
+
+```css
+.field-group.just-entered-invalid {
+  animation: validationFlash 150ms var(--ease-out-quart);
+}
+
+.field-group.just-entered-attention {
+  animation: validationAttentionFlash 150ms var(--ease-out-quart);
+}
+```
+
+The JS should detect when a field-group's `data-field-validation-state` transitions from a non-problem state to `invalid` or `attention`, and apply the transient class. This detection logic should go wherever `data-field-validation-state` is currently set (likely `field-handlers.js` or `navigation.js` sync logic).
+
+The `box-shadow: 0 0 0 2px` creates a sharp rectangular ring (no blur) that matches the flat aesthetic — no soft shadows, no glow.
+
+**Dependencies**: Requires JS to detect validation state transitions and apply transient classes.
 
 ---
 
-### R4 — Pager "End" state should acknowledge evaluation completion
+### R5 — Pager button directional press feedback
 
 **Priority**: MEDIUM  
-**Description**: When the reviewer reaches the last page and the next button shows "End →" (disabled, `pager.js:128`), there is no acknowledgment that the evaluation is complete. The pager status text shows "Page 13 of 13" but gives no sense of accomplishment. For a 132+ field evaluation across 10 sections, reaching the end is a significant effort.
-
-The brand says "Efficient, Explicit, Engineered" — so no confetti or celebration. But a brief, explicit confirmation that the evaluation review is complete would reinforce the reviewer's confidence in having finished a thorough assessment.
+**Description**: The prev/next pager buttons have `:active` background styling (`interaction-states.css:987-989`) but no directional feedback. When clicking "← Previous", the button should nudge left; when clicking "Next →", it should nudge right. This is standard instrument feedback — a button should visually travel in the direction of its action.
 
 **Specifics**:
 
-- In `pager.js`, when `nextPageId` is `null` AND the evaluation progress is `complete` (check `state.derived.overallProgress` or equivalent), update the status text:
-  ```js
-  if (!pagerState.nextPageId && isOverallComplete) {
-    refs.status.textContent = `Evaluation complete — ${pagerState.pageOrder.length} sections reviewed`;
-  }
-  ```
-- The status element already has `aria-live="polite"` (`pager.js:40`), so screen readers will announce the completion.
-- No color change, no animation, no badge. Just explicit, clear text. The tool's personality demands understatement.
+In `interaction-states.css`, update the pager button styles:
 
-**Dependencies**: Depends on having an `isOverallComplete` or equivalent derived state. Check `derive.js` for an overall progress/completion flag.
+```css
+.pager-button {
+  transition:
+    opacity var(--duration-fast) var(--ease-out-quart),
+    transform var(--duration-instant) var(--ease-out-quart);
+}
+
+.pager-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--ut-grey) 80%, var(--ut-border));
+  transform: translateX(-1px);
+}
+
+.pager-button[data-page-direction='next']:active:not(:disabled) {
+  background: color-mix(in srgb, var(--ut-grey) 80%, var(--ut-border));
+  transform: translateX(1px);
+}
+```
+
+1px is intentionally minimal. At this scale it reads as "button traveled" rather than "button moved." Any more would violate the flat, no-translate design principle.
+
+**Dependencies**: None. Pure CSS.
 
 ---
 
-### R5 — Evidence empty state text should be more specific per context
+### R6 — Page transition incoming section should have subtle translateY
 
 **Priority**: MEDIUM  
-**Description**: The evidence block empty state (`.evidence-empty-state` in `components.css:765-771`) currently shows generic dashed-border styling but the text content is set dynamically in `evidence.js`. This is a good pattern. However, the empty state is a moment where the tool can help the reviewer think about what evidence to attach.
+**Description**: When navigating between pages, the outgoing section fades to opacity 0 (`interaction-states.css:1045-1047`) and the incoming section fades in via `sectionEnter` (opacity 0→1, `animations.css:34-42`). The outgoing transition is purely an opacity fade — no movement. The incoming transition is also purely an opacity fade. This makes page changes feel static — the content swaps but there's no sense of traversal.
 
-The current empty state likely says something generic. Since the tool already has section-specific context guidance in the sidebar, the evidence empty state could reference the relevant evidence type for that criterion.
+A 4px vertical offset on the incoming section (matching the evidence-item enter animation) would give a sense of the new page "arriving" — like a gauge settling into position. This is the same displacement already used for evidence items, so it's consistent with the existing motion vocabulary.
 
 **Specifics**:
 
-- In `evidence.js`, when creating the evidence empty state element for a criterion-level block, vary the text based on the criterion code or principle:
-  - For TR criteria: "No evidence attached. Attach source documentation, screenshots, or methodology disclosures."
-  - For RE criteria: "No evidence attached. Attach repeated-query results, verification records, or accuracy test data."
-  - For SE criteria: "No evidence attached. Attach privacy policy excerpts, DPIA notes, or compliance records."
-  - For TC criteria: "No evidence attached. Attach provenance path screenshots, source verification records, or attribution samples."
-  - For UC criteria: "No evidence attached. Attach usability observations, accessibility test results, or workflow screenshots."
-- Keep the text to one sentence. No emoji, no illustration.
-- The dashed border and muted styling are correct for this state — do not change the visual treatment.
+Update the `sectionEnter` keyframe in `animations.css`:
 
-**Dependencies**: Check `evidence.js` `createEvidenceBlockElement` for the current empty state text generation.
+```css
+@keyframes sectionEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+```
+
+Add `transform` to the section transition in `interaction-states.css:65-67`:
+
+```css
+.doc-section,
+.form-section {
+  transition:
+    border-left-color var(--duration-fast) var(--ease-out-quart),
+    background var(--duration-fast) var(--ease-out-quart),
+    transform var(--duration-fast) var(--ease-out-quart);
+  opacity: 0;
+  animation: sectionEnter 120ms var(--ease-out-quart) forwards;
+}
+```
+
+Ensure `print.css` resets the transform:
+
+```css
+/* Already in print.css:84-86, add transform: none */
+.form-section.is-page-transitioning-out,
+.form-section.is-page-transitioning-in,
+.rating-option.is-just-selected,
+.evidence-item.is-removing {
+  opacity: 1;
+  transform: none;
+  animation: none;
+  border-left-width: revert;
+}
+```
+
+**Dependencies**: Verify print.css already resets `transform: none` on animated sections (it does for `is-removing` but needs the same for `is-page-transitioning-*` if not already present).
 
 ---
 
-### R6 — Field focus-within should show a subtle left-accent reveal
+### R7 — Strip cell active-state change should flash the new cell
 
 **Priority**: MEDIUM  
-**Description**: When a field group receives focus (`field-group:focus-within`, `interaction-states.css:749-753`), the border turns blue. This is functional but doesn't take advantage of the existing section accent system. The criterion cards already do this well — `criterion-card:focus-within` changes border-left-color to the section accent (`interaction-states.css:855-885`). Field groups should follow the same pattern for visual consistency.
+**Description**: When navigating between pages, the active strip cell changes. The new cell gets `is-active` class which adds an inset box-shadow and changes background/border (`interaction-states.css:1281-1288`). This transition uses `--duration-normal` (200ms) easing, which is good, but there's no momentary emphasis to draw the eye to the newly-active cell.
+
+In a dense 12-cell strip with color-coded progress states, the eye needs help tracking which cell just became active. A brief 150ms scale pulse (same as `cellFill`) would snap attention to the right position.
 
 **Specifics**:
 
-- Update `.field-group:focus-within` in `interaction-states.css:749-753`:
-  ```css
-  .field-group:focus-within {
-    border-color: var(--section-border, var(--ut-blue));
-    border-left: 3px solid var(--section-accent, var(--ut-blue));
-  }
-  ```
-- Add `border-left` to the transition list for `.field-group` (already has `border-color` transition at `interaction-states.css:743-747`):
-  ```css
-  .field-group {
-    transition:
-      border-color var(--duration-fast) var(--ease-out-quart),
-      border-left var(--duration-fast) var(--ease-out-quart);
-  }
-  ```
-- This creates a visual hierarchy: focused field group → section accent left border → focused criterion card → thicker section accent left border. The progression reinforces spatial orientation within the form.
+Add a new keyframe in `animations.css`:
 
-**Dependencies**: None. Uses existing CSS custom properties.
+```css
+@keyframes stripCellActivate {
+  0% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+```
+
+In `interaction-states.css`, add:
+
+```css
+.strip-cell.just-activated {
+  animation: stripCellActivate 150ms var(--ease-out-quint);
+}
+```
+
+In `navigation.js`, when the active strip cell changes (the code that applies `is-active` to the strip cell — search for `strip-cell` class toggling), add the transient class:
+
+```js
+// After applying is-active to the new cell:
+newActiveCell.classList.add('just-activated');
+const removeClass = () => newActiveCell.classList.remove('just-activated');
+newActiveCell.addEventListener('animationend', removeClass, { once: true });
+setTimeout(removeClass, 180);
+```
+
+**Dependencies**: Requires a small JS change in the strip cell update logic in `navigation.js`.
 
 ---
 
-### R7 — Page transition should briefly highlight the target page index button
+### R8 — Reference drawer height animation on open/close
 
 **Priority**: LOW  
-**Description**: When navigating between pages, the page index sidebar updates correctly (`.page-index-button.is-active` styling exists at `interaction-states.css:918-928`), but the transition is instant — the active class is swapped and the previous button loses its highlight with no visual bridge. A brief flash on the newly-active button would help the reviewer's eye track which page they arrived at, especially in the dense page index.
+**Description**: The `<details>` reference drawers in the context panel open and close instantly via the browser's native behavior. The summary gets a subtle background change on `[open]` (`interaction-states.css:1008-1010`) and the border darkens on `.is-open` (`interaction-states.css:1012-1014`), but the content panel appears with no height transition. Since these drawers contain reference tables and checklists that reviewers consult frequently, a smooth height animation would make the interaction feel more controlled and deliberate — like opening a panel on a control console.
 
 **Specifics**:
 
-- In `navigation.js`, when navigating to a new page, briefly add a class like `.is-navigating` to the target `.page-index-button` that triggers a quick background flash:
-  ```css
-  .page-index-button.is-navigating {
-    animation: pageNavigateFlash 200ms var(--ease-out-quart);
-  }
-  @keyframes pageNavigateFlash {
-    0% {
-      background: var(--section-tint, var(--ut-grey));
-    }
-    50% {
-      background: color-mix(in srgb, var(--section-tint) 60%, var(--section-accent));
-    }
-    100% {
-      background: var(--section-tint, var(--ut-grey));
-    }
-  }
-  ```
-- Remove the class after `animationend`. The final state is the existing `.is-active` styling, so the flash is a transient overlay.
-- The 200ms duration matches the existing page transition timing.
+Use the `grid-template-rows` technique (widest browser support without JS):
 
-**Dependencies**: Requires adding a class toggle in `navigation.js` around the page navigation logic.
+In `components.css`, update `.reference-drawer-panel`:
+
+```css
+.reference-drawer-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  gap: 12px;
+  transition: grid-template-rows var(--duration-normal) var(--ease-out-quart);
+  overflow: hidden;
+}
+
+.reference-drawer-panel > * {
+  overflow: hidden;
+}
+
+.reference-drawer[open] .reference-drawer-panel,
+.reference-drawer.is-open .reference-drawer-panel {
+  grid-template-rows: 1fr;
+}
+```
+
+Remove the existing `border-top: 1px solid` from `.reference-drawer-panel` (line 1674) — the border should be on the summary element instead, or moved to a `::before` on the panel that's always visible.
+
+**Dependencies**: Verify that the `<details>` `[open]` attribute change triggers the CSS transition. In some browsers, `<details>` content is removed from layout when closed, which may require using `is-open` class via JS instead. Check if `reference-drawers.js` already applies `.is-open` — if so, use that class instead of `[open]`.
 
 ---
 
-### R8 — Reference drawer open/close should animate the panel height
+### R9 — Evidence count badge should pulse when count changes
 
 **Priority**: LOW  
-**Description**: The `<details>` elements used for reference drawers (`reference-drawer` in `components.css:1389-1479`) open/close with the browser's default instant behavior. The summary gets a subtle background change on `[open]` (`interaction-states.css:1013-1015`), but the content panel appears/disappears abruptly. Since these drawers contain reference tables and checklists that reviewers consult frequently, a smooth height transition would make the UI feel more controlled.
+**Description**: When evidence items are added or removed, the evidence count text updates. There is no visual emphasis on this change. Since the evidence count is a small monospace number in the evidence block header, it's easy to miss in peripheral vision. A brief 120ms scale pulse on the count element would confirm the change.
 
 **Specifics**:
 
-- Add `interpolate-size: allow-keywords` (CSS Interpolate Size, supported in Chrome 129+ and Firefox 132+) to `.reference-drawer-panel` and animate `height` from `0` to `auto`:
-  ```css
-  .reference-drawer-panel {
-    interpolate-size: allow-keywords;
-    transition: height var(--duration-normal) var(--ease-out-quart);
-  }
-  ```
-- Alternatively, if browser support is a concern, use the `grid-rows` technique:
-  ```css
-  .reference-drawer-panel {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows var(--duration-normal) var(--ease-out-quart);
-  }
-  .reference-drawer[open] .reference-drawer-panel {
-    grid-template-rows: 1fr;
-  }
-  .reference-drawer-panel > * {
-    overflow: hidden;
-  }
-  ```
-- The grid-rows approach has wider support and is well-tested. It's the same technique used in many design systems.
+Add a keyframe in `animations.css`:
 
-**Dependencies**: None. Self-contained in components CSS. Verify that `print.css` already handles the `[open]` state correctly (it does — `print.css:67-69` hides the summary and shows the panel).
+```css
+@keyframes countPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+```
+
+In `interaction-states.css`, add:
+
+```css
+.evidence-count.just-updated {
+  animation: countPulse 120ms var(--ease-out-quart);
+}
+```
+
+In `evidence.js`, wherever the evidence count text is updated after add/remove operations, apply the transient class to the `.evidence-count` element.
+
+**Dependencies**: Requires JS change in evidence rendering. Small — same transient-class pattern.
 
 ---
 
-### R9 — Pager button arrows should briefly animate on navigation
+### R10 — Tooltip appear should include a 2px vertical settle
 
 **Priority**: LOW  
-**Description**: The pager buttons ("← Previous →") are clicked frequently during evaluation. Currently they have hover and disabled states but no click feedback animation. A brief directional nudge (← shifts left, → shifts right) on click would provide tactile-like feedback.
+**Description**: Tooltips currently appear via a pure opacity transition (100ms fade). Adding a subtle 2px translateY shift (from -2px to 0) would make the tooltip feel like it "settles" into position rather than just blinking into existence. This matches the precision-engineered aesthetic — the tooltip arrives at its exact position.
 
 **Specifics**:
 
-- Add to `interaction-states.css`:
-  ```css
-  .pager-button:active:not(:disabled) {
-    transform: translateX(-1px);
-  }
-  .pager-button[data-page-direction='next']:active:not(:disabled) {
-    transform: translateX(1px);
-  }
-  ```
-- Add `transform` to the existing pager-button transition (currently only has `opacity` at `interaction-states.css:1078-1080`):
-  ```css
-  .pager-button {
-    transition:
-      opacity var(--duration-fast) var(--ease-out-quart),
-      transform var(--duration-instant) var(--ease-out-quart);
-  }
-  ```
-- 1px is intentionally tiny — this is a micro-nudge, not a slide. The brand demands subtlety.
+Update `.tooltip-content` in `components.css:1096-1114`:
 
-**Dependencies**: None.
+```css
+.tooltip-content {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-2px);
+  transition:
+    opacity var(--duration-instant) var(--ease-out-quart),
+    transform var(--duration-instant) var(--ease-out-quart);
+}
+
+.tooltip-trigger.is-active .tooltip-content {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+```
+
+For `.tooltip-content.is-flipped`, the direction reverses:
+
+```css
+.tooltip-content.is-flipped {
+  transform: translateX(-50%) translateY(2px);
+}
+
+.tooltip-trigger.is-active .tooltip-content.is-flipped {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+```
+
+**Dependencies**: None. Pure CSS. The existing `prefers-reduced-motion` block already kills all transitions.
 
 ---
 
-### R10 — Context sidebar should show a brief "scanning" state when switching pages
+### R11 — Completion badge should use a stronger pulse when page completes
 
-**Priority**: LOW  
-**Description**: When navigating between pages, the context sidebar updates its content to show the relevant section guidance. If the update involves DOM manipulation that takes a frame or two, there may be a brief flash of stale content. Even if the update is instant, a minimal "settling" indicator would reinforce that the context is actively tracking the questionnaire position.
+**Priority**: MEDIUM  
+**Description**: The `completePulse` animation (`animations.css:44-54`) and `.just-completed` class (`interaction-states.css:559-561`) exist but the pulse is weak — it only animates `border-color` and `background` between very similar values. Completing a TRUST principle section (TR1+TR2+TR3 with evidence) is a significant moment. The pulse should be more visible without crossing into celebration territory.
 
 **Specifics**:
 
-- In `navigation.js`, when navigating to a new page, briefly add a class to the context panel content area that shows a 2px accent-colored top border (similar to the `can-scroll-down` shadow but horizontal):
-  ```css
-  .context-sidebar-shell.is-switching {
-    opacity: 0.6;
-    transition: opacity var(--duration-fast) var(--ease-out-quart);
-  }
-  ```
-- Remove the class after the context content has been updated (same frame or next frame).
-- This is not a loading spinner — it's a 50-100ms dip that signals "content is updating" without implying delay.
+Update `completePulse` in `animations.css` to include a brief scale pulse:
 
-**Dependencies**: Requires a class toggle in `navigation.js` around the context sidebar update logic.
+```css
+@keyframes completePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--section-accent, var(--ut-navy));
+  }
+  30% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 3px var(--section-accent, var(--ut-navy));
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+```
+
+The `box-shadow: 0 0 0 3px` creates a sharp rectangular ring (no blur = flat aesthetic). The 1.06 scale is barely perceptible but creates a satisfying "settling" feel. The 30% peak means the pulse is front-loaded and returns quickly — confirming rather than lingering.
+
+Ensure the completion badge has `transform` in its transition list and that `will-change: transform` is added to avoid jank.
+
+**Dependencies**: Verify that the JS logic in `navigation.js` (around `syncCanonicalProgressDecorations`) actually toggles `.just-completed` when a page's progress state transitions to `complete`. If it only fires on initial render, the JS needs updating to detect state transitions.
 
 ---
 
-### R11 — Consider a subtle console message for developers
+### R12 — Panel scroll shadow transition should be smoother
 
 **Priority**: LOW  
-**Description**: This is a niche delight opportunity. Since this is a vanilla JS tool with no build step, developers inspecting it in DevTools might appreciate a brief, on-brand console message. This is invisible to end users and costs nothing.
+**Description**: The panel scroll shadows (`.panel::before` and `.panel::after` in `layout.css:183-213`) use opacity transitions to indicate scroll overflow. The transition duration is `--duration-fast` (150ms), which is snappy but slightly abrupt for an ambient indicator. The shadows should ease in more gradually since they're environmental context, not action feedback.
 
 **Specifics**:
 
-- In `app.js`, after bootstrap completes, add:
-  ```js
-  console.log(
-    '%cTRUST Framework Questionnaire',
-    'font-family: Arial Narrow, sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #002c5f;',
-  );
-  ```
-- One line. No ASCII art, no emoji, no hiring link. Matches the brand voice.
+In `layout.css:192`, change the transition timing for panel scroll shadows:
 
-**Dependencies**: None. Add to `app.js` after initialization.
+```css
+.panel::before,
+.panel::after {
+  transition: opacity var(--duration-normal) var(--ease-out-quart);
+}
+```
+
+200ms with ease-out-quart feels more like a gauge settling than a UI snapping. The shadows are background information — they should arrive smoothly.
+
+**Dependencies**: None. Pure CSS timing change.
 
 ---
 
 ## Things Explicitly NOT Recommended
 
-1. **Confetti, particles, or celebratory animations on completion** — Inappropriate for the brand and audience. Reviewers are doing serious academic work.
-2. **Sound effects** — Academic office environments. No.
-3. **Onboarding tours or tooltips** — The `.impeccable.md` explicitly lists "Onboarding flows and hand-holding" as an anti-reference. The help panel and context sidebar already serve this function.
-4. **Gamification (streaks, badges, points)** — The tool is an instrument, not a game. Progress tracking exists in the completion strip and page states — that is sufficient.
-5. **Animated illustrations or SVG characters** — Contradicts the "regimented functionalism" aesthetic.
-6. **Gradient or glow effects** — Explicitly listed as anti-patterns in the design context.
-7. **Personalized messages ("Great job, Sarah!")** — The tool should not know or use reviewer names in this way. State and structure, not personality.
-8. **Seasonal themes or time-of-day variations** — The tool should look identical in every session. Consistency is a feature.
-9. **Easter eggs or hidden features** — An instrument should not have surprises. Every behavior should be documented and predictable.
-10. **Micro-copy humor** — Error messages and labels should be direct and technical. The existing copy ("Any critical-fail flag triggers a mandatory team review") is exactly right.
+1. **Confetti, particles, or celebration animations** — Inappropriate for academic evaluation work. Reviewers are making institutional recommendations, not winning games.
+2. **Sound effects** — Office environment. Never appropriate for this audience.
+3. **Onboarding tours, walkthroughs, or progressive disclosure** — Explicitly listed as anti-reference in `.impeccable.md`. The help panel and context sidebar already serve this function.
+4. **Gamification (streaks, badges, points, progress percentages)** — The tool is an instrument. Progress is encoded in the completion strip and page states — that is sufficient and appropriate.
+5. **Animated illustrations, SVG characters, or decorative icon motion** — Contradicts the "regimented functionalism" aesthetic.
+6. **Gradient transitions, glow effects, or blur shifts** — Explicitly listed as anti-patterns in the design context.
+7. **Personalized messages or name usage** — The tool should not address the reviewer by name. State and structure, not personality.
+8. **Seasonal themes, time-of-day variations, or weather-based changes** — The tool must look identical in every session. Consistency is a feature for an evaluation instrument.
+9. **Easter eggs, Konami codes, or hidden features** — An instrument should have zero surprises. Every behavior must be documented and predictable.
+10. **Micro-copy humor, winking error messages, or casual language** — Error messages and labels must be direct and technical. The existing copy ("Any critical-fail flag triggers a mandatory team review") is exactly right.
+11. **Hover lift/translate effects** — `.impeccable.md` explicitly states "No hover lift/translate effects" under Navigation Buttons.
+12. **Custom cursors** — Would undermine the engineered, functional aesthetic.
+13. **Skeleton screens or loading shimmer** — The tool loads instantly (static HTML + JS modules). There are no network requests during normal operation.
+
+---
+
+## Implementation Priority Order
+
+| Priority | ID  | Effort                | Impact                                                      |
+| -------- | --- | --------------------- | ----------------------------------------------------------- |
+| HIGH     | R1  | CSS only              | Consistent accent system across all interactive elements    |
+| HIGH     | R2  | CSS + small JS        | Confirms every checkbox action (high-frequency interaction) |
+| HIGH     | R3  | CSS + small JS        | Confirms judgment/recommendation changes (high-stakes)      |
+| MEDIUM   | R4  | CSS + JS              | Draws attention to validation problems                      |
+| MEDIUM   | R5  | CSS only              | Tactile pager feedback                                      |
+| MEDIUM   | R6  | CSS only              | Page traversal feels directional                            |
+| MEDIUM   | R7  | CSS + small JS        | Eye-tracking aid in dense strip                             |
+| MEDIUM   | R11 | CSS + JS verification | Stronger completion acknowledgment                          |
+| LOW      | R8  | CSS + possible JS     | Smoother drawer interaction                                 |
+| LOW      | R9  | CSS + small JS        | Evidence count change confirmation                          |
+| LOW      | R10 | CSS only              | Precision tooltip arrival                                   |
+| LOW      | R12 | CSS only              | Ambient shadow smoothing                                    |
+
+---
+
+## Cross-Cutting Notes
+
+- All new animations should be added to the `prefers-reduced-motion` block in `animations.css` to ensure they're zeroed out for users who prefer reduced motion.
+- All transient animation classes (`just-checked`, `just-changed`, `just-activated`, `just-updated`) follow the same pattern already established by `is-just-selected` and `just-completed`: add class → remove on `animationend` → fallback `setTimeout`.
+- The maximum animation duration for any new micro-interaction is 200ms (the existing `--duration-normal`). Most should be 100-150ms. Nothing should exceed 280ms.
+- No new CSS custom properties are needed — all recommendations use existing tokens.
+- No new dependencies are needed — all animations use CSS keyframes and transitions.

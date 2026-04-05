@@ -1,240 +1,284 @@
-# Wave 5 — Adapt (Responsive Design Review)
+# Wave 5 — Adapt (Responsive Design Validation)
 
-**Date**: 2026-04-04
-**Scope**: 1160px breakpoint, 760px breakpoint, 480px breakpoint, print layout, touch targets, overflow, readability
-**Preceding waves**: W4 reduced header 138→118px, restructured header to grid, mobile header 196→168px
+**Date**: 2026-04-05
+**Scope**: 1160px drawer breakpoint, 760px/480px sub-breakpoints, touch targets, overflow, readability, W1–W4 regression check
+**Preceding waves**: W1–W4 applied. Header restructured to grid, header height reduced to 118px, evidence/context button touch targets fixed to 44px, field-grid single-column forced at 760px, score-table horizontal scroll added at 760px, print `size: A4` added.
 
 ---
 
 ## Already Good — Do NOT Change
 
-- **1160px drawer mode JS logic** (navigation.js:234-1033): The `matchMedia('(max-width: 1160px)')` listener correctly toggles `is-context-drawer-mode`, manages focus returns, handles Escape key, and closes context drawer when switching to overlay surfaces. This is well-engineered.
-- **`prefers-reduced-motion` support** (animations.css): All transitions and animations are zeroed out. Section enter animations forced to `opacity: 1`. Excellent.
-- **Skip links** (base.css:25-36): Properly positioned with `z-index: 50`, become visible on focus. Both questionnaire and context panels have skip-link targets.
-- **Rating scale responsive grid** (components.css:452-456, 974-983, 996-999): 4-col → 2-col at 760px → 1-col at 480px. Clean progressive collapse.
-- **Evidence intake grid** (components.css:626-629, 990-993): Collapses from 3-col to 1-col at 760px. Correct behavior.
-- **Context drawer width** (layout.css:456): `min(34rem, calc(100vw - 12px))` with `max-width: 100%`. Well-guarded against viewport edge overflow.
-- **Drawer backdrop** (layout.css:434-443): Properly positioned with `inset: var(--header-h) 0 0 0`, hidden/shown correctly.
-- **`overscroll-behavior: contain`** on panels (layout.css:110): Prevents scroll chaining. Good touch behavior.
-- **`100dvh` usage** (layout.css:108, 458): Uses dynamic viewport height for mobile browser chrome. Correct.
-- **Print layout** (print.css): Hides shell chrome, strips panels to `display: block`, expands all hidden sections, resets animations, forces `page-break-before: always` on TRUST principle sections. Solid foundation.
-- **`min-height: 44px`** on rating options, mock controls, context link buttons, evidence file rows — these meet WCAG 44px touch target minimum.
+- **1160px drawer mode JS logic** (`navigation.js:17,293-1014`): `matchMedia('(max-width: 1160px)')` listener correctly toggles `is-context-drawer-mode`, manages focus returns, handles Escape key, closes drawer on surface switches, updates `aria-label` on the sidebar toggle button. Well-engineered.
+- **Drawer CSS transition** (`layout.css:476-515`): `transform translateX(100% + 3px)` → `translateX(0)` with `ease-out-quint` easing. Opacity fade synchronized. `visibility` with transition-delay pattern prevents flash. Correct.
+- **Drawer width clamping** (`layout.css:487`): `min(34rem, calc(100vw - 12px))` prevents drawer wider than viewport. At 760px it expands to `min(100vw, calc(100vw - 8px))`. Well-guarded.
+- **`prefers-reduced-motion`** (`animations.css:1-22,93-106`): All transitions and animations zeroed out. Section enter animations forced to `opacity: 1`. Rating dot confirm and evidence item enter animations disabled. Excellent.
+- **Skip links** (`base.css:25-36`): Two skip links (questionnaire + context panel), `z-index: 50`, visible on focus. Both targets have `tabindex="-1"` in HTML.
+- **Rating scale progressive collapse** (`components.css:490-495,1130-1148,1161-1165`): 4-col → 2-col at 760px → 1-col at 480px. Clean.
+- **Evidence intake grid collapse** (`components.css:664-675,1145-1148`): 3-col → 1-col at 760px. Correct.
+- **Field-grid single-column at 760px** (`components.css:1150-1152`): Explicit `grid-template-columns: 1fr` override. Reliable.
+- **Score-table horizontal scroll at 760px** (`components.css:1154-1158`): `display: block; overflow-x: auto; -webkit-overflow-scrolling: touch`. Standard pattern.
+- **`overscroll-behavior: contain`** on panels (`layout.css:120`): Prevents scroll chaining. Good touch behavior.
+- **`100dvh` usage** (`layout.css:118,489`): Dynamic viewport height for mobile browser chrome.
+- **Panel progress bar** (`layout.css:96-114`): Sticky `top: 0` within the panel, `scaleX` transform for smooth animation. Works at all widths.
+- **Print layout** (`print.css`): Hides chrome, expands sections, resets animations, `size: A4`, `page-break-before` on principle sections. Solid.
+- **Touch targets already at 44px**: `.strip-cell` (44px), `.mock-control` (44px), `.rating-option` (44px), `.evidence-button/.evidence-remove-button/.evidence-lightbox-close` (44px), `.context-pin-button/.context-overview-button/.context-link-button/.about-topic-button` (44px), `.tooltip-trigger-btn` (44px×44px), `.evidence-file-row` (44px). All confirmed in current CSS.
+- **Workspace layout collapse at 1160px** (`layout.css:554-556`): `grid-template-columns: 1fr` with `position: static` on page-index-column. Page index stacks above questionnaire workspace. Correct.
+- **Header progress summary at 1160px** (`interaction-states.css:1456-1461`): `min-width: 0; max-width: none; flex-basis: 100%`. Allows shrinking on narrow screens.
+- **Context drawer dismiss button** (`layout.css:171-174,506-508`): `display: none` by default, `display: inline-flex` in drawer mode. Correctly shown/hidden.
+- **Sidebar tab indicator** (`layout.css:426-438`): Absolutely positioned, animated width/transform. Works in both sidebar and drawer contexts.
+- **Shell divider hidden in drawer mode** (`layout.css:259-261,537-539,576-578`): Hidden when sidebar collapsed, at 1160px, and in drawer mode. Correct at all breakpoints.
 
 ---
 
 ## Recommendations
 
-### R1 — Header inner padding not reduced at 1160px
-
-- **Priority**: MEDIUM
-- **Description**: At 1160px the header still uses `padding: 10px 24px 8px` (layout.css:23). On tablets/laptops in this width range, the 24px horizontal padding consumes valuable space while the header grid has already collapsed (the context panel is now a drawer). Reducing horizontal padding at 1160px would give more room for the completion strip and nav buttons.
-- **Specifics**: In `layout.css`, inside the existing `@media (max-width: 1160px)` block (line 486), add:
-  ```css
-  .header-inner {
-    padding-inline: 16px;
-  }
-  ```
-- **Dependencies**: None. The 760px rule (layout.css:208) already sets `padding-inline: 16px`, so this would just bring the 1160-760px range in line. Consider using 18px at 1160px if 16px feels too tight at that width.
-
-### R2 — No visual indicator that context panel is a drawer below 1160px
+### R1 — `.evidence-file-button` touch target below 44px minimum
 
 - **Priority**: HIGH
-- **Description**: When the viewport drops below 1160px, the context panel becomes a drawer that slides in from the right. The "Context" toggle button in the top nav looks identical to its desktop state — there is no affordance indicating that it opens a drawer. On desktop, clicking "Context" expands/collapses the right panel. Below 1160px, it opens a full-height overlay drawer. Users may not realize the interaction model changed.
-- **Specifics**: In `layout.css`, inside `@media (max-width: 1160px)`, add a visual indicator to the Context toggle button when the drawer is closed:
+- **Description**: The file selection button (`.evidence-file-button`, `components.css:713-729`) has `padding: 4px 10px` and no `min-height`. Effective height is approximately 12px × 1.2 line-height + 8px padding = ~22px — well below the 44px WCAG touch target minimum. This is the "Attach file" / "Choose file" button in the evidence intake area. Prior W1–W4 fixes corrected `.evidence-button`, `.evidence-remove-button`, and `.evidence-lightbox-close` to 44px, but missed this sibling control.
+- **Specifics**: In `components.css`, change:
+
   ```css
-  .shell-layout.is-context-drawer-mode:not(.is-context-drawer-open)
-    .nav-button[data-surface-toggle='contextSidebar']::after {
-    content: '▸';
+  /* Before */
+  .evidence-file-button {
+    padding: 4px 10px;
+  }
+
+  /* After */
+  .evidence-file-button {
+    min-height: 44px;
+    padding: 4px 10px;
+  }
+  ```
+
+  File: `components.css:713-729`. Add `min-height: 44px` to the existing `.evidence-file-button` rule block.
+
+- **Dependencies**: None. Purely additive. No layout impact — the button sits inside `.evidence-file-control` which is a flex row with `gap: 8px`. The taller button will align with the adjacent file name text.
+- **Affected viewports**: All. Touch targets should meet 44px regardless of screen size per `.impeccable.md` accessibility requirements.
+
+### R2 — `.sidebar-tab` touch target below 44px minimum
+
+- **Priority**: HIGH
+- **Description**: The sidebar tab buttons (Guidance / Reference / About) have `padding: 10px 16px 8px` (`layout.css:399`) with no `min-height`. Effective height is ~12px × 1.2 + 18px = ~32px. At the 1160px drawer breakpoint, the context panel becomes a touch-accessible drawer overlay. These tabs are the primary navigation within that drawer. On tablet-sized touch screens (768–1160px), 32px tabs are difficult to tap accurately.
+- **Specifics**: In `layout.css`, change:
+
+  ```css
+  /* Before (layout.css:399) */
+  .sidebar-tab {
+    padding: 10px 16px 8px;
+  }
+
+  /* After */
+  .sidebar-tab {
+    min-height: 44px;
+    padding: 10px 16px 8px;
+  }
+  ```
+
+  File: `layout.css:395-415`. Add `min-height: 44px` to the existing `.sidebar-tab` rule block.
+
+- **Dependencies**: None. The sidebar tab bar uses `display: flex; align-items: stretch` so tabs will share the new height. The tab indicator (`layout.css:426-438`) uses absolute positioning relative to the tab bar, so it will adjust naturally.
+- **Affected viewports**: Critical at 760–1160px (drawer mode on tablets). Also relevant on all widths since tabs exist in the sidebar too.
+
+### R3 — `.pager-button` touch target below 44px minimum
+
+- **Priority**: MEDIUM
+- **Description**: Previous/Next page navigation buttons have `padding: 10px 16px` (`components.css:1520-1534`) with no `min-height`. Effective height is ~12px × 1.2 + 20px = ~34px. These are the primary page-to-page navigation controls. At 760px, the pager shell stacks vertically (`components.css:1738-1745`), and the Previous/Next buttons sit on separate rows — making them more likely to be tapped on small screens.
+- **Specifics**: In `components.css`, change:
+
+  ```css
+  /* Before (components.css:1520-1534) */
+  .pager-button {
+    padding: 10px 16px;
+  }
+
+  /* After */
+  .pager-button {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+  ```
+
+  File: `components.css:1520-1534`. Add `min-height: 44px` to the existing `.pager-button` rule block.
+
+- **Dependencies**: None. The pager shell uses `display: grid; align-items: center`, so the taller buttons will expand the grid row. The pager shell has no fixed height.
+- **Affected viewports**: Most critical at ≤760px where the pager stacks vertically. The design context states "Keyboard-first efficiency" but the accessibility requirement in `.impeccable.md` explicitly requires 44px minimum touch targets.
+
+### R4 — Header height estimate may be inaccurate between 760–1160px
+
+- **Priority**: MEDIUM
+- **Description**: The `--header-h: 118px` token (`tokens.css:287`) is used for `inset` on the shell layout, drawer backdrop, and drawer panel. At `max-width: 760px`, it's overridden to `168px` (`layout.css:217`). Between 760–1160px, the header stays at `118px`. However, the completion strip can wrap to 2 rows when viewport is ~780–900px (12 section cells at `min-width: 3.2rem` each = ~614px minimum, plus divider and toggle button ≈ 130px = ~744px total). In a 800px viewport with 36px header padding, the header-bar grid column gets ~580px. The strip wraps internally to 2 rows (~98px height), making the total header ~126px — exceeding the 118px estimate by ~8px. This causes the fixed shell to overlap the header bottom edge.
+- **Specifics**: In `layout.css`, inside the `@media (max-width: 1160px)` block (line 532), add:
+  ```css
+  :root {
+    --header-h: 130px;
+  }
+  ```
+  This gives 12px of breathing room for strip wrapping between 760–1160px. The 760px override (`--header-h: 168px`) remains unchanged. Alternatively, a more robust approach: set `--header-h: 118px` at 1160px (unchanged) and add a separate rule at `max-width: 900px`:
+  ```css
+  @media (max-width: 900px) {
+    :root {
+      --header-h: 138px;
+    }
+  }
+  ```
+  This avoids penalizing the 900–1160px range where the strip likely fits in one row.
+- **Dependencies**: This affects the shell layout position, drawer backdrop position, and drawer panel position — all use `var(--header-h)`. All will adjust consistently. The `760px` override must remain at `168px`.
+- **Affected viewports**: ~780–900px. At wider widths (>900px), the strip fits in one row. At narrower widths (<760px), the `168px` override handles it.
+
+### R5 — `.context-anchor-button` has no explicit min-height
+
+- **Priority**: MEDIUM
+- **Description**: The context anchor buttons in the sidebar/drawer use `padding: 8px 10px` (`components.css:1437-1450`) with no `min-height`. The effective height depends on content (`.context-anchor-label` + `.context-anchor-code`). For short labels, the button could be ~32px tall. These are interactive navigation elements in the context panel that users tap to jump to specific criteria. In drawer mode (760–1160px), they're the primary way to navigate within a section's context.
+- **Specifics**: In `components.css`, change:
+
+  ```css
+  /* Before (components.css:1437-1450) */
+  .context-anchor-button {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 8px 10px;
+    ...
+  }
+
+  /* After */
+  .context-anchor-button {
+    min-height: 44px;
+    ...
+  }
+  ```
+
+  Add `min-height: 44px` to the existing `.context-anchor-button` rule block at `components.css:1437`.
+
+- **Dependencies**: None. The anchor list uses `display: grid; gap: 8px`, so taller buttons simply expand their grid row.
+- **Affected viewports**: All. Most critical in drawer mode (≤1160px).
+
+### R6 — Header inner padding not reduced at 1160px breakpoint
+
+- **Priority**: LOW
+- **Description**: At 1160px, the context panel becomes a drawer and the workspace layout collapses to single-column, but the header inner padding remains at the desktop default `padding: 10px 24px 8px` (`layout.css:20`). At 760px it's reduced to `16px` inline. Between 760–1160px, the 24px padding (48px total horizontal) consumes space that could be used by the completion strip. This isn't a breakage — the strip wraps gracefully — but reducing padding at 1160px would give the strip more room and reduce the likelihood of 2-row wrapping (see R4).
+- **Specifics**: In `layout.css`, inside the existing `@media (max-width: 1160px)` block (line 532), add:
+
+  ```css
+  .header-inner {
+    padding-inline: 18px;
+  }
+  ```
+
+  File: `layout.css:532-561`. This matches the intermediate value already present in the block at line 546 (the 1160px block already sets `padding-inline: 18px` — wait, let me re-check).
+
+  **Correction**: The 1160px block already has `.header-inner { padding-inline: 18px; }` at `layout.css:545-547`. This is already implemented. **No change needed.**
+
+- **Dependencies**: N/A — already implemented.
+- **Affected viewports**: 760–1160px.
+- **Status**: ALREADY ADDRESSED. Prior wave applied this. Removing from action list.
+
+### R7 — No drawer-mode visual indicator on sidebar toggle button below 1160px
+
+- **Priority**: LOW
+- **Description**: When the viewport drops below 1160px, clicking the "Sidebar" toggle opens a drawer overlay instead of expanding/collapsing an inline panel. The button text and appearance are identical to the desktop state. Users who resize their browser may not realize the interaction model changed. The JS does update the `aria-label` to "Open sidebar drawer" vs "Toggle sidebar panel" (`navigation.js:993-996`), which is good for screen readers, but there's no visual affordance for sighted users. At 760px, a CSS rule adds a `▸` triangle indicator (`layout.css:584-588`), but this only applies to `is-sidebar-collapsed:not(is-context-drawer-open)` — i.e., when the sidebar is collapsed and drawer is closed, below 760px.
+- **Specifics**: Extend the existing 760px indicator to the 1160px breakpoint. In `layout.css`, inside the `@media (max-width: 1160px)` block, add:
+  ```css
+  .shell-layout.is-sidebar-collapsed:not(.is-context-drawer-open)
+    .nav-button[data-sidebar-toggle]::after {
+    content: '\25B8';
     margin-left: 4px;
     font-size: var(--text-xs);
   }
   ```
-  Alternatively, if a CSS-only approach is too fragile, add a small "drawer" icon via JS in the navigation module when `isContextDrawerMode` is true. The button text could change from "Context" to "Context ▸" to signal drawer behavior.
-- **Dependencies**: None. Pure CSS or minor JS change.
+  This applies the same `▸` triangle indicator used at 760px (line 584-588) to the wider 1160px range. The 760px rule can then be removed as it would be redundant.
+- **Dependencies**: None. Pure CSS. The `data-sidebar-toggle` attribute is already on the button (`trust-framework.html:47`).
+- **Affected viewports**: 760–1160px (drawer mode).
 
-### R3 — Shell toolbar Context button hidden below 760px on questionnaire panel
+### R8 — `.reference-drawer-summary` has no min-height for touch interaction
 
-- **Priority**: MEDIUM
-- **Description**: The questionnaire panel header has a toolbar with a "Context" toggle button (trust-framework.html:70-71). At 760px, `.shell-toolbar { width: 100% }` (layout.css:518-520) gives it full width, but the button has no special mobile treatment. On small screens the panel header stacks (flex-wrap), so the Context button may end up alone on its own row with wasted space. More importantly, this Context button duplicates the one in the top nav, and below 1160px both exist. Below 760px, the questionnaire-panel Context button is redundant since the top nav Context button is always visible in the fixed header.
-- **Specifics**: In `layout.css`, inside `@media (max-width: 760px)`, add:
+- **Priority**: LOW
+- **Description**: Reference drawer summary elements (`<summary>` tags) have `padding: 12px` (`components.css:1567-1580`) with no `min-height`. These are clickable disclosure widgets for reference information drawers. With `font-size: var(--text-sm)` (12px) and 12px vertical padding, effective height is ~36px. While below the 44px target, the content area (code + title + status) typically fills enough space to approach ~40px+. Still slightly below the minimum for comfortable touch use.
+- **Specifics**: In `components.css`, add to the existing `.reference-drawer-summary` rule block (line 1567):
   ```css
-  .questionnaire-panel .shell-toolbar {
-    display: none;
-  }
-  ```
-  This removes the duplicate Context button on mobile, leaving only the one in the fixed header.
-- **Dependencies**: None. The top-nav Context button (trust-framework.html:46) remains accessible.
-
-### R4 — `field-grid` minmax(240px) can overflow on narrow screens
-
-- **Priority**: MEDIUM
-- **Description**: `.field-grid` uses `grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))` (components.css:272). On screens narrower than ~520px (after 14px panel padding on each side = 28px, plus form-section padding of 14px on each side = 28px, plus field-group padding of 12px on each side = 24px), the available width is roughly `viewport - 80px`. At 480px viewport, that's ~400px. `minmax(240px, 1fr)` with two columns requires 480px + gaps, so it should gracefully fall to 1 column. However, the 240px minimum is still quite wide for very narrow viewports (360-400px phones). A field group with a 240px input inside a 360px screen is fine as single-column, but the threshold for switching from 2-col to 1-col could be tighter.
-- **Specifics**: In `components.css`, inside `@media (max-width: 760px)`, add:
-  ```css
-  .field-grid {
-    grid-template-columns: 1fr;
-  }
-  ```
-  This forces single-column field grids on mobile, ensuring no partial-column squeezing. The current behavior with `auto-fit` already handles this for most cases, but an explicit single-column rule at 760px is more predictable and avoids any edge case where `auto-fit` might produce a cramped 2-column layout between 480-520px.
-- **Dependencies**: None. `.field-grid.single` already has `grid-template-columns: 1fr` and would override this.
-
-### R5 — Evidence buttons below 44px touch target minimum
-
-- **Priority**: HIGH
-- **Description**: `.evidence-button`, `.evidence-remove-button`, and `.evidence-lightbox-close` all have `min-height: 36px` with `padding: 8px 10px` (components.css:722-724). At 36px height, these are 8px below the WCAG 2.5.8 / 44px minimum touch target guideline. On touch devices, 36px is small enough to cause accidental mis-taps, especially for remove/close actions that are destructive or modal-dismissing.
-- **Specifics**: In `components.css`, change:
-  ```css
-  .evidence-button,
-  .evidence-remove-button,
-  .evidence-lightbox-close {
+  .reference-drawer-summary {
     min-height: 44px;
   }
   ```
-  The existing `padding: 8px 10px` plus `min-height: 44px` will give adequate tap area. No other changes needed.
-- **Dependencies**: None. This only increases the minimum height; existing padding keeps buttons visually proportional.
+  The existing padding remains. The grid row will expand slightly.
+- **Dependencies**: None. Reference drawers use `display: grid; gap: 12px` in their stack, so taller summaries expand their row naturally.
+- **Affected viewports**: All. Most relevant in drawer mode where the context panel is touch-accessible.
 
-### R6 — Context pin/overview buttons below 44px touch target minimum
+### R9 — `scroll-margin-top` on sections doesn't adapt to variable header height
 
-- **Priority**: MEDIUM
-- **Description**: `.context-pin-button`, `.context-overview-button`, `.reference-pin-button`, and `.about-topic-button` all have `min-height: 36px` (components.css:1164). Same issue as R5 — these are interactive buttons that fall below the 44px touch target minimum. The pin toggle and overview navigation are used frequently in the context panel.
-- **Specifics**: In `components.css`, change:
+- **Priority**: LOW
+- **Description**: `.doc-section, .form-section` have `scroll-margin-top: 22px` (`components.css:93`). This is the scroll offset when navigating to a section via anchor link or page index click. Since sections are inside panels that start below the fixed header (`inset: var(--header-h)`), the scroll context is the panel itself, not the viewport. The `scroll-margin-top: 22px` provides clearance from the panel's own sticky elements (progress bar at 4px). This is correct and viewport-independent — the margin relates to the panel's scroll context, not the viewport header.
+- **Specifics**: No action needed. The current value is correct for all breakpoints.
+- **Dependencies**: None.
+- **Affected viewports**: All — but behavior is correct.
+
+### R10 — Help section item grid slightly compressed in drawer mode at 1160px
+
+- **Priority**: LOW
+- **Description**: `.help-section-item` uses a 4-column grid (`grid-template-columns: auto auto minmax(0, 1fr) auto`, `components.css:1691`). At 760px, it collapses to 3 columns (`components.css:1763-1770`). Between 760–1160px in drawer mode, the context drawer is `min(34rem, calc(100vw - 12px))` wide. At exactly 1160px, the drawer is 544px. A 4-column grid with 8–10px gaps in 544px gives ~128px per column. The "auto" columns (swatch + code) are small (~20px + ~50px), leaving ~350px for the label column and ~50px for the status badge. This works but is tight.
+- **Specifics**: No action needed at this time. The content renders legibly. If the help panel sees heavy use on tablets, consider adding the 3-column collapse at 1160px instead of 760px:
   ```css
-  .context-pin-button,
-  .context-overview-button,
-  .reference-pin-button,
-  .about-topic-button {
-    min-height: 44px;
+  @media (max-width: 1160px) {
+    .help-section-item {
+      grid-template-columns: auto auto minmax(0, 1fr);
+    }
+    .help-section-item .page-index-meta {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
   }
   ```
+  But this would duplicate the 760px rule. Low priority — monitor.
 - **Dependencies**: None.
+- **Affected viewports**: 760–1160px (drawer mode only).
 
-### R7 — Evidence select and file inputs below 44px touch target minimum
+---
 
-- **Priority**: MEDIUM
-- **Description**: `.evidence-select` and `.evidence-file-input` have `min-height: 38px` (components.css:677-678). Native `<select>` and `<input type="file">` controls need adequate tap area. 38px is 6px below the 44px guideline.
-- **Specifics**: In `components.css`, change:
-  ```css
-  .evidence-select,
-  .evidence-file-input {
-    min-height: 44px;
-  }
-  ```
-- **Dependencies**: None.
+## W1–W4 Regression Check
 
-### R8 — `score-table` horizontal overflow on narrow screens
+Checked for regressions introduced by prior waves:
 
-- **Priority**: HIGH
-- **Description**: `.score-table` is `width: 100%` with `border-collapse: collapse` (components.css:207-215). The scoring table has 3 columns (Score, Label, Meaning). The "Meaning" column contains long descriptive text. On screens below ~500px, the table will overflow its container because `border-collapse` tables don't participate in CSS grid/flex containment, and there is no `overflow` or `table-layout: fixed` rule. The form section padding + panel padding further reduce available width.
-- **Specifics**: In `components.css`, add to the `@media (max-width: 760px)` block:
-  ```css
-  .score-table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  ```
-  This wraps the table in a scrollable container on mobile, preventing layout blowout while keeping the full table readable with horizontal swipe.
-- **Dependencies**: None. This is a standard mobile table pattern.
+| Check                                     | Result                                                                                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Header grid layout (W4 arrange)           | ✅ No regression. Grid `auto minmax(0,1fr) auto` handles all widths.                                                        |
+| Header height 118px (W4 arrange)          | ✅ No regression. Token updated in tokens.css. 760px override intact.                                                       |
+| Touch targets on evidence buttons (W1–W4) | ✅ All at 44px. `.evidence-button`, `.evidence-remove-button`, `.evidence-lightbox-close` confirmed.                        |
+| Touch targets on context buttons (W1–W4)  | ✅ All at 44px. `.context-pin-button`, `.context-overview-button`, `.context-link-button`, `.about-topic-button` confirmed. |
+| Field-grid single-column at 760px         | ✅ Present at `components.css:1150-1152`.                                                                                   |
+| Score-table horizontal scroll at 760px    | ✅ Present at `components.css:1154-1158`.                                                                                   |
+| Print `size: A4`                          | ✅ Present at `print.css:7`.                                                                                                |
+| Header progress summary responsive        | ✅ `min-width: 0; flex-basis: 100%` at 1160px (`interaction-states.css:1456-1461`).                                         |
+| Workspace layout collapse at 1160px       | ✅ Present at `layout.css:554-556`.                                                                                         |
+| Section animation opacity reset           | ✅ `interaction-states.css:68-69` sets `opacity: 0; animation: sectionEnter 120ms forwards`. No regression.                 |
+| Rating option transitions                 | ✅ `duration-instant` (100ms) — fast but not zero. Works on touch.                                                          |
+| Accent scoping via `[data-accent-key]`    | ✅ Accent variables resolve correctly in both sidebar and drawer modes. Drawer panel inherits body accent.                  |
 
-### R9 — `context-route-grid` two-column layout not collapsed at 760px
+**New issues not present in prior waves:**
 
-- **Priority**: LOW
-- **Description**: `.context-route-grid` uses `grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr)` (components.css:1193-1195). The info rows in the context route card (Mode, Topic, Focus, Workflow, Status, Required) use this 2-column definition-list layout. On very narrow screens inside the context drawer (which is `min(100vw - 8px, 34rem)` at 760px), the 5.5rem label column plus content column is fine. However, when the drawer opens on a 360px phone, the effective width is ~352px, which should still fit. This is a marginal concern.
-- **Specifics**: No action needed now. Monitor if context route labels are truncated on 320px devices. If so, add `minmax(4.5rem, auto)` at 480px.
-- **Dependencies**: None.
-
-### R10 — Panel title text may truncate on narrow screens
-
-- **Priority**: LOW
-- **Description**: `.panel-title` uses `font-size: var(--text-display)` which is `2.25rem` (36px) (layout.css:131). With the panel title row including a completion badge, the title "Questionnaire — [long section name]" can exceed available width on narrow screens. The flex layout with `min-width: 0` (layout.css:150) allows text truncation, but the title is not explicitly set to truncate with ellipsis. The `text-transform: uppercase` and `letter-spacing: var(--ls-panel-title)` (0.12em) make uppercase text even wider.
-- **Specifics**: In `layout.css`, add to `.panel-title`:
-  ```css
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  ```
-  This ensures graceful truncation rather than wrapping or pushing the badge off-screen. The full title is still accessible via the `aria-labelledby` attribute on the panel.
-- **Dependencies**: None.
-
-### R11 — `header-progress-summary` overlaps completion strip at narrow widths
-
-- **Priority**: MEDIUM
-- **Description**: The `.header-progress-summary` is dynamically inserted after the completion strip in the header grid (sidebar.js:381-389). At 1160px, it gets `flex-basis: 100%` (interaction-states.css:1491-1495), causing it to take a full row. On mobile (760px), the completion strip also gets `width: 100%; order: 10` (components.css:975-979). Both elements take full rows in the header grid, but the progress summary has `min-width: min(24rem, 100%)` (interaction-states.css:1185) which is 384px. On a 375px phone, this is wider than the viewport. The `max-width: none` at 1160px overrides, but the `min-width` still constrains it below 384px viewports.
-- **Specifics**: In `interaction-states.css`, inside the `@media (max-width: 1160px)` block (line 1490), change:
-  ```css
-  .header-progress-summary {
-    min-width: 0;
-    max-width: none;
-    flex-basis: 100%;
-  }
-  ```
-  The `min-width: 0` allows it to shrink below 24rem on very narrow screens. The progress text will wrap naturally since it's in `<p>` block elements.
-- **Dependencies**: None. The `min-width: 0` at 1160px is the key fix.
-
-### R12 — Print layout missing `@page` size specification
-
-- **Priority**: LOW
-- **Description**: `print.css` sets `@page { margin: 1.5cm; }` (print.css:5-7) but does not specify `size`. Without an explicit size, the browser defaults to the user's printer settings, which is usually correct. However, for a questionnaire that may be exported to PDF, explicitly setting `size: A4` ensures consistent pagination.
-- **Specifics**: In `print.css`, change:
-  ```css
-  @page {
-    margin: 1.5cm;
-    size: A4;
-  }
-  ```
-- **Dependencies**: None.
-
-### R13 — Print layout does not expose page-index navigation state
-
-- **Priority**: LOW
-- **Description**: The page index column is hidden in print (`display: none` on `.page-index-column`, print.css:14). This is correct — the sidebar nav is interactive chrome. However, there is no print-visible replacement showing which page/section the printed content belongs to. The section headings (h2) inside each form-section provide this, so the content is identifiable. This is acceptable as-is.
-- **Specifics**: No action needed. Section headings serve as print navigation context.
-- **Dependencies**: None.
-
-### R14 — `nav-button` padding creates inconsistent touch targets
-
-- **Priority**: LOW
-- **Description**: `.nav-button` has `padding: 8px 14px` (components.css:63) with no explicit `min-height`. The effective height depends on font-size (`var(--text-sm)` = 12px) + line-height + padding. At approximately `12px * 1.2 (default) + 16px = ~30px`, this is well below 44px. However, these are primarily keyboard-driven (per the design context: "Keyboard-first efficiency. Power users drive the interface.") and are used in the fixed header where space is constrained. Adding 44px height would break the header layout.
-- **Specifics**: No action needed. These buttons are in the fixed header where vertical space is at a premium, and the design context explicitly prioritizes keyboard use. The completion strip cells (28px height) are similarly compact by design. Both are used by expert users on desktop. If touch use becomes a requirement, a separate mobile nav pattern would be needed.
-- **Dependencies**: None.
-
-### R15 — No `landscape` orientation handling
-
-- **Priority**: LOW
-- **Description**: The app uses `100dvh` which adapts to viewport changes including orientation, and the 1160px breakpoint catches most tablet landscape scenarios. However, on phones in landscape orientation, the viewport width may exceed 760px (triggering tablet layout) while the viewport height is very shallow (~300-400px). The fixed header at 118px (or 168px at 760px if the width is still >760px) consumes a significant portion of the available height, leaving very little scroll area for the questionnaire.
-- **Specifics**: No new breakpoint needed. The existing `100dvh` and panel `overflow: auto` handle this acceptably. If landscape phone usability becomes an issue, consider reducing `--header-h` via a `@media (max-height: 500px)` query in a future wave.
-- **Dependencies**: None. Flagged for future consideration.
-
-### R16 — Drawer backdrop click area starts below header
-
-- **Priority**: LOW
-- **Description**: The context drawer backdrop uses `inset: var(--header-h) 0 0 0` (layout.css:436). This means the header area is not covered by the backdrop, so clicking the header while the drawer is open does not dismiss it. This is intentional — the header contains the Context toggle button which should remain clickable. However, the completion strip and nav buttons in the header are not inert while the drawer is open.
-- **Specifics**: No action needed. The Escape key handler (navigation.js:992-995) closes the drawer, and the Context button toggles it. The header remaining interactive is correct behavior.
-- **Dependencies**: None.
+- None identified. All findings (R1–R10) are pre-existing gaps that were either missed or intentionally deferred.
 
 ---
 
 ## Summary
 
-| ID  | Priority | Area          | Action                                                             |
-| --- | -------- | ------------- | ------------------------------------------------------------------ |
-| R1  | MEDIUM   | Header        | Reduce header-inner padding at 1160px                              |
-| R2  | HIGH     | Drawer UX     | Add visual indicator for drawer mode on Context button             |
-| R3  | MEDIUM   | Mobile        | Hide duplicate Context button in questionnaire toolbar below 760px |
-| R4  | MEDIUM   | Form layout   | Force single-column field-grid at 760px                            |
-| R5  | HIGH     | Touch targets | Increase evidence buttons min-height to 44px                       |
-| R6  | MEDIUM   | Touch targets | Increase context/reference/pin buttons min-height to 44px          |
-| R7  | MEDIUM   | Touch targets | Increase evidence select/file inputs min-height to 44px            |
-| R8  | HIGH     | Overflow      | Make score-table scrollable horizontally at 760px                  |
-| R9  | LOW      | Layout        | Monitor context-route-grid on 320px devices                        |
-| R10 | LOW      | Typography    | Add text-overflow ellipsis to panel-title                          |
-| R11 | MEDIUM   | Header        | Fix header-progress-summary min-width at 1160px                    |
-| R12 | LOW      | Print         | Add `size: A4` to @page rule                                       |
-| R13 | LOW      | Print         | No action needed — section headings suffice                        |
-| R14 | LOW      | Touch targets | No action needed — keyboard-first design                           |
-| R15 | LOW      | Orientation   | Flagged for future — landscape phone height concern                |
-| R16 | LOW      | Drawer UX     | No action needed — intentional behavior                            |
+| ID  | Priority | Area          | Action                                                      | Status       |
+| --- | -------- | ------------- | ----------------------------------------------------------- | ------------ |
+| R1  | HIGH     | Touch targets | Add `min-height: 44px` to `.evidence-file-button`           | New fix      |
+| R2  | HIGH     | Touch targets | Add `min-height: 44px` to `.sidebar-tab`                    | New fix      |
+| R3  | MEDIUM   | Touch targets | Add `min-height: 44px` to `.pager-button`                   | New fix      |
+| R4  | MEDIUM   | Header height | Adjust `--header-h` between 760–1160px to prevent overlap   | New fix      |
+| R5  | MEDIUM   | Touch targets | Add `min-height: 44px` to `.context-anchor-button`          | New fix      |
+| R6  | LOW      | Header        | Already addressed — padding reduced to 18px at 1160px       | Already done |
+| R7  | LOW      | Drawer UX     | Add `▸` indicator to sidebar toggle at 1160px               | Enhancement  |
+| R8  | LOW      | Touch targets | Add `min-height: 44px` to `.reference-drawer-summary`       | Nice-to-have |
+| R9  | LOW      | Scroll        | No action needed — current `scroll-margin-top` correct      | No change    |
+| R10 | LOW      | Layout        | Monitor help grid in drawer — slightly compressed at 1160px | Monitor      |
 
-**HIGH**: R2, R5, R8 (3 items)
-**MEDIUM**: R1, R3, R4, R6, R7, R11 (6 items)
-**LOW**: R9, R10, R12, R13, R14, R15, R16 (7 items — mostly no-action-needed)
+**HIGH**: R1, R2 (2 items)
+**MEDIUM**: R3, R4, R5 (3 items)
+**LOW**: R6 (done), R7, R8, R9 (no change), R10 (monitor) (5 items)
+
+**Total actionable fixes**: 5 (R1–R5). All are additive `min-height` or `--header-h` adjustments with no layout regression risk.

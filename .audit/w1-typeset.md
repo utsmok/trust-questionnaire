@@ -1,196 +1,318 @@
 # W1 — Typeset Audit
 
+**Date:** 2026-04-05
 **Scope:** All CSS files (`tokens.css`, `base.css`, `layout.css`, `components.css`, `accent-scoping.css`, `interaction-states.css`, `animations.css`, `print.css`), `trust-framework.html`, and JS inline styles.
+**Previous audit:** Supersedes prior w1-typeset.md. Prior R1–R5 and R7 have been resolved. R6 (text-mega), R8 (Arial Narrow docs), and R9 (drawer title comment) remain outstanding. This is a fresh assessment against current code.
 
 ---
 
 ## What's Already Good (Do NOT Change)
 
-- **Font family tokens are well-structured.** Three distinct families (`--ff-body`, `--ff-heading`, `--ff-mono`) with semantic names. Inter for body, Arial Narrow for headings, JetBrains Mono for data/codes. This matches the design context and the brand personality of "Efficient, Explicit, Engineered."
-- **Type scale uses `rem` throughout.** All sizes in `tokens.css` use `rem` — respects user zoom settings. No `px` font-size values found anywhere in the CSS.
-- **`font-kerning: normal` on body.** Good baseline in `base.css:16`.
-- **`font-variant-numeric: tabular-nums` applied consistently** to all numerical/data elements (strip cells, score tables, completion badges, page index statuses, rating scores). Exactly right for tabular data alignment.
-- **Letter-spacing tokens are intentional and purposeful.** The graduated scale (`--ls-body: 0`, `--ls-label: 0.02em`, `--ls-uppercase: 0.04em`, `--ls-kicker: 0.08em`, `--ls-panel-title: 0.12em`) maps cleanly to typographic roles from body text through display headings.
-- **Measure constraints are present.** `max-width: 72ch` on `.doc-section p` and `.form-section p`, `max-width: 44ch` on `.panel-caption`. Both are appropriate for their contexts.
-- **Uppercase heading treatment with Arial Narrow** is coherent and matches the "condensed, uppercase, tight tracking" specification from `.impeccable.md`.
-- **Print stylesheet correctly overrides body text** to `11pt` with `line-height: 1.5` and forces black-on-white. Uses `print-color-adjust: exact` where needed.
-- **Font loading uses `preconnect`** for Google Fonts. Inter loads 400/700/800; JetBrains Mono loads 400/700. No unnecessary weights.
-- **Heading hierarchy is clean.** h1 = panel title (`--text-display`), h2 = section headings (`--text-heading`), h3 = sub-sections and criterion cards (`--text-sub`). No h4-h6 used, which is appropriate for this flat, dense structure.
+- **Three-font system with clear functional roles.** `--ff-body` (Inter) for prose, `--ff-heading` (Arial Narrow) for structural labels and headings, `--ff-mono` (JetBrains Mono) for codes, IDs, and data. Each family has exactly one job. No overlap, no ambiguity.
+- **Only two weights loaded per font (400, 700).** Google Fonts URL (`trust-framework.html:9`) loads Inter 400/700 and JetBrains Mono 400/700. No unused weights. All instances of `font-weight: 700` in CSS are consistent — no 500/600/800 anywhere.
+- **`rem`-based type scale with defined steps.** All sizes reference browser default (16px). Respects user zoom. No `px` font-size in any CSS file.
+- **`font-kerning: normal`** on body (`base.css:16`). Correct.
+- **Anti-aliasing enabled.** `-webkit-font-smoothing: antialiased` and `-moz-osx-font-smoothing: grayscale` in `base.css:18-19`.
+- **`font-variant-numeric: tabular-nums`** applied to strip cells, completion badges, score tables, page-index states, rating-text strong elements — all numeric data aligns correctly.
+- **Line-heights are well-chosen.** `--lh-body: 1.55` (excellent for dense body text), `--lh-heading: 1.2` (correct for large text), `--lh-sub: 1.3` (good middle ground for h3/criterion cards).
+- **`max-width: 72ch`** on `.doc-section p` and `.form-section p` — body line lengths are controlled.
+- **Semantic letter-spacing tokens.** The graduated scale (`--ls-body: 0`, `--ls-label: 0.02em`, `--ls-heading: 0.03em`, `--ls-uppercase: 0.04em`, `--ls-kicker: 0.08em`, `--ls-panel-title: 0.08em`, `--ls-annotation: 0.04em`, `--ls-section-kicker: 0.1em`) maps cleanly to typographic roles. The h2 tracking fix from the prior audit (changed from `-0.01em` to `0.03em`) is now in place and correct.
+- **`text-rendering: optimizeLegibility`** on body (`base.css:17`). Fine for an app with limited long-form text.
+- **Print stylesheet** correctly handles typography (`font-size: 11pt`, `line-height: 1.5`, mono for section kickers, `print-color-adjust: exact` on colored elements).
+- **Google Fonts `display=swap`** prevents invisible text during font load. `preconnect` hints are present.
+- **Monospace applied consistently to data.** `.strip-cell`, `.completion-badge`, `.page-index-code`, `.page-index-state`, `.page-index-status`, `.evidence-meta-item`, `.section-kicker`, `.context-route-code`, `.context-block-label`, `.context-source-item`, `.context-anchor-code`, `.pager-status`, `.pager-shortcuts`, `.score-table td strong`, `.rating-text strong`, `.evidence-file-name`, `.evidence-item-name`, `.validation-message`, `.header-progress-body`, `.header-progress-meta` all use `--ff-mono`. This matches the "expose the machine" principle.
+- **Heading font applied consistently to headings/labels.** `.panel-title`, `.sidebar-tab`, `.nav-button`, `.score-table th`, `.field-label`, `.workspace-title`, `.evidence-lightbox-title`, `.context-route-title`, `.about-topic-title`, `.header-progress-title`, `.reference-drawer-summary`, `.page-index-group-label` all use `--ff-heading`. Prior R2 fix is confirmed applied.
+- **Chips correctly sized.** `.chip` uses `--text-sm` (12px). Prior R3 fix is confirmed applied.
+- **Score values and rating scores use monospace.** `.score-table td strong` and `.rating-text strong` both use `--ff-mono`. Prior R4/R5 fixes confirmed applied.
+- **Evidence file names use monospace.** `.evidence-file-name` and `.evidence-item-name` both use `--ff-mono`. Prior R7 fix confirmed applied.
+- **Heading hierarchy is clean.** h1 = panel title (`--text-display`), h2 = section headings (`--text-heading`), h3 = sub-sections/criterion cards (`--text-sub`). Only three heading levels — appropriate for this flat, dense structure.
+- **h3 treatment is intentional and effective.** h3 uses Arial Narrow 700 at `--text-sub` in mixed case, while h2 is uppercase. This creates a readable two-tier heading system. Do NOT add `text-transform: uppercase` to h3.
+- **`font: inherit`** used in JS-generated inline styles for input/textarea/select controls (`dom-factories.js`). Controls inherit body typography correctly.
 
 ---
 
 ## Recommendations
 
-### R1 — HIGH: Inter weight 800 is used extensively but NOT loaded
+### R1 — HIGH: `.mini-card h3` inherits Inter instead of Arial Narrow in reference panels
 
-**Description:** The Google Fonts URL loads Inter at weights `400;700;800`, but the font link uses `family=Inter:wght@400;700;800` — this is actually correct. However, Arial Narrow is used at `font-weight: 800` in ~12 selectors (`.panel-title`, `.nav-button`, `.section-kicker`, `.score-table th`, `.workspace-title`, `.subhead`, `.reference-drawer-summary`, `.surface-kicker`, `.header-progress-title`, `.context-route-title`, `.evidence-lightbox-title`, `.evidence-item-name`). Arial Narrow only ships at weights 400 (Regular) and 700 (Bold) in most system font stacks. Weight 800 on Arial Narrow will be indistinguishable from 700, making it a silent no-op.
+| Field        | Value                   |
+| ------------ | ----------------------- |
+| **ID**       | R1                      |
+| **Priority** | HIGH                    |
+| **Category** | Consistency / Hierarchy |
 
-**Specifics:**
+**Problem:** `.mini-card h3` (`components.css:235-239`) only sets `margin`, `color`, and `font-size`. It does NOT set `font-family` or `font-weight`. It relies on cascade to inherit these values:
 
-- `trust-framework.html:9` — Font URL is fine for Inter.
-- All selectors using `font-weight: 800` with `font-family: var(--ff-heading)` (Arial Narrow): change to `font-weight: 700` to reflect actual rendering, OR add a web font for Arial Narrow if the extra weight distinction is desired.
-- Affected selectors in `components.css`: `.nav-button` (L65), `.section-kicker` (L124), `.doc-section h2, .form-section h2` (L148), `.score-table th` (L233), `.score-table td strong` (L238), `.workspace-title` (L1001), `.reference-drawer-summary` (L1401), `.evidence-lightbox-title` (L888), `.evidence-item-name` (L830).
-- Affected in `layout.css`: `.panel-title` (L135), `.surface-kicker` (L386).
-- Affected in `interaction-states.css`: `.header-progress-title` (L1170).
+- Inside `.doc-section` or `.form-section` → the `.doc-section h3, .form-section h3` rule (`components.css:147-154`) provides `font-family: var(--ff-heading)` and `font-weight: 700`. **Correct result: Arial Narrow bold.**
+- Inside reference panel (NOT a `.doc-section`/`.form-section`) → no h3 rule applies. Browser default `font-weight: bold` (~700) is used, and `font-family` inherits from `body` (Inter). **Wrong result: Inter bold.**
 
-**Dependencies:** None. This is a standalone correction.
+This affects every mini-card heading in the Reference tab panels — the "Criterion rating scale", "Recommendation vocabulary", "Confidence levels", "Critical-fail flags", "Per-principle judgment", "Final recommendation categories", "Decision rules", "Desk review", "Hands-on testing", "Repeated-query test", "Manual source verification", and "Evidence bundle" headings all render in Inter while structurally identical headings in the Guidance tab render in Arial Narrow.
 
----
-
-### R2 — HIGH: `--ls-heading: -0.01em` is defined but never used
-
-**Description:** The token `--ls-heading` (`tokens.css:206`) is declared at `-0.01em` and intended for headings, but no selector in any CSS file references `var(--ls-heading)`. Instead, most headings either inherit `--ls-body` (0) or use inline values like `letter-spacing: 0.02em` (field labels) or `letter-spacing: 0.04em`/`0.06em`/`0.08em`/`0.1em`/`0.12em` (uppercase elements). The heading styles (`.doc-section h2`, `.form-section h2`) set no `letter-spacing` at all, so they inherit `0` from body. Meanwhile `.context-route-title` at `components.css:1120` has no letter-spacing despite being an uppercase heading.
+**Fix:** Add `font-family: var(--ff-heading)`, `font-weight: 700`, and `line-height: var(--lh-sub)` to `.mini-card h3`.
 
 **Specifics:**
 
-- Either remove `--ls-heading` from `tokens.css:206` (dead token), or start using it consistently on heading selectors.
-- `.doc-section h2, .form-section h2` (`components.css:139-149`) — currently has no `letter-spacing`. Add `letter-spacing: var(--ls-heading)` if tight tracking for headings is desired, or confirm that `0` is intentional for these large uppercase headings.
-- `.context-route-title` (`components.css:1113-1120`) — uppercase heading with no letter-spacing. Should it use `--ls-uppercase` (0.04em)?
+- File: `components.css` lines 235-239
+- Change:
 
-**Dependencies:** Relates to R5 (heading consistency).
-
----
-
-### R3 — MEDIUM: `--ls-label: 0.02em` is only used in JS, not in CSS
-
-**Description:** The token `--ls-label` is defined at `0.02em` in `tokens.css:208` but only referenced in `static/js/utils/confirm-dialog.js:42`. The CSS `.field-label` at `components.css:301` uses the inline value `letter-spacing: 0.02em` instead of `var(--ls-label)`. This defeats the purpose of having a token.
-
-**Specifics:**
-
-- `components.css:301` — Change `letter-spacing: 0.02em` to `letter-spacing: var(--ls-label)`.
-- Audit for any other `0.02em` values that should reference the token.
-
-**Dependencies:** None.
-
----
-
-### R4 — MEDIUM: Inconsistent letter-spacing on uppercase elements
-
-**Description:** There are at least 5 different letter-spacing values used across uppercase elements without clear mapping to the token system:
-
-| Value    | Selectors                                                                                                                                       |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `0.04em` | `.nav-button`, `.pager-button`, `.evidence-button`, `.condition-tag`, `.display-tag`, `.criterion-card::after`, `.completion-badge` (via reset) |
-| `0.06em` | `.trust-label p`, `.reference-drawer-summary`                                                                                                   |
-| `0.08em` | `.score-table th`, `.workspace-title`, `.header-progress-title`                                                                                 |
-| `0.1em`  | `.section-kicker`, `.surface-kicker`                                                                                                            |
-| `0.12em` | `.panel-title`                                                                                                                                  |
-
-The tokens define `--ls-uppercase: 0.04em`, `--ls-kicker: 0.08em`, `--ls-panel-title: 0.12em`, but these tokens are only used for `.panel-title` and `.surface-kicker`. Everything else uses raw values.
-
-**Specifics:**
-
-- `.nav-button` (L68), `.pager-button` (L1357), `.evidence-button` (L724) — Change `letter-spacing: 0.04em` to `letter-spacing: var(--ls-uppercase)`.
-- `.score-table th` (L232), `.workspace-title` (L1004), `.header-progress-title` (L1173) — Change `letter-spacing: 0.08em` to `letter-spacing: var(--ls-kicker)`.
-- `.section-kicker` (L126), `.surface-kicker` (L388) — Already use `0.1em` inline, not `var(--ls-kicker)`. Either add a `--ls-section-kicker: 0.1em` token or unify with `--ls-kicker`.
-- `.trust-label p` (L73), `.reference-drawer-summary` (L1403) — Change `letter-spacing: 0.06em` to a new token `--ls-nav-label: 0.06em` or consolidate with `--ls-uppercase`.
-
-**Dependencies:** May require adding 1 new token (`--ls-nav-label`).
-
----
-
-### R5 — MEDIUM: `h3` headings lack `font-family` declaration
-
-**Description:** `.doc-section h3, .form-section h3` (`components.css:151-158`) do not set `font-family`, so they inherit `var(--ff-body)` (Inter) from the body. Meanwhile `.criterion-card h3` (`components.css:546-551`) also inherits Inter. However, `.mini-card h3` (`components.css:194-198`) and `.context-route-title` (`components.css:1113-1120`) explicitly set `font-family: var(--ff-heading)`. This means h3 elements are split between two typefaces with no clear rule for which gets which.
-
-**Specifics:**
-
-- Decide whether h3 should be body (Inter) or heading (Arial Narrow).
-- If h3 is a heading level, it should probably use `var(--ff-heading)` for visual consistency with h1/h2. Add `font-family: var(--ff-heading)` to `.doc-section h3, .form-section h3` and `.criterion-card h3`.
-- Alternatively, if h3 is intentionally a "sub-heading" that should read as body-weight, document this as a deliberate choice.
-
-**Dependencies:** None.
-
----
-
-### R6 — MEDIUM: `.brand-sep` uses `font-weight: 300` on Arial Narrow
-
-**Description:** `layout.css:63` sets `font-weight: 300` on `.brand-sep`. Arial Narrow does not have a 300 weight variant on any major OS. It will fall back to 400 (Regular), making this a silent no-op like R1.
-
-**Specifics:**
-
-- `layout.css:63` — Change `font-weight: 300` to `font-weight: 400` to match actual rendering.
-
-**Dependencies:** None.
-
----
-
-### R7 — MEDIUM: `.small` class is misleading — it sets `font-size` to body, not small
-
-**Description:** `base.css:98-100` defines `.small { font-size: var(--text-body); }`. The token `--text-body` is `1rem`. This class name implies a reduced size but applies the default body size. It appears to be a no-op override or a leftover from refactoring.
-
-**Specifics:**
-
-- If `.small` should actually be small, change to `font-size: var(--text-sm)` (0.75rem).
-- If `.small` is intentionally the same as body (perhaps it used to set something else), rename it to avoid confusion (e.g., `.text-base`) or remove it entirely if no longer used.
-- Search JS for `.small` usage to confirm.
-
-**Dependencies:** None.
-
----
-
-### R8 — MEDIUM: No `text-rendering` or `font-smooth` optimization
-
-**Description:** For a text-heavy questionnaire where readability is paramount, `text-rendering: optimizeLegibility` on body would enable OpenType ligatures and kerning. Additionally, `-webkit-font-smoothing: antialiased` can improve rendering of thin strokes on Inter at small sizes on macOS/Chrome.
-
-**Specifics:**
-
-- Add to `body` in `base.css`:
   ```css
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Current */
+  .mini-card h3 {
+    margin: 0 0 8px;
+    color: var(--ut-navy);
+    font-size: var(--text-sub);
+  }
+
+  /* Should be */
+  .mini-card h3 {
+    margin: 0 0 8px;
+    color: var(--ut-navy);
+    font-size: var(--text-sub);
+    line-height: var(--lh-sub);
+    font-family: var(--ff-heading);
+    font-weight: 700;
+  }
   ```
-- This is safe for this application since there are no long runs of body text where subpixel rendering would matter more (the questionnaire is mostly labels, fields, and short descriptions).
+
+**Dependencies:** None. Independent change.
+
+---
+
+### R2 — HIGH: `.subhead` class inherits Inter instead of Arial Narrow
+
+| Field        | Value                   |
+| ------------ | ----------------------- |
+| **ID**       | R2                      |
+| **Priority** | HIGH                    |
+| **Category** | Consistency / Hierarchy |
+
+**Problem:** `.subhead` (`components.css:984-989`) sets `font-size: var(--text-sub)`, `font-weight: 700`, but does NOT set `font-family`. It inherits `var(--ff-body)` (Inter) from the body cascade. This class occupies the same visual role as `.doc-section h3` / `.form-section h3` (subheading at `--text-sub` size, bold), but renders in Inter while h3 elements render in Arial Narrow. If `.subhead` is used in JS-rendered content alongside h3 elements, the font mismatch is visible.
+
+**Fix:** Add `font-family: var(--ff-heading)` to `.subhead`.
+
+**Specifics:**
+
+- File: `components.css` lines 984-989
+- Change:
+
+  ```css
+  /* Current */
+  .subhead {
+    margin: 24px 0 12px;
+    color: var(--ut-navy);
+    font-size: var(--text-sub);
+    font-weight: 700;
+  }
+
+  /* Should be */
+  .subhead {
+    margin: 24px 0 12px;
+    color: var(--ut-navy);
+    font-size: var(--text-sub);
+    font-weight: 700;
+    font-family: var(--ff-heading);
+  }
+  ```
 
 **Dependencies:** None.
 
 ---
 
-### R9 — LOW: `line-height: 1.5` hardcoded in print stylesheet
+### R3 — HIGH: Missing intermediate type-scale step for readable secondary text
 
-**Description:** `print.css:129` sets `line-height: 1.5` directly instead of using the token `--lh-body` (which is `1.55`). The screen value is `1.55`; print is `1.5`. This 0.05 difference is negligible and may be intentional (slightly tighter for print), but it breaks the token pattern.
+| Field        | Value                 |
+| ------------ | --------------------- |
+| **ID**       | R3                    |
+| **Priority** | HIGH                  |
+| **Category** | Density / Readability |
+
+**Problem:** The type scale jumps 33% from `--text-sm: 0.75rem` (12px) to `--text-body: 1rem` (16px). Several text elements that need to be read — not just glanced at — currently sit at `--text-sm` (12px):
+
+| Selector                      | File:Line            | Content                            | Current Size | Problem                                                    |
+| ----------------------------- | -------------------- | ---------------------------------- | ------------ | ---------------------------------------------------------- |
+| `.field-help`                 | `components.css:468` | Field instructions and guidance    | 12px         | Readable secondary text at 12px is below comfort threshold |
+| `.evidence-block-description` | `components.css:649` | Evidence block purpose description | 12px         | Prose that explains evidence workflow                      |
+| `.evidence-selection-summary` | `components.css:649` | Selected evidence summary          | 12px         | Summary text that needs scanning                           |
+| `.evidence-status`            | `components.css:649` | Evidence status prose              | 12px         | Status description                                         |
+| `.evidence-note`              | `components.css:649` | Reviewer notes                     | 12px         | Prose notes needing readability                            |
+| `.evidence-lightbox-note`     | `components.css:649` | Lightbox context notes             | 12px         | Supporting prose                                           |
+
+For a dense data application, 12px is correct for labels, tags, badges, and codes (annotation-level text). But these elements are not annotations — they are instructional and descriptive prose that the reviewer reads. A 14px (0.875rem) intermediate step would maintain density while providing readable secondary text.
+
+The existing scale steps above body already follow a coherent progression: body (16px) → sub (19.2px, ~1.2x) → heading (25px, ~1.3x) → display (36px, ~1.44x). Adding 14px below body creates a tighter sub-scale for secondary text while keeping body at 16px.
+
+**Fix:** Add `--text-md: 0.875rem` token and apply it to readable secondary text elements.
 
 **Specifics:**
 
-- Either change to `line-height: var(--lh-body)` for consistency, or if tighter print leading is deliberate, add a comment explaining the deviation.
+1. `tokens.css` line ~292 — Add new token between `--text-sm` and `--text-body`:
+
+   ```css
+   --text-sm: 0.75rem;
+   --text-md: 0.875rem; /* NEW: secondary readable text */
+   --text-body: 1rem;
+   ```
+
+2. Update the comment at line 289 from "Type scale -- 6 steps" to "Type scale -- 7 steps" (or whichever count is accurate after this change).
+
+3. Update these selectors in `components.css`:
+
+   | Selector                                 | Current                     | Change To                   |
+   | ---------------------------------------- | --------------------------- | --------------------------- |
+   | `.field-help` (line 469)                 | `font-size: var(--text-sm)` | `font-size: var(--text-md)` |
+   | `.evidence-block-description` (line 649) | `font-size: var(--text-sm)` | `font-size: var(--text-md)` |
+   | `.evidence-selection-summary` (line 649) | `font-size: var(--text-sm)` | `font-size: var(--text-md)` |
+   | `.evidence-status` (line 649)            | `font-size: var(--text-sm)` | `font-size: var(--text-md)` |
+   | `.evidence-note` (line 649)              | `font-size: var(--text-sm)` | `font-size: var(--text-md)` |
+   | `.evidence-lightbox-note` (line 649)     | `font-size: var(--text-sm)` | `font-size: var(--text-md)` |
+
+4. Also consider for `.reference-drawer-subtitle` (`components.css:1659`): currently `font-size: var(--text-body)` (16px), which is the same size as body text. Changing to `--text-md` would better differentiate it as a subtitle/secondary description.
+
+**Dependencies:** None. The new token is purely additive. All `--text-sm` usages for labels, buttons, UI chrome, tags, badges, and codes remain at 12px — correct for their annotation/label roles.
+
+---
+
+### R4 — MEDIUM: `.criterion-card h3` missing explicit `font-weight: 700`
+
+| Field        | Value                    |
+| ------------ | ------------------------ |
+| **ID**       | R4                       |
+| **Priority** | MEDIUM                   |
+| **Category** | Robustness / Consistency |
+
+**Problem:** `.criterion-card h3` (`components.css:596-604`) sets `font-family: var(--ff-heading)` but does not explicitly set `font-weight: 700`. It relies on the browser default bold for `<h3>` elements. While this works in practice, it's fragile: any CSS reset or inheritance change could strip the weight. Every other heading-level rule that explicitly sets `font-family` also explicitly sets `font-weight` (`.doc-section h2`, `.doc-section h3`, `.panel-title`, `.evidence-lightbox-title`, `.section-kicker`). `.criterion-card h3` is the only one that omits it.
+
+**Fix:** Add `font-weight: 700` to `.criterion-card h3`.
+
+**Specifics:**
+
+- File: `components.css` lines 596-604
+- Change:
+
+  ```css
+  /* Current */
+  .criterion-card h3 {
+    margin: 0 0 8px;
+    color: var(--ut-navy);
+    font-size: var(--text-sub);
+    line-height: var(--lh-sub);
+    font-family: var(--ff-heading);
+    border-bottom: 1px solid var(--ut-border);
+    padding-bottom: 6px;
+  }
+
+  /* Should be */
+  .criterion-card h3 {
+    margin: 0 0 8px;
+    color: var(--ut-navy);
+    font-size: var(--text-sub);
+    line-height: var(--lh-sub);
+    font-family: var(--ff-heading);
+    font-weight: 700;
+    border-bottom: 1px solid var(--ut-border);
+    padding-bottom: 6px;
+  }
+  ```
 
 **Dependencies:** None.
 
 ---
 
-### R10 — LOW: `font-size: 12pt` hardcoded in print stylesheet
+### R5 — MEDIUM: `--text-mega` token is dead (carried from prior audit R6)
 
-**Description:** `print.css:111` uses `font-size: 12pt` in `.section-kicker::before` content, while the body uses `11pt`. The `12pt` is appropriate for print kicker labels but bypasses the type scale tokens.
+| Field        | Value         |
+| ------------ | ------------- |
+| **ID**       | R5            |
+| **Priority** | MEDIUM        |
+| **Category** | Token hygiene |
+
+**Problem:** `--text-mega: 2.75rem` is defined at `tokens.css:297` but is never referenced in any CSS file or JS file. The comment at line 289 says "Type scale -- 6 steps" but 7 values are defined. Dead tokens add maintenance burden and suggest incomplete implementation. Carried from prior audit R6 — not yet resolved.
+
+**Fix:** Remove the token. The panel title (`.panel-title`) uses `--text-display` (2.25rem / 36px), which is appropriate. There is no UI element that needs 44px text in this dense data application.
 
 **Specifics:**
 
-- This is acceptable as a print-specific override. No change needed, but document why `12pt` was chosen (slightly larger for section kickers to stand out in print).
+- File: `tokens.css` line 297
+- Remove: `--text-mega: 2.75rem;`
+- Update comment at line 289 to reflect the final step count (6 or 7, depending on whether R3's new `--text-md` is adopted)
 
-**Dependencies:** None.
+**Dependencies:** Grep JS source to confirm no dynamic references to `--text-mega` before removing.
 
 ---
 
-### R11 — LOW: `--text-xs` (0.625rem = 10px) may be below minimum readable size
+### R6 — MEDIUM: `.field-label` line-height too generous for uppercase condensed text
 
-**Description:** `--text-xs` at `0.625rem` (10px at default) is used extensively for chip labels, completion badges, meta tags, and code references. While WCAG does not set a minimum font size (it's about contrast), 10px is small for extended reading. In this app it's used only for short labels/codes, which is appropriate. However, it's worth noting.
+| Field        | Value                     |
+| ------------ | ------------------------- |
+| **ID**       | R6                        |
+| **Priority** | MEDIUM                    |
+| **Category** | Density / Vertical rhythm |
+
+**Problem:** `.field-label` (`components.css:333-345`) is `text-transform: uppercase` with `font-family: var(--ff-heading)` (Arial Narrow) and `letter-spacing: var(--ls-label)` (0.02em), but does not set `line-height`. It inherits `--lh-body: 1.55` from the body cascade. For a single-line uppercase condensed label at 12px, a line-height of 1.55 is overly generous — it adds ~5px of extra vertical space per label. In a form with 132+ fields, this accumulates into significant wasted vertical space.
+
+Compare with other uppercase/heading elements that DO set line-height:
+
+- `.doc-section h2` → `--lh-heading: 1.2`
+- `.criterion-card h3` → `--lh-sub: 1.3`
+- `.panel-title` → not explicitly set, but it's a single line with `white-space: nowrap`
+
+**Fix:** Add `line-height: var(--lh-heading)` (1.2) to `.field-label`.
 
 **Specifics:**
 
-- No change recommended — usage is limited to short labels, codes, and metadata where small size is intentional for information density.
-- Consider adding `line-height: 1.4` as a minimum for `--text-xs` contexts if any are multi-line.
+- File: `components.css` lines 333-345
+- Add to the rule: `line-height: var(--lh-heading);`
 
-**Dependencies:** None.
+**Dependencies:** None. Field labels are typically single-line. If any labels wrap to two lines, 1.2 line-height is still readable at 12px.
 
 ---
 
-### R12 — LOW: No `h4`–`h6` styles defined
+### R7 — LOW: Arial Narrow fallback documentation (carried from prior audit R8)
 
-**Description:** The HTML uses only h1, h2, and h3. No h4-h6 elements exist in the markup. The CSS defines no styles for them either, so they would inherit body styles. This is fine for the current structure but worth documenting as a convention.
+| Field        | Value                     |
+| ------------ | ------------------------- |
+| **ID**       | R7                        |
+| **Priority** | LOW                       |
+| **Category** | Font loading / Robustness |
+
+**Problem:** Arial Narrow is specified via `--ff-heading: 'Arial Narrow', Arial, sans-serif` (`tokens.css:328`) with no `@font-face` declaration or documentation. It relies entirely on being a system font. Arial Narrow IS included with Windows and macOS, so desktop users are covered. However: (1) not available on Linux, ChromeOS, or mobile, (2) fallback to standard Arial loses condensed character, (3) no documentation of this assumption. For a tool used by a specific team on managed workstations, risk is minimal, but the assumption should be documented. Carried from prior audit R8.
+
+**Fix:** Add a comment documenting the system font assumption.
 
 **Specifics:**
 
-- No change needed. If h4+ are ever introduced, they should follow the type scale (use `--text-body` or `--text-sub` with appropriate weight).
+- File: `tokens.css` above line 328
+- Add:
+  ```css
+  /* Arial Narrow: system font (Windows, macOS). Fallback to Arial is wider —
+     acceptable for managed desktop deployment. */
+  --ff-heading: 'Arial Narrow', Arial, sans-serif;
+  ```
+
+**Dependencies:** None. Documentation only, no visual change.
+
+---
+
+### R8 — LOW: Reference drawer title mixed-case intent should be documented (carried from prior audit R9)
+
+| Field        | Value                            |
+| ------------ | -------------------------------- |
+| **Priority** | LOW                              |
+| **Category** | Consistency (likely intentional) |
+| **ID**       | R8                               |
+
+**Problem:** `.reference-drawer-title` (`components.css:1631-1637`) explicitly sets `text-transform: none` and uses `font-size: var(--text-body)` with `font-weight: 700`. Its parent `.reference-drawer-summary` uses `font-family: var(--ff-heading)` with `text-transform: uppercase` and `letter-spacing: var(--ls-uppercase)`. The title breaks out of the uppercase pattern to show the criterion or reference name in mixed case. This is likely intentional — criterion names are proper nouns that read better in mixed case — but there is no comment explaining the design decision, so a future contributor might "fix" it. Carried from prior audit R9.
+
+**Fix:** Add a comment explaining the intentional deviation.
+
+**Specifics:**
+
+- File: `components.css` before the `.reference-drawer-title` rule
+- Add:
+  ```css
+  /* Title intentionally mixed-case for readability of proper nouns,
+     despite uppercase context in parent summary. */
+  ```
 
 **Dependencies:** None.
 
@@ -198,17 +320,30 @@ The tokens define `--ls-uppercase: 0.04em`, `--ls-kicker: 0.08em`, `--ls-panel-t
 
 ## Summary Table
 
-| ID  | Priority | Area           | Action                                              |
-| --- | -------- | -------------- | --------------------------------------------------- |
-| R1  | HIGH     | Font weights   | Normalize `font-weight: 800` on Arial Narrow to 700 |
-| R2  | HIGH     | Tokens         | Use or remove `--ls-heading`                        |
-| R3  | MEDIUM   | Tokens         | Use `var(--ls-label)` in `.field-label` CSS         |
-| R4  | MEDIUM   | Letter-spacing | Replace raw values with tokens across ~10 selectors |
-| R5  | MEDIUM   | Font family    | Add `font-family: var(--ff-heading)` to h3 rules    |
-| R6  | MEDIUM   | Font weights   | Change `.brand-sep` weight 300 → 400                |
-| R7  | MEDIUM   | Class naming   | Fix or remove misleading `.small` class             |
-| R8  | MEDIUM   | Rendering      | Add `text-rendering: optimizeLegibility` to body    |
-| R9  | LOW      | Print          | Tokenize or document print `line-height` deviation  |
-| R10 | LOW      | Print          | Document `12pt` print kicker size rationale         |
-| R11 | LOW      | Minimum size   | Acknowledge 10px usage is acceptable for labels     |
-| R12 | LOW      | Hierarchy      | Document h1-h3-only convention                      |
+| ID  | Priority | Area          | Action                                                                       | Files                          | Status  |
+| --- | -------- | ------------- | ---------------------------------------------------------------------------- | ------------------------------ | ------- |
+| R1  | HIGH     | Font family   | Add `--ff-heading` + `font-weight: 700` + `line-height` to `.mini-card h3`   | `components.css`               | New     |
+| R2  | HIGH     | Font family   | Add `--ff-heading` to `.subhead`                                             | `components.css`               | New     |
+| R3  | HIGH     | Sizing/Scale  | Add `--text-md: 0.875rem` token; apply to field help + evidence descriptions | `tokens.css`, `components.css` | New     |
+| R4  | MEDIUM   | Robustness    | Add explicit `font-weight: 700` to `.criterion-card h3`                      | `components.css`               | New     |
+| R5  | MEDIUM   | Token hygiene | Remove unused `--text-mega`                                                  | `tokens.css`                   | Carried |
+| R6  | MEDIUM   | Density       | Add `line-height: var(--lh-heading)` to `.field-label`                       | `components.css`               | New     |
+| R7  | LOW      | Documentation | Document Arial Narrow system font assumption                                 | `tokens.css`                   | Carried |
+| R8  | LOW      | Documentation | Comment mixed-case intent in `.reference-drawer-title`                       | `components.css`               | Carried |
+
+**Total:** 3 HIGH, 3 MEDIUM, 2 LOW
+
+## Implementation Order
+
+Recommended sequence (no cross-dependencies, but order minimizes review friction):
+
+1. **R5** — `tokens.css` token removal (cleanup first)
+2. **R3** — `tokens.css` new token + `components.css` value updates (scale change)
+3. **R7** — `tokens.css` comment addition
+4. **R1** — `components.css` add properties to `.mini-card h3`
+5. **R2** — `components.css` add property to `.subhead`
+6. **R4** — `components.css` add property to `.criterion-card h3`
+7. **R6** — `components.css` add property to `.field-label`
+8. **R8** — `components.css` add comment
+
+All changes are confined to `tokens.css` and `components.css`. No changes needed to: `base.css`, `layout.css`, `interaction-states.css`, `animations.css`, `accent-scoping.css`, `print.css`, `trust-framework.html`, or any JS files.

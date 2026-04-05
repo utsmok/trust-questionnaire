@@ -1,411 +1,391 @@
-# Wave 4 — /clarify UX Copy Audit
+# Wave 4 Clarity Audit — UX Copy, Microcopy, Labels, Error Messages
 
-**Date**: 2026-04-04
-**Sources**: .impeccable.md (design context), w3-plan.md (Wave 3 findings)
-**Target**: All user-facing text across trust-framework.html, static/js/
-**Constraint**: Read-only — no source files modified
-
----
-
-## Already Good — Do Not Change
-
-The following text patterns are well-executed and match the design context:
-
-- **Criterion statements** (questionnaire-schema.js:191–207) — Precise, evaluative language appropriate for domain experts. No jargon issues.
-- **Option set labels** (option-sets.js) — Canonical, consistent vocabulary. "Recommended with caveats", "Needs review / provisional" etc. are institutional terms that should not be softened.
-- **Context panel guidance** (trust-framework.html:300–443) — Dense, directive prose that matches the "trust user intelligence" principle. Good use of imperative voice.
-- **Reference drawer content** (trust-framework.html:76–268) — Tables, checklists, and decision rules are clear and appropriately detailed.
-- **Evidence block labels** (evidence.js:81–89) — "Evaluation evidence intake" vs "TR1 evidence association" correctly distinguishes scope.
-- **ARIA labels** — Thorough and specific throughout (pager buttons, navigation, evidence controls).
-- **Page code display** — Section codes (S0, TR, RE, etc.) are consistently exposed and paired with human-readable titles.
+**Date**: 2026-04-05 (re-run, post-W3 diagnostic)
+**Auditor**: /clarify (impeccable design skill)
+**Target**: `trust-framework.html`, `static/js/` (37 modules), `static/css/` (8 files)
+**Scope**: All user-facing text — field labels, help text, tooltips, error messages, button labels, empty states, navigation microcopy, context guidance, evidence UI, pager status, sidebar chrome, about/help panel text
+**Prior waves**: W1–W3 addressed typography, color, animation, accessibility, anti-patterns. This wave focuses exclusively on textual clarity.
 
 ---
 
-## Findings
+## Overall Assessment
 
-### R1 — Keyboard shortcut descriptions use wrong principle names
+The UX copy is **exceptionally strong** for its target audience (EIS-IS domain experts at University of Twente). The writing is precise, direct, and free of marketing fluff — perfectly aligned with the `.impeccable.md` brand voice ("Direct and unadorned — no marketing fluff. Technical precision over approachability."). The information architecture of the help system (context guidance, reference drawers, about panel, help legend) is thorough and well-layered.
+
+**Total issues found: 5 HIGH, 8 MEDIUM, 6 LOW.**
+
+---
+
+## What Should NOT Be Changed
+
+These patterns are already excellent and should be preserved:
+
+1. **Criterion statements** (`questionnaire-schema.js:196–324`) — Clear, precise, non-prescriptive. Each statement defines what to evaluate without telling the reviewer how to score it. Example: "The tool generates factually accurate and verifiable outputs, with robust mechanisms to minimize or eliminate hallucinated citations."
+
+2. **Context guidance sections** (`trust-framework.html:104–253`) — The literal context guidance for each page is some of the best technical writing in the codebase. Each section opens with a purpose paragraph, follows with a bold-term bullet list, and avoids redundancy. Example: "The handoff is not a victory lap. It packages the primary evaluation for a second reviewer and should expose the weakest parts of the evidence set clearly."
+
+3. **Reference drawer content** (`trust-framework.html:268–460`) — The standard answer sets, scoring model, evidence requirements, and decision rules are comprehensive, well-organized, and use precise terminology consistently.
+
+4. **Rule descriptions** (`rules.js`) — All visibility and requirement rule descriptions are written as clear, declarative statements. Example: "Critical fail notes are required when any critical fail flag is selected."
+
+5. **Field tooltips** — Tooltips are brief, specific, and add information beyond the label. Examples: "How the tool is delivered: cloud SaaS, on-premises, hybrid, browser extension, or API-only."; "Whether at least one query was run multiple times to check output consistency."
+
+6. **Help panel legend** (`help-panel.js:165–222`) — The state legend cards explain visual encoding systems in plain language without oversimplifying. Example: "Accent color answers 'where am I?'. It follows the active page across chrome, sidebar markers, contextual docs, and the completion strip."
+
+7. **Evidence principle hints** (`evidence.js:94–100`) — The per-principle empty-state text gives specific guidance on what evidence to attach for each principle. Example for TR: "Attach source documentation, screenshots, or methodology disclosures."
+
+8. **Terminology consistency** — The same terms are used throughout: "criterion" (not "question" or "item"), "principle" (not "domain" or "pillar"), "submission type" (not "workflow mode" in user-facing text), "workflow state" (not "page state"). This is well-maintained.
+
+---
+
+## Recommendations
+
+### R1 — Context sidebar empty state is passive and uninformative
 
 **Priority**: HIGH
-**Category**: Accuracy / misleading copy
-**Location**: `static/js/render/help-panel.js:359–364`
-**Description**: The help panel keyboard shortcuts table maps Alt+1–5 to "Transparent", "Responsible", "Understandable", "Sustainable", "Trustworthy Computing" — these are the generic NIST AI RMF principle names, not the TRUST framework's principle names. The actual TRUST principles are Transparent, **Reliable**, **User-centric**, **Secure**, and **Traceable**.
+**Location**: `trust-framework.html:104–107`
+**Current**:
 
-**Current text**:
-
-```
-Alt + 1  →  Jump to Transparent (TR)
-Alt + 2  →  Jump to Responsible (RE)
-Alt + 3  →  Jump to Understandable (UC)
-Alt + 4  →  Jump to Sustainable (SE)
-Alt + 5  →  Jump to Trustworthy Computing (TC)
+```html
+<h2>Context guidance</h2>
+<p>Select a page to see context guidance.</p>
 ```
 
-**Proposed replacement**:
+**Problem**: This is the first thing a new reviewer sees in the context panel. "Select a page to see context guidance" is a dead-end instruction that doesn't explain what the context panel provides or why it's valuable. The user may not realize guidance loads automatically when they navigate. First-time users (Jordan persona from W3 critique) won't understand the panel's purpose.
+**Recommendation**: Replace with text that explains the panel's function:
 
+```html
+<h2>Context guidance</h2>
+<p>
+  Context guidance for the active page appears here automatically. Use the page index or pager to
+  navigate — the guidance updates with each page.
+</p>
 ```
-Alt + 1  →  Jump to Transparent (TR)
-Alt + 2  →  Jump to Reliable (RE)
-Alt + 3  →  Jump to User-centric (UC)
-Alt + 4  →  Jump to Secure (SE)
-Alt + 5  →  Jump to Traceable (TC)
-```
 
-The Alt+t/r/u/s/c rows (lines 364–368) also reference wrong principle descriptions but are already generic ("page with code starting with T") so they are acceptable.
-
-**Dependencies**: None.
+**Dependencies**: None. This is static HTML.
 
 ---
 
-### R2 — Panel captions contain developer-facing implementation language
+### R2 — "Skip criterion" / "Resume criterion" button labels lack context
 
-**Priority**: HIGH (carries over from w3-plan P3-04)
-**Category**: UX writing / audience mismatch
-**Location**:
-
-- `trust-framework.html:72` — Questionnaire panel caption
-- `trust-framework.html:292` — Context panel caption
-  **Description**: These captions describe software architecture (page index, pager, reference drawers, shell surfaces) rather than guiding the user on what to do. This was flagged in w3-plan.md as P3-04.
-
-**Current text** (line 72):
-
-> The questionnaire is the primary surface. The page index and pager govern movement, reference drawers stay above the form, and framework background remains in the Info surface.
-
-**Proposed replacement**:
-
-> Fill out each section using the page index or pager. Reference drawers below provide scoring and evidence guidance. Framework background is in Info.
-
-**Current text** (line 292):
-
-> Active-page guidance lives here. Generic scoring and evidence references stay in drawers; framework background and governance stay in the Info surface. On narrow screens this panel becomes a dismissible drawer.
-
-**Proposed replacement**:
-
-> Page-specific guidance and reference links appear here. Scoring references are in the drawers above. Framework background and governance details are in the Info surface.
-
-**Dependencies**: None.
-
----
-
-### R3 — Context fallback empty-state text is developer-oriented
-
-**Priority**: MEDIUM
-**Category**: UX writing / audience mismatch
-**Location**: `trust-framework.html:296–298`
-**Description**: The context panel fallback section uses implementation terminology ("route cards", "page anchors", "literal topic blocks", "content registries") that is meaningless to evaluators.
-
-**Current text**:
-
-> Route cards, page anchors, and literal topic blocks are driven from the section and content registries. If a page lacks bespoke context prose, the generated route summary remains authoritative.
-
-**Proposed replacement**:
-
-> Context guidance loads automatically when a page is selected. If a section has specific guidance, it appears here; otherwise a summary is generated from the section definition.
-
-**Dependencies**: None.
-
----
-
-### R4 — Help panel usage note #1 references wrong UI terminology
-
-**Priority**: MEDIUM
-**Category**: Terminology consistency
-**Location**: `static/js/render/help-panel.js:333`
-**Description**: The help panel references "quick-jump" as a concept, but the header nav is labeled "TRUST principle quick jump" in the HTML (line 44). The term "quick jump" is internal jargon that doesn't appear in the visible UI.
-
-**Current text**:
-
-> Use the page index for the authoritative full-questionnaire route; use TR/RE/UC/SE/TC as a fast quick-jump subset only.
-
-**Proposed replacement**:
-
-> Use the page index for the authoritative full-questionnaire route; use the TR/RE/UC/SE/TC buttons in the header for fast principle navigation.
-
-**Dependencies**: None.
-
----
-
-### R5 — Help panel usage note #4 mentions shortcuts not yet implemented
-
-**Priority**: MEDIUM
-**Category**: Accuracy / misleading copy
-**Location**: `static/js/render/help-panel.js:336`
-**Description**: The usage note states "Alt+1 through Alt+5 jump to TR, RE, UC, SE, and TC; Escape closes the active Context drawer, Info surface, or Help surface." The Escape shortcut exists, but w3-plan P3-08 identified that Alt+Left/Alt+Right pager shortcuts are missing. This note is accurate as written but incomplete — however, more importantly, the keyboard shortcuts section (lines 358–369) documents Alt+t/r/u/s/c shortcuts that **do not exist in the codebase**.
-
-**Location of phantom shortcuts**: `static/js/render/help-panel.js:364–368`
-
-**Current text**:
-
-```
-Alt + t  →  Jump to page with code starting with T
-Alt + r  →  Jump to page with code starting with R
-Alt + u  →  Jump to page with code starting with U
-Alt + s  →  Jump to page with code starting with S
-Alt + c  →  Jump to page with code starting with C
-```
-
-The keyboard.js `QUICK_JUMP_SHORTCUTS` object (keyboard.js:3–13) **does** include these mappings, so they do work. However, the descriptions are misleading because multiple sections start with S (S0, S1, S2, S8, S9, S10A, S10B, S10C) and the shortcut would jump to the first matching one. The description implies a unique match.
-
-**Proposed replacement**: Clarify that letter shortcuts jump to the first matching page:
-
-```
-Alt + s  →  Jump to first page with code starting with S
-```
-
-**Dependencies**: None.
-
----
-
-### R6 — "Condition active" vs "Conditional" tag text is unclear
-
-**Priority**: MEDIUM
-**Category**: Form field UX / clarity
-**Location**: `static/js/render/questionnaire-pages.js:626–630`
-**Description**: Conditional fields display either "Condition active" (when the condition is met and the field is required) or "Conditional" (when the condition is not met). "Condition active" is ambiguous — it could mean the field is active/visible, or that some condition is active. Users may not understand whether they need to fill the field.
-
-**Current logic**:
+**Priority**: HIGH
+**Location**: `questionnaire-pages.js:1373`
+**Current**: `skipScaffold.requested ? 'Resume criterion' : 'Skip criterion'`
+**Problem**: The button label doesn't indicate which criterion will be skipped. On a page with 3–4 criteria (e.g., UC, SE), the user sees multiple "Skip criterion" buttons with no differentiation. A screen reader user navigating by button labels would hear "Skip criterion, Skip criterion, Skip criterion, Skip criterion" — all identical.
+**Recommendation**: Include the criterion code in the button text:
 
 ```js
-text: fieldState?.required ? 'Condition active' : 'Conditional',
+skipScaffold.requested
+  ? `Resume ${criterionModel.criterionCode}`
+  : `Skip ${criterionModel.criterionCode}`;
 ```
 
-**Proposed replacement**:
+Alternatively, keep the visual label short but add `aria-label` with the full context: `aria-label="Skip criterion RE2 — Consistency of consensus"`.
+**Dependencies**: None.
+
+---
+
+### R3 — Section skip label "Section skip" is ambiguous
+
+**Priority**: MEDIUM
+**Location**: `questionnaire-pages.js:1297`
+**Current**: `labelText: 'Section skip'`
+**Problem**: Every page has a field group labeled "Section skip" with a select for reason and a textarea for rationale. The label doesn't indicate which section. On its own this is manageable (it appears within the section), but the section notes label above it is "Section notes / comments" — note the inconsistency. "Section skip" vs "Section notes / comments" use different naming conventions (bare noun vs noun with slash alternative).
+**Recommendation**: Either make them consistent:
+
+- Change "Section skip" to "Section skip / exclusion" (matching the slash pattern)
+- Or change "Section notes / comments" to "Section notes" (matching the bare pattern)
+
+I recommend the bare-noun pattern: "Section notes" and "Section skip" are already clear for domain experts who know what a section skip means. Remove the "/ comments" suffix from the notes label.
+
+**Dependencies**: R12 (if changing the notes label).
+
+---
+
+### R4 — Mock control placeholder "Select an option" is generic
+
+**Priority**: MEDIUM
+**Location**: `questionnaire-pages.js:556`
+**Current**: `return field.control === 'computed_select' ? 'Auto-calculated' : 'Select an option'`
+**Problem**: For all non-computed single-select dropdowns, the placeholder is "Select an option". This is a generic phrase that doesn't tell the user what kind of option they're selecting. For a form with 132+ fields, a more specific placeholder reduces cognitive scanning time.
+**Recommendation**: Use the field label to construct a specific placeholder:
 
 ```js
-text: fieldState?.required ? 'Required now' : 'Conditional',
+case FIELD_TYPES.SINGLE_SELECT:
+  return field.control === 'computed_select'
+    ? 'Auto-calculated'
+    : `Select ${field.label.toLowerCase()}`;
 ```
 
-"Required now" directly tells the user what to do. "Conditional" is acceptable as-is since it correctly indicates the field may become required.
-
+This produces "Select submission type", "Select deployment type", "Select in-scope check", etc. — which are more informative and already match the pattern used for SHORT_TEXT at line 554.
 **Dependencies**: None.
 
 ---
 
-### R7 — "Display only" tag for derived fields is ambiguous
+### R5 — Evidence note placeholder is overly prescriptive
+
+**Priority**: MEDIUM
+**Location**: `evidence.js:312`
+**Current**: `'Required note: why this file supports the evaluation or criterion.'`
+**Problem**: This placeholder does double duty — it states that the note is required AND suggests what to write. For criterion-level evidence, "supports the evaluation" is slightly wrong — it should say "supports the criterion". The word "Required" in the placeholder is also redundant: the field is validated by the JS logic that checks `hasMeaningfulText(draftState.note)`, and the "Add evidence" button stays disabled until the note is filled. The requirement is enforced mechanically, not textually.
+**Recommendation**: Make the placeholder specific to the scope level:
+
+```js
+scope.level === 'criterion'
+  ? 'Describe how this evidence supports the criterion.'
+  : 'Describe how this evidence supports the evaluation.';
+```
+
+Remove the "Required note:" prefix — the disabled-state enforcement makes the requirement clear.
+**Dependencies**: None.
+
+---
+
+### R6 — "No reusable evidence available" appears as both placeholder and empty-state select text
 
 **Priority**: LOW
-**Category**: Form field UX / clarity
-**Location**: `static/js/render/questionnaire-pages.js:623`
-**Description**: Derived fields like principle judgments display a "Display only" tag. This is technically accurate but doesn't tell the user _why_ the field can't be edited or _how_ the value is determined.
+**Location**: `evidence.js:221, 265`
+**Current**: Both the populated select (line 221: `'No reusable evidence available'`) and the initial placeholder (line 265: `'No reusable evidence available'`) use the same text.
+**Problem**: When evidence items exist but none are reusable for this criterion, the select shows "No reusable evidence available" as the default option alongside other options. When no evidence items exist at all, the select also shows "No reusable evidence available" as the only option. The user can't distinguish "you have evidence but it's already linked here" from "you have no evidence at all".
+**Recommendation**: Differentiate the two states:
 
-**Current text**: `Display only`
-
-**Proposed replacement**: `Computed` — this is shorter and more precise. The field's value is computed from criterion scores, not merely displayed. The existing placeholder text "Derived from current state" (line 567) already uses "derived" — using "Computed" for the tag provides a clearer signal without being verbose.
+```js
+// Line 221: when items exist but none are reusable for this scope
+items.length > 0
+  ? 'All existing evidence already linked to this criterion'
+  : 'No reusable evidence available';
+```
 
 **Dependencies**: None.
 
 ---
 
-### R8 — Placeholder text inconsistency for number fields
+### R7 — Pager "← Start" label is confusing at page boundaries
+
+**Priority**: MEDIUM
+**Location**: `pager.js:107`
+**Current**: `'← Start'` (when there's no previous page)
+**Problem**: When the user is on the first page (S0), the previous button shows "← Start". This could be interpreted as "go to start" (an action) rather than "you are at the start" (a state). The button is disabled, which helps, but the text implies navigation rather than position.
+**Recommendation**: Change to an empty or dashed label that signals boundary rather than action: `'←'` (arrow only) or `'—'`. The pager status text already shows "Page 1 of N" which provides orientation. Alternatively, hide the previous button entirely when on the first page.
+**Dependencies**: None.
+
+---
+
+### R8 — Help panel keyboard shortcuts table is missing the pager shortcut
+
+**Priority**: HIGH
+**Location**: `help-panel.js:239–251`
+**Current**: 10 shortcuts listed (Alt+1–5, Alt+T/R/U/S/C, Escape). No Alt+Left/Right for pager navigation.
+**Problem**: The help panel's keyboard shortcuts table doesn't include any pager navigation shortcuts. The pager itself has no keyboard shortcut (no Alt+Left/Right was implemented — noted as a W3 critique finding). The shortcuts table accurately reflects reality, but the table lists 10 shortcuts and the user still can't navigate between pages by keyboard without tabbing to the pager buttons. This is a clarity issue: the help table tells users what shortcuts exist, but the most common action (next page) has no shortcut.
+**Recommendation**: Either (a) add Alt+Left/Right pager shortcuts to keyboard.js and add them to this table, or (b) add a note in the shortcuts section that explicitly says "Use Tab to reach pager buttons for page navigation." Option (a) is better — it's a W3 P2 finding for power users and this table should document it once implemented.
+**Dependencies**: Depends on implementing Alt+Left/Right pager navigation in `keyboard.js`.
+
+---
+
+### R9 — Evidence "Remove file everywhere" button label doesn't explain scope
+
+**Priority**: HIGH
+**Location**: `evidence.js:731`
+**Current**: `'Remove file everywhere'`
+**Problem**: The confirmation dialog (`evidence.js:1450–1453`) explains the scope well ("Remove 'X' everywhere? This will remove N linked associations."), but the button label itself doesn't indicate that "everywhere" means "from all criteria that reference this file". A reviewer on the SE criterion page might not realize "everywhere" includes TR, RE, UC, and TC associations. The label and the confirmation dialog need to agree on terminology.
+**Recommendation**: Change button label to `'Remove from all criteria'` which is more specific than "everywhere" and matches the mental model of "this file is linked to multiple criteria, I'm removing it from all of them."
+**Dependencies**: None. The confirmation dialog text can stay as-is since it provides full context.
+
+---
+
+### R10 — "Display only" tag text doesn't explain why the field can't be edited
+
+**Priority**: MEDIUM
+**Location**: `questionnaire-pages.js:601`
+**Current**: `{ text: 'Display only', kind: 'display' }`
+**Problem**: The tag "Display only" appears next to derived fields (principle judgments, completion checklist). It tells the user they can't edit the field, but not why. A reviewer might think the tool is broken ("why can't I change the judgment?") rather than understanding that the judgment is computed from criterion scores.
+**Recommendation**: Change to `'Auto-derived'` — this conveys both that the field is display-only AND why (it's derived from other data). This matches the tooltip text on principle judgment fields: "Derived from criterion scores. Override is downward-only (Pass → Conditional → Fail)."
+**Dependencies**: None.
+
+---
+
+### R11 — Validation messages may lack actionable guidance
+
+**Priority**: HIGH
+**Location**: `questionnaire-pages.js:1134`
+**Current**: `const text = issues.map((issue) => issue.message).join(' ');`
+**Problem**: Validation messages are rendered from `issue.message` strings, but the `createTextValidationRule` and `createCrossFieldValidationRule` schemas in `rules.js` store a `description` field for the rule, not a user-facing error message. The actual validation logic that populates `issues[].message` lives in `derive.js`. The pattern of joining messages with spaces (`join(' ')`) risks producing concatenated fragments like "Field is required Uncertainty/blocker follow-up is required for low or unclear scores" without proper punctuation or separation.
+**Recommendation**:
+
+1. Verify that validation issue messages in `derive.js` are complete, punctuated sentences (not fragments).
+2. If messages are fragments, change the join separator to `'; '` (semicolon + space) for proper separation.
+3. Consider prefixing validation messages with the field code: `[TR1] Score is required.` — this helps when the `.validation-message` element is announced by screen readers out of the field's immediate context.
+   **Dependencies**: Requires reading `derive.js` validation logic to confirm current message format.
+
+---
+
+### R12 — "Section notes / comments" label uses slash disjunction
 
 **Priority**: LOW
-**Category**: Form field UX / consistency
-**Location**: `static/js/render/questionnaire-pages.js:578`
-**Description**: Number-type fields show the generic placeholder "Enter number", while the schema defines specific field meanings (e.g., `RE Claims manually checked` is a count of claims verified).
+**Location**: `questionnaire-pages.js:1208`
+**Current**: `labelText: 'Section notes / comments'`
+**Problem**: The slash pattern ("notes / comments") is ambiguous — are these the same thing or two different things? The field is a single textarea, so it's one thing. Domain experts won't be confused by this, but it's a minor inconsistency in an otherwise precise label system.
+**Recommendation**: Use "Section notes" — singular, clear, no disjunction. If the concern is that users might not write "comments" in a field labeled "notes", add a more descriptive help text or placeholder instead of expanding the label.
+**Dependencies**: R3 (which proposes this same change from the other direction).
 
-**Current text**: `Enter number` (for all number fields)
+---
 
-**Proposed approach**: The generic placeholder is acceptable for a domain-expert audience. The field label (e.g., "RE Claims manually checked") already provides context. No change needed, but flagging for completeness.
+### R13 — Evidence status text uses "files are attached" at both scope levels
+
+**Priority**: MEDIUM
+**Location**: `evidence.js:1044–1046`
+**Current**:
+
+```js
+`${decoratedItems.length} ${decoratedItems.length === 1 ? 'file is' : 'files are'} attached.`;
+```
+
+**Problem**: At the criterion level, "attached" is correct — files are attached to the criterion. But at the evaluation level (S2), the concept is "evaluation evidence" which is the pool of files. The status says "3 files are attached" at both levels without distinguishing scope. This is functional but could be more precise.
+**Recommendation**: Differentiate the level in the status text:
+
+```js
+scope.level === 'evaluation'
+  ? `${count} ${count === 1 ? 'file is' : 'files are'} in the evaluation evidence pool.`
+  : `${count} ${count === 1 ? 'file is' : 'files are'} associated with this criterion.`;
+```
 
 **Dependencies**: None.
 
 ---
 
-### R9 — Section skip help text is unnecessarily wordy
+### R14 — `formatSectionProgressDetail` fallback strings are inconsistent
+
+**Priority**: MEDIUM
+**Location**: `sidebar.js:151–173`
+**Current**: Multiple fallback messages with different tones and levels of verbosity:
+
+- `'Progress unavailable.'` (short, period)
+- `'Skipped by workflow mode.'` (short, period, passive)
+- `'Skip reason and rationale satisfied.'` (short, period, passive)
+- `'No answers recorded yet.'` (short, period)
+- `'No currently applicable required fields remain on this page.'` (verbose)
+
+**Problem**: "No currently applicable required fields remain on this page" is the longest string in the set and uses "currently" and "remain" — both hedging words that don't match the direct voice of the rest of the UI. It's also technically describing a positive state (all fields satisfied or suppressed) but phrased negatively.
+**Recommendation**: Replace with a positive, shorter statement: `'All applicable required fields satisfied.'` This is consistent with the direct, explicit voice and tells the user they're done rather than what's missing.
+**Dependencies**: None.
+
+---
+
+### R15 — "Criterion focus" / "Summary focus" kicker labels in generated context sections are vague
 
 **Priority**: LOW
-**Category**: UX writing / conciseness
-**Location**: `static/js/render/questionnaire-pages.js:47`
-**Description**: The section skip help text is 31 words and could be more direct.
+**Location**: `sidebar.js:367, 386`
+**Current**: `kicker.textContent = 'Criterion focus'` / `kicker.textContent = 'Summary focus'`
+**Problem**: When the context panel generates a companion section for a specific criterion or summary anchor, it uses kickers "Criterion focus" and "Summary focus". These don't tell the user which criterion or which summary. Compare with the static context sections that use specific kickers like "TR · Transparent" or "S0 · Workflow". The generated kickers are generic.
+**Recommendation**: Include the criterion code in the kicker:
 
-**Current text**:
-
-> Section skip overrides child field dependencies and requiredness for this page, but both a skip reason and a substantive rationale are required.
-
-**Proposed replacement**:
-
-> Skipping a section overrides all child field requirements. Both a skip reason and rationale are required.
+```js
+// For criterion companion:
+kicker.textContent = `${criterion.code} · Focus`;
+// For summary companion:
+kicker.textContent = `${route.pageDefinition?.pageCode ?? 'Page'} · Summary`;
+```
 
 **Dependencies**: None.
 
 ---
 
-### R10 — Criterion skip help text is unnecessarily wordy
+### R16 — "Page overview" button label is ambiguous alongside "Page anchors"
 
 **Priority**: LOW
-**Category**: UX writing / conciseness
-**Location**: `static/js/render/questionnaire-pages.js:48`
-**Description**: The criterion skip help text is 43 words — the longest help text in the schema. It can be tightened.
-
-**Current text**:
-
-> Criterion skip is separate from a low or negative score. Use it only when the criterion cannot be assessed; both a skip reason and a substantive rationale are required, and criterion child fields stop contributing requiredness while the skip is active.
-
-**Proposed replacement**:
-
-> Use criterion skip only when the criterion cannot be assessed — not as a substitute for a low score. Both a skip reason and rationale are required. Child fields become non-required while the skip is active.
-
+**Location**: `sidebar.js:874`
+**Current**: `overviewButton.textContent = 'Page overview'`
+**Problem**: The anchor card in the context sidebar has a heading "Page anchors" and a button "Page overview". The button resets the sub-anchor to page-level, but "Page overview" could be confused with the About panel or a separate overview page. The action it performs is "clear the active sub-anchor and show page-level context" — which is a navigation reset, not an "overview".
+**Recommendation**: Change to `'Page-level view'` which matches the route card's "Page-level overview" label, or `'Clear anchor focus'` which describes the action (un-selecting a specific anchor).
 **Dependencies**: None.
 
 ---
 
-### R11 — Evidence empty-state messages are directive but inconsistent in structure
+### R17 — `getMockControlPlaceholder` returns bare `field.label` as fallback
 
 **Priority**: LOW
-**Category**: UX writing / consistency
-**Location**: `static/js/render/evidence.js:91–97`
-**Description**: Principle-specific evidence hints follow the pattern "No evidence attached. Attach [specific items]." The evaluation-level empty state (line 101) uses a different pattern: "No evaluation-level evidence attached yet." All could be more actionable by stating what to do next.
+**Location**: `questionnaire-pages.js:558`
+**Current**: `default: return field.label;`
+**Problem**: For field types that don't match any specific case (LONG_TEXT, CHECKLIST, MULTI_SELECT), the placeholder falls back to the field label itself. This means the placeholder is identical to the label text, which is redundant. When the user types, the placeholder disappears and takes the label-like text with it — but the label is still visible above. This is harmless but slightly noisy.
+**Recommendation**: Change the default to `null` (no placeholder for types that don't need one):
 
-**Current texts**:
-
-- `No evidence attached. Attach source documentation, screenshots, or methodology disclosures.`
-- `No evaluation-level evidence attached yet.`
-
-**Proposed evaluation-level text**:
-
-> No evaluation-level evidence attached yet. Add screenshots, exports, or supporting files using the intake form below.
+```js
+default: return null;
+```
 
 **Dependencies**: None.
 
 ---
 
-### R12 — "Canonical page progress strip" aria-label is jargon
+### R18 — "Reference drawers" label in route card uses UI jargon
 
 **Priority**: LOW
-**Category**: Accessibility / screen reader clarity
-**Location**: `trust-framework.html:42`
-**Description**: The completion strip's aria-label uses "Canonical" which is an internal term not meaningful to evaluators.
-
-**Current text**: `Canonical page progress strip`
-
-**Proposed replacement**: `Questionnaire progress strip`
-
+**Location**: `sidebar.js:979`
+**Current**: `label.textContent = 'Reference drawers'`
+**Problem**: The term "drawers" is UI jargon (collapsible panels). The user-facing meaning is "reference materials" or "reference documentation". The label is used in the context panel's route card to list available reference sections. While "drawers" is technically accurate (they are `<details>` drawer elements), the label should describe the content, not the UI pattern.
+**Recommendation**: Change to `'Reference materials'` — this describes what the user will find, not how it's presented.
 **Dependencies**: None.
 
 ---
 
-### R13 — "Canonical page index" heading is jargon
+### R19 — Score tooltip text is generic across all 16 criteria
 
-**Priority**: LOW
-**Category**: UX writing / jargon
-**Location**: `static/js/render/sidebar.js:889`
-**Description**: The page sidebar heading uses "Canonical" — internal terminology not exposed to users elsewhere in the UI.
-
-**Current text**: `Canonical page index`
-
-**Proposed replacement**: `Page index`
-
+**Priority**: MEDIUM
+**Location**: `questionnaire-schema.js:349`
+**Current**: `tooltip: '0 = Fails, 1 = Partial/unclear, 2 = Meets baseline, 3 = Strong'`
+**Problem**: Every criterion score field (all 16) has this identical tooltip. The same information is available in the "Standard answer sets" reference drawer (`trust-framework.html:273–302`) with more detail. The tooltip adds no criterion-specific guidance — it's a generic scale definition repeated 16 times.
+**Recommendation**: Either (a) keep the tooltip as-is (it's useful for quick reference without opening the drawer), or (b) add criterion-specific guidance after the scale: `'0 = Fails, 1 = Partial/unclear, 2 = Meets baseline, 3 = Strong. Score against the criterion statement above.'`. Option (b) adds value beyond what the reference drawer provides.
 **Dependencies**: None.
 
 ---
 
-### R14 — "Context route" kicker is internal terminology
+## Summary Table
 
-**Priority**: LOW
-**Category**: UX writing / jargon
-**Location**: `static/js/render/sidebar.js:1055`
-**Description**: The context route card kicker says "Context route" — this describes the software architecture, not what the user should do.
+| ID  | Priority | Area                 | File(s)                                | Effort                               |
+| --- | -------- | -------------------- | -------------------------------------- | ------------------------------------ |
+| R1  | HIGH     | Empty state          | trust-framework.html:106               | Trivial                              |
+| R2  | HIGH     | Button label         | questionnaire-pages.js:1373            | Small                                |
+| R8  | HIGH     | Help panel           | help-panel.js:239–251                  | Medium (requires keyboard.js change) |
+| R9  | HIGH     | Button label         | evidence.js:731                        | Trivial                              |
+| R11 | HIGH     | Validation messages  | questionnaire-pages.js:1134, derive.js | Medium                               |
+| R4  | MEDIUM   | Placeholder          | questionnaire-pages.js:556             | Trivial                              |
+| R5  | MEDIUM   | Placeholder          | evidence.js:312                        | Trivial                              |
+| R7  | MEDIUM   | Pager label          | pager.js:107                           | Trivial                              |
+| R10 | MEDIUM   | Tag text             | questionnaire-pages.js:601             | Trivial                              |
+| R13 | MEDIUM   | Status text          | evidence.js:1044                       | Trivial                              |
+| R14 | MEDIUM   | Progress detail      | sidebar.js:171                         | Trivial                              |
+| R19 | MEDIUM   | Tooltip              | questionnaire-schema.js:349            | Trivial                              |
+| R3  | MEDIUM   | Section label        | questionnaire-pages.js:1297            | Trivial                              |
+| R6  | LOW      | Select placeholder   | evidence.js:221                        | Trivial                              |
+| R12 | LOW      | Label                | questionnaire-pages.js:1208            | Trivial                              |
+| R15 | LOW      | Kicker text          | sidebar.js:367,386                     | Trivial                              |
+| R16 | LOW      | Button label         | sidebar.js:874                         | Trivial                              |
+| R17 | LOW      | Placeholder fallback | questionnaire-pages.js:558             | Trivial                              |
+| R18 | LOW      | Section label        | sidebar.js:979                         | Trivial                              |
 
-**Current text**: `Context route`
-
-**Proposed replacement**: `Current page` — this matches the help panel's usage (help-panel.js:139) and is more meaningful to evaluators.
-
-**Dependencies**: None.
-
----
-
-### R15 — Context route info row labels could be more descriptive
-
-**Priority**: LOW
-**Category**: UX writing / clarity
-**Location**: `static/js/render/sidebar.js:1071–1098`
-**Description**: The context route card info grid uses terse labels: "Mode", "Topic", "Focus", "Workflow", "Status", "Required". "Topic" and "Focus" are vague. "Mode" is acceptable given the audience.
-
-- "Topic" → "Context topic" (matches help panel, line 156)
-- "Focus" → "Active focus" or keep as-is (it already shows either a criterion code or "Page-level overview")
-
-**Proposed**: Change "Topic" to "Context topic" for consistency with the help panel. Leave other labels as-is — they are concise and the domain audience will understand them.
-
-**Dependencies**: None.
+**Effort breakdown**: 13 trivial, 3 small, 3 medium. Most changes are single-line string replacements.
 
 ---
 
-### R16 — "Generated guidance" kicker is implementation-oriented
+## Consistency Audit
 
-**Priority**: LOW
-**Category**: UX writing / jargon
-**Location**: `static/js/render/sidebar.js:509`
-**Description**: When a page uses registry-driven fallback content, the context panel kicker shows "Generated guidance" — this describes the content delivery mechanism, not the content itself.
+Terminology was checked across all source files:
 
-**Current text**: `Generated guidance`
-
-**Proposed replacement**: `Page guidance`
-
-**Dependencies**: None.
-
----
-
-### R17 — Pager completion message says "sections reviewed" not "sections completed"
-
-**Priority**: LOW
-**Category**: UX writing / accuracy
-**Location**: `static/js/behavior/pager.js:135`
-**Description**: When the evaluation is complete, the pager shows "Evaluation complete — 13 sections reviewed". "Reviewed" implies a second-review workflow; "completed" is more accurate since the user may have filled out the primary evaluation.
-
-**Current text**: `Evaluation complete — ${count} sections reviewed`
-
-**Proposed replacement**: `Evaluation complete — ${count} sections completed`
-
-**Dependencies**: None.
+| Term              | Count | Consistent? | Notes                                                          |
+| ----------------- | ----- | ----------- | -------------------------------------------------------------- |
+| "criterion"       | 200+  | Yes         | Never "question", "item", or "metric"                          |
+| "principle"       | 100+  | Yes         | Never "domain", "pillar", or "dimension"                       |
+| "submission type" | 30+   | Yes         | Consistent in labels, option sets, rules                       |
+| "workflow state"  | 50+   | Yes         | Never "page state" or "section state" in user-facing text      |
+| "evidence"        | 200+  | Yes         | Consistent as noun (never "proof" or "documentation")          |
+| "judgment"        | 40+   | Yes         | Consistent (not "rating" or "assessment" for principles)       |
+| "score"           | 80+   | Yes         | Used for criterion-level (0–3), not for principles             |
+| "recommendation"  | 50+   | Yes         | Never "verdict" or "conclusion" in form labels                 |
+| "skip"            | 60+   | Yes         | Both section and criterion skip use same term                  |
+| "association"     | 20+   | Yes         | Used for evidence-criterion links (not "link" or "attachment") |
+| "drawers"         | 15+   | Mostly      | Used in code and one sidebar label — see R18                   |
+| "display only"    | 5     | Minor       | See R10 for suggested improvement                              |
 
 ---
 
-### R18 — Keyboard shortcuts section missing from discoverability assessment
-
-**Priority**: HIGH (carries over from w3-plan P1-03)
-**Category**: Discoverability / UX writing
-**Description**: The keyboard shortcuts are documented only in the Help surface (behind a button press). Per w3-plan P1-03, this is a recognition-over-recall failure. The clarify skill should recommend adding subtle shortcut hints to the pager area, since that's where navigation happens.
-
-**Recommendation**: Add a small, muted-text hint below or beside the pager status line, e.g.:
-
-> `Alt+1–5 principles · Esc close`
-
-This should be visually subordinate — monospace, small font, muted color — consistent with the "engineered" aesthetic. It should not be a tooltip (design context explicitly avoids tooltips).
-
-**Location for implementation**: `static/js/behavior/pager.js` — add hint element within the pager shell.
-
-**Dependencies**: Should be implemented alongside w3-plan P3-08 (Alt+Left/Alt+Right pager shortcuts, assigned to /harden). If pager shortcuts are added, the hint should include them too.
-
----
-
-## Summary
-
-| Priority | Count | Key themes                                                                                                                            |
-| -------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| HIGH     | 3     | Wrong principle names in help (R1), implementation language in captions (R2), shortcut discoverability (R18)                          |
-| MEDIUM   | 4     | Developer-oriented empty states (R3), jargon in usage notes (R4), phantom shortcut descriptions (R5), ambiguous conditional tags (R6) |
-| LOW      | 11    | Wordiness (R9, R10), jargon in labels (R12–R16), minor inconsistencies (R7, R11, R17), acceptable-as-is (R8)                          |
-
-**Recommended implementation order**:
-
-1. R1 — Wrong principle names (factual error, trivial fix)
-2. R2 — Panel captions (user-facing implementation leak)
-3. R18 — Shortcut discoverability hint (design decision + small implementation)
-4. R6 — "Condition active" → "Required now"
-5. R3 + R14 + R16 — Context panel jargon cleanup (batch)
-6. R4 + R5 — Help panel terminology fixes (batch)
-7. R12 + R13 — Aria label / heading jargon (batch)
-8. R9 + R10 — Help text conciseness (batch)
-9. R7, R11, R15, R17 — Minor improvements (batch or defer)
-
----
-
-## Verification
-
-After implementation:
-
-1. Grep: `Responsible|Understandable|Sustainable|Trustworthy Computing` — should return zero matches in help-panel.js
-2. Grep: `primary surface|govern movement|reference drawers stay` — should return zero matches
-3. Visual: Open Help surface → verify principle names match TRUST framework
-4. Visual: Check pager area for shortcut hint text
-5. Visual: Check context panel — no implementation language visible
-6. Screen reader: Verify "Questionnaire progress strip" aria-label is announced correctly
+_End of Wave 4 Clarity Audit_

@@ -1,213 +1,403 @@
 # Wave 4 — Optimize Performance Recommendations
 
-**Date**: 2026-04-04
-**Scope**: CSS and JS performance analysis across all static assets
-**Cross-reference**: w3-plan.md (P2-04, P2-05 assigned to /optimize)
+**Date**: 2026-04-05
+**Auditor**: impeccable /optimize skill
+**Target**: TRUST Framework Questionnaire — `trust-framework.html`, `static/css/` (8 files, 5031 lines), `static/js/` (37+ modules, ~16K lines)
+**Scope**: CSS rendering performance, JS runtime performance, state derivation cost, DOM update efficiency, loading strategy
+**Previous W3 audit score**: Performance 3.5/4.0 — "Very good — minimal waste, one layout-thrash risk on tab indicator"
+**Context**: `.impeccable.md` — 132+ field form SPA, vanilla JS/CSS/HTML, no build step, no framework
 
 ---
 
-## Things That Are Good — Do NOT Change
+## Baseline Assessment
 
-- **Event delegation**: `field-handlers.js` attaches `input`/`change`/`click` at the `questionnaireRenderRoot` level — correct and efficient.
-- **Passive scroll listeners**: Both panel scroll handlers use `{ passive: true }` — no forced layout.
-- **State change short-circuiting**: `store.js` compares normalized values via `areNormalizedValuesEqual` before committing — avoids redundant derivation cycles.
-- **Subscriber early-exit**: `context-tracking.js` returns immediately if `activePageId` hasn't changed — prevents unnecessary hash writes.
-- **MutationObserver throttling**: `navigation.js` debounces its MutationObserver via `observerPending` flag + `requestAnimationFrame` — prevents cascading re-renders.
-- **Animation property choices**: All keyframe animations use only `opacity` and `transform` (GPU-composited) — no layout-triggering properties animated.
-- **Reduced-motion support**: `animations.css` properly zeros all durations and overrides animations under `prefers-reduced-motion`.
-- **`:where()` for accent scoping**: `accent-scoping.css:113` uses `:where()` for zero specificity — excellent for preventing cascade conflicts without perf cost.
-- **No `will-change` abuse**: Only one `will-change: transform` on `.panel-progress-bar` — appropriate for the one element that animates continuously.
-- **No images**: Zero image assets. CSS-only rendering means zero image decode/decode latency.
-- **`font-display: swap`**: Google Fonts URL uses `display=swap` — prevents FOIT.
-- **`100dvh` usage**: `layout.css` uses `calc(100dvh - var(--header-h))` for panels — correct mobile viewport handling without JS.
+### What's Already Excellent — Do NOT Change
+
+These patterns are performance-positive and must be preserved:
+
+1. **Event delegation at questionnaire root** — `field-handlers.js:809-810` attaches a single `input` + `change` listener on `questionnaireRenderRoot`, not per-field. This scales perfectly to 132+ fields.
+
+2. **Document fragment for initial render** — `questionnaire-pages.js:1592` creates a `DocumentFragment`, builds all 13 pages into it, then inserts once via `replaceChildren()`. Zero intermediate DOM mutations.
+
+3. **`will-change: transform` used exactly once** — On `.panel-progress-bar` (`layout.css:110`), the only continuously animated element. No abuse.
+
+4. **`contain: layout style paint` on `.framework-panel`** — `layout.css:274` isolates the context panel's rendering from the questionnaire panel. Correct usage.
+
+5. **GPU-composited animations** — `animations.css` keyframes use only `transform` and `opacity` (`cellFill`, `sectionEnter`, `ratingDotConfirm`, `evidenceItemEnter`). GPU-friendly.
+
+6. **`prefers-reduced-motion` zeroing** — `animations.css:1-22` properly zeroes all durations and disables animations globally.
+
+7. **`font-display: swap`** — Google Fonts URL uses `display=swap`, preventing FOIT.
+
+8. **`<link rel="preconnect">` for fonts** — DNS+TCP warmup for `fonts.googleapis.com` and `fonts.gstatic.com`.
+
+9. **Passive scroll listeners** — Both panel scroll handlers use `{ passive: true }` (`navigation.js:934,958`).
+
+10. **Store equality short-circuit** — `store.js:565-567` returns previous state reference if commit returns same object, skipping notification entirely. Field-level equality (`areNormalizedValuesEqual`) prevents commits when value hasn't changed (`store.js:589`).
+
+11. **`inert` + `aria-hidden` on inactive pages** — Gold standard for SPA page visibility. Inert prevents focus and interaction without removing from DOM.
+
+12. **`requestAnimationFrame` debounce on progress decorations** — `navigation.js:484-489` coalesces rapid state changes into a single frame.
+
+13. **MutationObserver throttle** — `navigation.js:1021-1034` uses `observerPending` flag to coalesce multiple mutations into one rAF callback.
+
+14. **`overscroll-behavior: contain`** — `layout.css:120` prevents scroll chaining from the questionnaire panel to the document.
+
+15. **Zero external runtime dependencies** — No framework overhead, no polyfills, no library initialization cost.
+
+---
+
+## Detailed Analysis
+
+### A. State Derivation Cost — The Core Bottleneck
+
+The most significant performance concern is the **full recomputation architecture** in the state derivation pipeline.
+
+**Call chain on every field change:**
+
+```
+User types → handleInput (field-handlers.js:742)
+  → store.actions.setFieldValue (store.js:580)
+    → normalizeFieldValue (store.js:251)
+    → areNormalizedValuesEqual (early exit if same)
+    → cloneEvaluation (store.js:412) — deep-clones all evaluation state
+    → createStateWithEvaluation (store.js:483)
+      → deriveQuestionnaireState (derive/index.js:100) — runs ALL 12+ derivation functions
+      → createUiState (store.js:445) — re-creates UI state object
+    → notify (store.js:555) — calls ALL subscribers
+      → field-handlers subscriber (field-handlers.js:876) — DOM sync
+      → navigation subscriber (navigation.js:900) — full shell sync
+```
+
+**`deriveQuestionnaireState` execution (derive/index.js:100-178) runs every time:**
+
+| Step | Function                          | Work                                                 | Items Iterated                          |
+| ---- | --------------------------------- | ---------------------------------------------------- | --------------------------------------- |
+| 1    | `normalizeState`                  | Object wrapping                                      | 5 properties                            |
+| 2    | `derivePageStates`                | Iterate pages, check workflow rules                  | 13 pages                                |
+| 3    | `deriveCriterionStates`           | Per-criterion: skip resolution, validation           | 15 criteria × ~4 fields = ~60 checks    |
+| 4    | `derivePrincipleJudgments`        | Per-principle: score aggregation                     | 5 principles                            |
+| 5    | `deriveEvidenceCompleteness`      | Per-criterion evidence check                         | 15 criteria + evaluation evidence       |
+| 6    | `deriveCompletionChecklist`       | Build checklist from judgments                       | 5 principles                            |
+| 7    | `deriveRecommendationConstraints` | Rule matching                                        | Multiple rules                          |
+| 8    | `deriveWorkflowEscalations`       | Rule matching                                        | Escalation rules                        |
+| 9    | `deriveFieldStates`               | Per-field: visibility, requirement, validation, skip | **132+ fields**                         |
+| 10   | `deriveSectionStates`             | Per-section: aggregation                             | 13 sections                             |
+| 11   | `deriveCompletionProgress`        | Per-section: required/answered counts                | 13 sections                             |
+| 12   | `deriveOverallCompletion`         | Aggregate                                            | 1 aggregation                           |
+| 13   | `deriveValidationSummary`         | Filter fields/criteria/sections for errors           | 132+ fields + 15 criteria + 13 sections |
+| 14   | `deriveRequiredFieldIds`          | Filter fields                                        | 132+ fields                             |
+| 15   | `deriveMissingRequiredFieldIds`   | Filter fields                                        | 132+ fields                             |
+
+**Total iterations per keystroke**: ~5 passes over 132 fields + ~3 passes over 15 criteria + ~3 passes over 13 sections. Each field pass involves rule evaluation via `matchesCondition` (recursive condition tree walk).
+
+**`cloneEvaluation` (store.js:412-430)** deep-clones:
+
+- `fields` object (132+ keys) — shallow copy
+- `sections` object (13 keys) — shallow copy of each record
+- `criteria` object (15 keys) — shallow copy of each record
+- `evidence.evaluation` array — `normalizeEvidenceItems` + `finalizeEvidenceItemsForInsert` (re-runs normalization on every commit)
+- `evidence.criteria` — `cloneEvidenceCriteria` (deep clone)
+- `overrides.principleJudgments` — shallow copy
+
+This creates significant GC pressure: on every keystroke in a text field, the entire evaluation state is cloned, then all derived state is recomputed from scratch, then all subscribers are notified.
+
+### B. DOM Update Efficiency
+
+**`field-handlers.js` subscriber (line 876-894):**
+
+```js
+store.subscribe(
+  (state) => {
+    const activeSection = questionnaireRoot.querySelector(`[data-page-id="${activePageId}"]`);
+    const scope = activeSection ?? questionnaireRoot;
+    toArray(scope.querySelectorAll('.field-group[data-field-id]')).forEach((fieldGroup) => {
+      syncFieldGroup(fieldGroup, state);
+    });
+    syncPageSections(questionnaireRoot, state);
+    syncCriterionCards(questionnaireRoot, state);
+    syncSectionMetaControls(questionnaireRoot, state);
+  },
+  { immediate: true },
+);
+```
+
+This re-syncs **all field groups in the active section** on every state change, even when only one field changed. Each `syncFieldGroup` call (field-handlers.js:427-486):
+
+- Sets 13 `dataset` attributes
+- Runs `syncFieldTag` (DOM query + class toggle)
+- Runs `syncFieldValidationAccessibility` (DOM query + potential DOM mutation)
+- Runs a control-specific sync (DOM query + value comparison + class toggles)
+
+For a typical page with 20 visible field groups, that's:
+
+- 260 `dataset` attribute writes
+- 20 `querySelector` calls for tags
+- 20 `querySelector` calls for validation elements
+- 20 control-specific DOM queries + updates
+
+**`navigation.js` subscriber** (line 900-906) calls `syncFromState` which runs 13 sync functions including `syncPageVisibility` that iterates all page sections and calls `syncPageControlAvailability` which does `querySelectorAll('.rating-scale')` + `querySelectorAll('.rating-option')` per section.
+
+### C. CSS Rendering
+
+**Layout-triggering transitions (still present):**
+
+| File:Line                          | Selector                         | Property                                   | Trigger                                |
+| ---------------------------------- | -------------------------------- | ------------------------------------------ | -------------------------------------- |
+| `interaction-states.css` (various) | `.form-section`                  | `border-left-width`                        | Layout                                 |
+| `interaction-states.css` (various) | `.criterion-card`                | `border-left-width`                        | Layout                                 |
+| `animations.css:68-80`             | `@keyframes ratingBorderConfirm` | `border-left-width: 2px → 5px → 3px`       | Layout per frame                       |
+| `animations.css:44-54`             | `@keyframes completePulse`       | `border-color`, `background`               | Paint per frame                        |
+| `components.css:45-48`             | `.strip-cell`                    | `background`, `border-color`, `box-shadow` | Paint                                  |
+| `interaction-states.css` (various) | `.form-section.is-active`        | `border-left-width: 6px → 8px`             | Layout                                 |
+| `layout.css:433-436`               | `.sidebar-tab-indicator`         | `transform`, `width`                       | Layout (width) + Composite (transform) |
+
+**Tab indicator layout thrash** (already identified in W3 audit):
+`navigation.js:623-624` reads `offsetLeft`/`offsetWidth` then immediately writes `style.transform`/`style.width`. Forces synchronous reflow if not batched.
+
+**`content-visibility` not used** — Hidden pages use `display: none` (via `.is-page-hidden`), which is already optimal. But criterion cards within visible pages could benefit from `content-visibility: auto` with `contain-intrinsic-size` for off-viewport cards.
+
+### D. CSS Containment Audit
+
+| Element                | Current `contain`    | Opportunity                                                   |
+| ---------------------- | -------------------- | ------------------------------------------------------------- |
+| `.framework-panel`     | `layout style paint` | Already optimal                                               |
+| `.questionnaire-panel` | None                 | Low priority — content changes frequently                     |
+| `.form-section`        | None                 | MEDIUM — inactive pages use `display:none` (already skipped)  |
+| `.criterion-card`      | None                 | LOW — only visible within active page                         |
+| `.field-group`         | None                 | LOW — many instances, containment overhead may exceed benefit |
 
 ---
 
 ## Recommendations
 
-### R1 — Remove `backdrop-filter: blur(2px)` from `.shell-surface`
+### R1 — Add early-return guard to `field-handlers.js` subscriber for UI-only state changes
 
 - **Priority**: HIGH
-- **Description**: The 2px blur on the surface overlay (`layout.css:327-328`) triggers per-frame compositing on the entire overlay area. The overlay background is already `color-mix(in srgb, var(--ut-text) 88%, var(--ut-grey))` — 88% opacity makes a 2px blur visually imperceptible. This is the only `backdrop-filter` in the codebase.
-- **Specifics**: Delete `backdrop-filter: blur(2px);` and `-webkit-backdrop-filter: blur(2px);` from `layout.css:327-328`.
-- **Dependencies**: None. This is P2-05 from w3-plan.md. Zero visual regression at 88% opacity.
-
----
-
-### R2 — Remove unused `font-weight: 800` from Google Fonts URL
-
-- **Priority**: HIGH
-- **Description**: The font import at `trust-framework.html:9` requests `Inter:wght@400;700;800` but weight 800 is not used anywhere in screen CSS (the two remaining `font-weight: 800` in `components.css` are Wave 1 regressions assigned to `/normalize`). Removing weight 800 eliminates ~15-20KB of unused font data from the download.
-- **Specifics**: Change `Inter:wght@400;700;800` to `Inter:wght@400;700` in `trust-framework.html:9`.
-- **Dependencies**: Coordinate with `/normalize` — the two `font-weight: 800` in `components.css` should also change to 700.
-
----
-
-### R3 — Transitioning `border-left-width` triggers layout recalculation
-
-- **Priority**: MEDIUM
-- **Description**: Three selectors transition `border-left-width` (a layout property, not GPU-composited):
-  - `.doc-section, .form-section` — `border-left-width var(--duration-fast)` (`interaction-states.css:107`)
-  - `.criterion-card` — `border-left-width var(--duration-fast)` (`interaction-states.css:841`)
-  - `@starting-style .doc-section.is-active, .form-section.is-active` — sets initial `border-left-width: 6px` (`interaction-states.css:164`)
-
-  Changing `border-left-width` during transitions forces the browser to recalculate layout for each animation frame. On a page with multiple sections/criteria visible, this can cause jank during page transitions.
-
-- **Specifics**: Replace `border-left-width` transitions with `transform: scaleX()` on a pseudo-element, or use `outline` (which doesn't affect layout) for the active indicator. Alternatively, simply set `border-left-width` without transition and rely on the opacity fade for the perceived transition.
-
-  Minimum viable fix: Remove `border-left-width` from the transition lists in `interaction-states.css:107` and `interaction-states.css:841`. The `@starting-style` block can remain (it only fires on first style application, not continuously).
-
-- **Dependencies**: None. Visual change is subtle — the width snaps instead of animating.
-
----
-
-### R4 — 219 `color-mix()` calls across CSS create computation at parse time
-
-- **Priority**: LOW
-- **Description**: `tokens.css` (90 calls), `interaction-states.css` (100 calls), `components.css` (19 calls), and `layout.css` (9 calls) use `color-mix(in srgb, ...)`. These are evaluated at CSS parse time and cached as computed values — they do NOT re-evaluate at runtime unless the variables they reference change. Since all inputs are static hex values or references to other static tokens, this is effectively zero ongoing cost.
-
-  However, `color-mix()` is used inside `@keyframes completePulse` (`animations.css:51-56`), which IS evaluated per-frame during animation. The function references `var(--section-accent-strong)` and `var(--section-tint)` — these are `--active-section-*` tokens that change per-page via `body[data-active-accent-key]`. If the accent changes during the animation (unlikely but possible), the browser must re-evaluate the color-mix per frame.
-
-- **Specifics**: No action needed for the 218 static `color-mix()` calls. For the 1 animated usage in `completePulse`, consider precomputing the colors or accepting the negligible cost (the animation is only 200ms).
-- **Dependencies**: None.
-
----
-
-### R5 — No CSS `contain` or `content-visibility` on off-screen sections
-
-- **Priority**: MEDIUM
-- **Description**: Hidden page sections use `display: none` (via `.is-page-hidden`), which is already optimal — the browser skips layout/paint for `display: none` elements. However, the context panel and its content (sidebar, reference drawers, framework docs) are always in the DOM even when hidden at narrow viewports (using `transform: translateX(100%)` + `visibility: hidden`).
-
-  Adding `contain: layout style paint` to `.framework-panel` would allow the browser to skip layout recalculation of its contents when the panel is off-screen or collapsed.
-
-- **Specifics**: Add to `layout.css`:
-  ```css
-  .framework-panel {
-    contain: layout style paint;
+- **Description**: The `field-handlers.js` subscriber (line 876) re-syncs all field groups on every state change, including changes that only affect `ui` (page navigation, sidebar toggle, scroll metrics). When the user clicks "Next page", the subscriber unnecessarily iterates all field groups in the now-inactive section.
+- **Specifics**: At `field-handlers.js:877`, add a guard:
+  ```js
+  // Before the querySelectorAll loop:
+  if (state.evaluation === previousState?.evaluation) {
+    return;
   }
   ```
-  Do NOT add to `.questionnaire-panel` — its content changes frequently and containment would inhibit style sharing.
-- **Dependencies**: Verify that the context panel's reference drawers still open/close correctly with containment. The `overflow: auto` on `.panel` already creates a formatting context, so `contain` should be safe.
+  The store subscriber already receives `(nextState, previousState)` via `notify` (store.js:555-558). The comparison is a reference check — O(1). When `evaluation` reference hasn't changed (UI-only transition), skip all DOM sync work.
+- **File**: `static/js/behavior/field-handlers.js:876-894`
+- **Dependencies**: None. The subscriber signature already provides previous state.
+- **Estimated impact**: Eliminates ~260 DOM attribute writes + ~60 `querySelector` calls per page navigation, sidebar toggle, and scroll event.
 
 ---
 
-### R6 — Subscriber in `field-handlers.js` queries all field groups on every state change
+### R2 — Skip evidence normalization in `cloneEvaluation` when evidence hasn't changed
+
+- **Priority**: HIGH
+- **Description**: `cloneEvaluation` (store.js:412-430) calls `normalizeEvidenceItems` + `finalizeEvidenceItemsForInsert` on the evaluation evidence array and `cloneEvidenceCriteria` on criterion evidence on every single field change. Evidence data is large (potentially multi-file with data URLs) and rarely changes — it only changes via dedicated evidence actions. A text field edit should not re-normalize evidence.
+- **Specifics**: In `cloneEvaluation`, accept an optional `{ evidenceChanged }` flag. When `false` (the default for `setFieldValue`, `setSectionValue`, `setCriterionValue`), shallow-copy the evidence references instead of re-normalizing:
+  ```js
+  evidence: evidenceChanged
+    ? { evaluation: finalizeEvidenceItemsForInsert(normalizeEvidenceItems(...)), criteria: cloneEvidenceCriteria(...) }
+    : { ...(evaluation.evidence ?? {}) }
+  ```
+  Only evidence actions (`addEvaluationEvidenceItems`, etc.) should pass `evidenceChanged: true`.
+- **File**: `static/js/state/store.js:412-430`, all commit updaters in store.js
+- **Dependencies**: None. Internal API change only.
+- **Estimated impact**: Eliminates evidence array normalization + deep cloning on every text field keystroke. Evidence items can contain data URLs (base64 images) — re-processing these is the single most expensive GC allocation per keystroke.
+
+---
+
+### R3 — Add `requestAnimationFrame` wrapper around tab indicator layout read/write
 
 - **Priority**: MEDIUM
-- **Description**: The store subscriber in `field-handlers.js:838-856` runs on every state change (including UI-only changes like `setActivePage`). It queries `scope.querySelectorAll('.field-group[data-field-id]')` which traverses the active page's DOM. It also calls `syncPageSections`, `syncCriterionCards`, and `syncSectionMetaControls` which each run their own `querySelectorAll`.
-
-  On a typical page with 10-20 field groups, this is 30-60 `querySelectorAll` calls per state change. Each keystroke in a text field triggers a state commit → notify → full DOM sync cycle.
-
-- **Specifics**:
-  1. Add a guard at the top of the subscriber to early-return when only `ui` changed (no `evaluation` or `derived` changes). The store passes both `nextState` and `previousState` — compare `nextState.evaluation === previousState.evaluation` and `nextState.derived === previousState.derived` to skip DOM sync for pure UI transitions.
-  2. Cache the `querySelectorAll` results and only re-query when the active page changes (MutationObserver already fires for structural changes).
-- **Dependencies**: Requires store subscriber to receive `(nextState, previousState)` — it currently does receive both per `store.js:549-553`. No API change needed.
-
----
-
-### R7 — `syncCanonicalProgressDecorations` runs `querySelector` for each principle section on every state change
-
-- **Priority**: LOW
-- **Description**: `navigation.js:387-422` iterates over `PRINCIPLE_SECTION_IDS` (5 items) and calls `pageSectionsById.get()` + `section.querySelector('h2')` + `heading.querySelector('.completion-badge')` + `dom.completionStrip?.querySelector('.strip-cell[...]')` per iteration. This is already debounced via `requestAnimationFrame` (line 427), so it only runs once per frame. With only 5 iterations, the cost is negligible.
-
-- **Specifics**: No action needed. The existing `requestAnimationFrame` debounce is appropriate.
+- **Description**: `navigation.js:617-625` (`updateTabIndicator`) reads `activeButton.offsetLeft` and `activeButton.offsetWidth` (forced layout) then immediately writes `style.transform` and `style.width`. This forces a synchronous reflow. While this function is called once per tab switch (not a hot path), it's the only forced-layout read/write in the codebase and was flagged in W3 P2.6.
+- **Specifics**: Wrap the style writes in `requestAnimationFrame`:
+  ```js
+  const updateTabIndicator = (activeTab) => {
+    if (!dom.tabIndicator || !dom.tabBar) return;
+    const activeButton = dom.tabBar.querySelector(`[data-sidebar-tab="${activeTab}"]`);
+    if (!activeButton) return;
+    const left = activeButton.offsetLeft;
+    const width = activeButton.offsetWidth;
+    windowRef.requestAnimationFrame(() => {
+      dom.tabIndicator.style.transform = `translateX(${left}px)`;
+      dom.tabIndicator.style.width = `${width}px`;
+    });
+  };
+  ```
+- **File**: `static/js/behavior/navigation.js:617-625`
 - **Dependencies**: None.
+- **Estimated impact**: Eliminates the only forced synchronous reflow in the codebase. Cosmetic — tab indicator update is already fast.
 
 ---
 
-### R8 — `syncFromState` calls 9 sync functions on every state change
-
-- **Priority**: LOW
-- **Description**: `navigation.js:639-658` calls `pager.sync`, `sidebar.sync`, `referenceDrawers.sync`, `aboutPanel.sync`, `helpPanel.sync`, `syncPageVisibility`, `syncActiveAccent`, `syncShellSurfaces`, `syncShellProgressState`, `syncPanelTitles`, `syncPanelMetrics` (×2), and `scheduleCanonicalProgressDecorations` — 13 function calls per state notification.
-
-  Most of these are cheap (dataset writes, classList toggles). The `requestAnimationFrame` debounce on progress decorations (R7) helps. But `syncPageVisibility` iterates all page sections and calls `syncPageControlAvailability` which runs `querySelectorAll('.rating-scale')` and `querySelectorAll('.rating-option')` per section.
-
-- **Specifics**: Low priority — the function calls are individually cheap and the total work is bounded by the small number of page sections (12). The main optimization opportunity is R6 (skip DOM sync for UI-only changes). No standalone action needed here.
-- **Dependencies**: R6 partially addresses this.
-
----
-
-### R9 — `ratingBorderConfirm` keyframe animates `border-left-width` (layout property)
+### R4 — Remove `border-left-width` from CSS transition lists
 
 - **Priority**: MEDIUM
-- **Description**: `animations.css:72-82` defines `ratingBorderConfirm` which animates `border-left-width` from 2px → 5px → 3px over 200ms. This triggers layout recalculation on each frame. Combined with R3's `border-left-width` transition on the parent `.criterion-card`, there may be compounded layout work when a rating is selected near a criterion card that's also transitioning.
+- **Description**: Several selectors transition `border-left-width` — a layout-triggering property that forces the browser to recalculate layout for every frame of the transition. The affected selectors are in `interaction-states.css` (`.form-section`, `.criterion-card` transitions that include `border-left-width`). When a page becomes active, the `border-left-width` change from 6px to 8px triggers layout recalculation on the entire form section.
+- **Specifics**: In `interaction-states.css`, remove `border-left-width` from transition property lists on `.form-section` and `.criterion-card`. The width change should be instant (not animated) — the visual transition is already handled by opacity and background changes. Keep the `border-left-width` declaration itself, just don't transition it.
+- **File**: `static/css/interaction-states.css` — transition declarations on `.doc-section, .form-section` and `.criterion-card`
+- **Dependencies**: None. Visual change is imperceptible — the width snaps instead of animating over 150ms.
+- **Estimated impact**: Eliminates layout recalculation during page transitions and criterion focus changes. Affects every page transition in the app.
 
-- **Specifics**: Replace with a `transform: scaleX()` animation on a pseudo-element overlay, or use `box-shadow` (composited) for the visual pulse. Minimum fix: change to animating `border-left-color` or `box-shadow` instead of width.
+---
+
+### R5 — Replace `border-left-width` animation in `ratingBorderConfirm` with `box-shadow`
+
+- **Priority**: MEDIUM
+- **Description**: `animations.css:68-80` defines `ratingBorderConfirm` which animates `border-left-width` from 2px → 5px → 3px over 200ms. This triggers layout recalculation on every animation frame. When a user clicks a rating, this animation fires simultaneously on the `.rating-option` element, compounding with any `border-left-width` transition on the parent `.criterion-card`.
+- **Specifics**: Replace the keyframe animation with a `box-shadow` inset animation (composited property):
+  ```css
+  @keyframes ratingBorderConfirm {
+    0% {
+      box-shadow: inset 2px 0 0 0 currentColor;
+    }
+    40% {
+      box-shadow: inset 5px 0 0 0 currentColor;
+    }
+    100% {
+      box-shadow: inset 3px 0 0 0 currentColor;
+    }
+  }
+  ```
+  Alternatively, use `transform: scaleX()` on a pseudo-element for a fully GPU-composited animation. The minimum fix is to remove `border-left-width` from the animation and accept an instant snap.
+- **File**: `static/css/animations.css:68-80`
+- **Dependencies**: None. The visual pulse effect is preserved with `box-shadow`.
+- **Estimated impact**: Eliminates per-frame layout recalculation during rating selection.
+
+---
+
+### R6 — Avoid full field re-sync when only one field changed
+
+- **Priority**: MEDIUM
+- **Description**: When the user types in a text field, `handleInput` → `store.actions.setFieldValue` → subscriber → `syncFieldGroup` runs on ALL field groups in the active section. For a page with 20 visible fields, this means 20 full field sync cycles (each setting 13 dataset attributes + querying DOM) when only one field's value actually changed.
+- **Specifics**: In the `field-handlers.js` subscriber, compare `state.derived.fieldStates.byId` against `previousState.derived.fieldStates.byId` to identify which fields actually changed state. Only call `syncFieldGroup` for those fields. Fall back to full sync if the comparison is not feasible (e.g., first render).
+
+  Alternatively (simpler): track the last-changed `fieldId` from the event handler and only sync that field group in the subscriber, with a periodic full sync on page change.
+
+- **File**: `static/js/behavior/field-handlers.js:876-894`
+- **Dependencies**: R1 (the early-return guard) should be implemented first, as it handles the easier case (UI-only changes). This recommendation handles the harder case (field changes that do need sync, but not for all fields).
+- **Estimated impact**: Reduces per-keystroke DOM work from O(n) fields to O(1) field, where n is typically 10-30 visible fields per page.
+
+---
+
+### R7 — Add `contain: layout style paint` to `.framework-panel` (already done — verify)
+
+- **Priority**: LOW
+- **Description**: W3 audit (P3.5) noted that `contain: layout style paint` on `.framework-panel` (`layout.css:274`) may clip focus outlines. The containment is already present and correct. The W3 audit flagged a theoretical concern about absolutely positioned elements near the panel boundary being clipped.
+- **Specifics**: Verify that focus outlines on elements near the top/bottom edges of the context panel are not clipped. If they are, downgrade to `contain: layout paint` (removing `style` containment). No action needed if no clipping is observed.
+- **File**: `static/css/layout.css:274`
 - **Dependencies**: None.
+- **Estimated impact**: Already implemented. Verification only.
 
 ---
 
-### R10 — No `font-display` on Google Fonts `JetBrains Mono`
+### R8 — Remove `backdrop-filter` if still present
 
-- **Priority**: LOW
-- **Description**: The Google Fonts URL (`trust-framework.html:9`) uses `display=swap` for the entire request, which applies to both Inter and JetBrains Mono. This is correct — both fonts will show fallback text immediately and swap when loaded. No issue here.
-
-  However, JetBrains Mono is only used for `.ff-mono` elements (field IDs, codes, monospace data). Consider adding `<link rel="preload" href="..." as="font" type="font/woff2" crossorigin>` for Inter only (the body font) to speed up LCP text rendering.
-
-- **Specifics**: Optional: self-host Inter and JetBrains Mono woff2 files with `<link rel="preload">`. This eliminates the Google Fonts redirect chain (DNS → TCP → CSS → font file). Expected LCP improvement: 200-500ms on cold loads.
-- **Dependencies**: Requires font file hosting. Out of scope if the project intentionally uses Google Fonts CDN.
-
----
-
-### R11 — CSS total size: 108KB uncompressed (4548 lines across 8 files)
-
-- **Priority**: LOW
-- **Description**: Total CSS payload is 108KB across 8 files. With gzip (typical 70-80% compression ratio), this is ~22-32KB transferred. The largest files are:
-  - `interaction-states.css`: 41.7KB (1486 lines) — data-driven state styling
-  - `components.css`: 32.8KB (1621 lines) — component definitions
-  - `tokens.css`: 13.7KB (375 lines) — design tokens
-
-  For a questionnaire app with 132+ fields and complex state styling, this is reasonable. There is no framework CSS overhead.
-
-- **Specifics**: No action needed. The CSS is well-structured by layer. If compression becomes a concern, the only optimization would be minifying for production (out of scope for this project's no-build-step approach).
+- **Priority**: HIGH
+- **Description**: W3 audit confirmed `backdrop-filter: blur(2px)` was removed from `.shell-surface`. Verify this hasn't been re-introduced. `backdrop-filter` is the single most expensive CSS property — it forces per-pixel compositing on the entire element area every frame.
+- **Specifics**: Run `grep -r "backdrop-filter" static/css/` — expect zero results.
+- **File**: All CSS files
 - **Dependencies**: None.
+- **Estimated impact**: Verification only. If present, removal eliminates per-frame compositing overhead.
 
 ---
 
-### R12 — JS total size: 502KB uncompressed (40+ modules)
+### R9 — Cache `querySelectorAll` results in field-handlers subscriber
 
 - **Priority**: LOW
-- **Description**: Total JS is 502KB across 40+ ES modules. With gzip, expect ~100-130KB transferred. The largest modules are:
-  - `render/sidebar.js`: 50KB
-  - `render/evidence.js`: 48.5KB
-  - `render/questionnaire-pages.js`: 52.4KB
-  - `config/questionnaire-schema.js`: 33.7KB
-  - `config/rules.js`: 24.9KB
-  - `config/sections.js`: 19.9KB
-  - `behavior/navigation.js`: 33.3KB
+- **Description**: `field-handlers.js` subscriber calls `scope.querySelectorAll('.field-group[data-field-id]')` on every state change. The result set doesn't change between state updates (only field values change, not the DOM structure). The MutationObserver in `navigation.js` already handles structural changes by calling `refreshPageSections`.
+- **Specifics**: Cache the `querySelectorAll` result and invalidate when the MutationObserver fires. Store as `let cachedFieldGroups = null;` at module scope, populate on first subscriber call and after MutationObserver triggers. This trades memory (holding ~20 element references) for reduced DOM traversal.
+- **File**: `static/js/behavior/field-handlers.js:876-894`
+- **Dependencies**: R1 (early-return guard) reduces the need for this optimization significantly. Only pursue if R1 is insufficient.
+- **Estimated impact**: Eliminates one `querySelectorAll` traversal per keystroke. Marginal — `querySelectorAll` with a class+attribute selector on ~100 elements is already sub-millisecond.
 
-  These are all loaded synchronously via ES module imports from `app.js`. The schema and rules are data-heavy (field definitions, validation rules) — they're large but simple object literals that parse quickly.
+---
 
-- **Specifics**: No action needed for the current architecture. If loading performance becomes a concern, the config modules (`questionnaire-schema.js`, `rules.js`, `sections.js`, `option-sets.js` — ~98KB combined) could be loaded lazily after initial render. But for a desktop-primary tool used by a single team, this is premature.
+### R10 — Consider memoizing `deriveFieldStates` with input comparison
+
+- **Priority**: LOW
+- **Description**: `deriveFieldStates` (fields.js) iterates all 132+ fields and runs visibility rules, requirement rules, validation rules, and skip logic for each. This is the most expensive single derivation. If the field values haven't changed (e.g., only `ui` state changed), the output is identical. A simple reference equality check on `state.fields` could short-circuit the entire derivation.
+- **Specifics**: In `derive/index.js:129`, add a check:
+  ```js
+  const fieldStates = previousFieldStates && state.fields === previousFields
+    ? previousFieldStates
+    : deriveFieldStates(state, { ... });
+  ```
+  This requires the main `deriveQuestionnaireState` function to accept and return a `previousDerivation` context for memoization.
+- **File**: `static/js/state/derive/index.js:100-178`, `static/js/state/derive/fields.js`
+- **Dependencies**: Significant architectural change. Only pursue if profiling shows derivation is a bottleneck. With only 132 fields and simple rule evaluation, the total derivation time is likely under 2ms — below the perceptual threshold.
+- **Estimated impact**: Could reduce derivation time by ~60% for UI-only state changes. Marginal for field changes (derivation is still needed).
+
+---
+
+### R11 — Remove `font-weight: 800` from Google Fonts URL if not used
+
+- **Priority**: HIGH
+- **Description**: `trust-framework.html:9` loads `Inter:wght@400;700;800`. Weight 800 may not be used in any screen CSS. If unused, this downloads ~15-20KB of unnecessary font data.
+- **Specifics**: Change the Google Fonts URL from `Inter:wght@400;700;800` to `Inter:wght@400;700`. Verify no screen CSS uses `font-weight: 800` (the W3 audit noted two instances in `components.css` that were flagged as regressions).
+- **File**: `trust-framework.html:9`
+- **Dependencies**: Coordinate with `/normalize` to ensure the two `font-weight: 800` instances in `components.css` are changed to 700.
+- **Estimated impact**: Eliminates ~15-20KB of unused font data download.
+
+---
+
+### R12 — Consider `content-visibility: auto` for criterion cards below the fold
+
+- **Priority**: LOW
+- **Description**: Pages with many criteria (TR, RE, UC, SE, TC each have 3 criteria = 3 criterion cards) could benefit from `content-visibility: auto` on `.criterion-card` elements that are below the viewport. This allows the browser to skip layout/paint for off-screen cards. With `contain-intrinsic-size: auto 200px`, the browser reserves space to prevent layout shift.
+- **Specifics**: Add to `components.css` or `layout.css`:
+  ```css
+  .criterion-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 200px;
+  }
+  ```
+- **File**: `static/css/components.css` (criterion-card section)
+- **Dependencies**: None. `content-visibility: auto` is progressive enhancement — browsers that don't support it render normally.
+- **Estimated impact**: Skips layout/paint for off-screen criterion cards. With 3-5 cards per page and only 1-2 typically visible, this could reduce initial page render cost by 30-50%. However, since pages are rendered via document fragment and then shown/hidden with `display:none`, the benefit is limited to the active page's below-fold content.
+
+---
+
+### R13 — Add `contain-intrinsic-size` to `.page-index-column` for sticky positioning optimization
+
+- **Priority**: LOW
+- **Description**: `.page-index-column` uses `position: sticky; top: 0` (`layout.css:376-379`). Sticky elements require the browser to track scroll position for containment recalculation. Adding `contain: layout style` would help, but may interfere with sticky positioning. Instead, ensuring the column has a fixed width (it does: `minmax(13rem, 16rem)`) prevents layout shift.
+- **Specifics**: No action needed. The current implementation is already efficient — the sticky column has a constrained width and doesn't change size during scroll.
+- **File**: N/A
 - **Dependencies**: None.
 
 ---
 
 ## Priority Summary
 
-| ID  | Priority | Category | Effort  | Description                                                 |
-| --- | -------- | -------- | ------- | ----------------------------------------------------------- |
-| R1  | HIGH     | CSS      | Trivial | Remove `backdrop-filter: blur(2px)`                         |
-| R2  | HIGH     | Loading  | Trivial | Remove `font-weight: 800` from Google Fonts URL             |
-| R3  | MEDIUM   | CSS      | Low     | Stop transitioning `border-left-width` (layout thrashing)   |
-| R9  | MEDIUM   | CSS      | Low     | Stop animating `border-left-width` in `ratingBorderConfirm` |
-| R5  | MEDIUM   | CSS      | Trivial | Add `contain: layout style paint` to context panel          |
-| R6  | MEDIUM   | JS       | Medium  | Skip DOM sync on UI-only state changes                      |
-| R4  | LOW      | CSS      | None    | `color-mix()` in keyframes — acceptable cost                |
-| R7  | LOW      | JS       | None    | Progress decoration queries — already RAF-debounced         |
-| R8  | LOW      | JS       | None    | 13 sync functions — individually cheap                      |
-| R10 | LOW      | Loading  | Medium  | Optional: self-host fonts with preload                      |
-| R11 | LOW      | Bundle   | None    | CSS size reasonable for feature scope                       |
-| R12 | LOW      | Bundle   | None    | JS size reasonable, lazy loading premature                  |
+| ID  | Priority | Category | Effort  | Description                                                       | Impact                                                               |
+| --- | -------- | -------- | ------- | ----------------------------------------------------------------- | -------------------------------------------------------------------- |
+| R1  | HIGH     | JS       | Small   | Early-return guard in field-handlers subscriber                   | Eliminates ~260 DOM writes per UI-only change                        |
+| R2  | HIGH     | JS       | Medium  | Skip evidence normalization on non-evidence changes               | Eliminates largest GC allocation per keystroke                       |
+| R8  | HIGH     | CSS      | Trivial | Verify no `backdrop-filter` in CSS                                | Verification — eliminates per-frame compositing if present           |
+| R11 | HIGH     | Loading  | Trivial | Remove `font-weight: 800` from Google Fonts                       | ~15-20KB less font data                                              |
+| R3  | MEDIUM   | JS       | Trivial | rAF wrapper on tab indicator reads/writes                         | Eliminates only forced reflow                                        |
+| R4  | MEDIUM   | CSS      | Small   | Remove `border-left-width` from transition lists                  | Eliminates layout recalc on page transitions                         |
+| R5  | MEDIUM   | CSS      | Small   | Replace `border-left-width` animation with `box-shadow`           | Eliminates layout recalc on rating selection                         |
+| R6  | MEDIUM   | JS       | Medium  | Selective field re-sync instead of full section sync              | Reduces per-keystroke DOM work from O(n) to O(1)                     |
+| R7  | LOW      | CSS      | None    | Verify `.framework-panel` containment doesn't clip focus outlines | Already implemented                                                  |
+| R9  | LOW      | JS       | Small   | Cache `querySelectorAll` results in subscriber                    | Marginal — sub-ms savings                                            |
+| R10 | LOW      | JS       | Large   | Memoize `deriveFieldStates` with input comparison                 | ~60% derivation reduction for UI changes, marginal for field changes |
+| R12 | LOW      | CSS      | Trivial | `content-visibility: auto` on criterion cards                     | Skips layout/paint for below-fold cards                              |
+| R13 | LOW      | CSS      | None    | Page index column already efficient                               | No action needed                                                     |
 
 ---
 
 ## Execution Order
 
-1. **R1 + R2** — Trivial CSS/HTML deletes. Do first.
-2. **R3 + R9** — Remove `border-left-width` from transition/animation lists. Test page transitions and rating selection visually.
-3. **R5** — Add `contain` to `.framework-panel`. Test context panel rendering.
-4. **R6** — Add early-return guard to `field-handlers.js` subscriber. Test all field types still sync correctly.
+1. **R8 + R11** — Verification and trivial HTML edit. Zero risk.
+2. **R1** — Early-return guard in field-handlers. Small change, high impact on page navigation performance.
+3. **R2** — Skip evidence normalization. Medium effort, eliminates biggest per-keystroke allocation.
+4. **R4 + R5** — CSS layout-thrash fixes. Remove `border-left-width` from transitions and animations.
+5. **R3** — rAF wrapper on tab indicator. Trivial.
+6. **R6** — Selective field re-sync. Medium effort, builds on R1's pattern.
+7. **R12** — `content-visibility` on criterion cards. Progressive enhancement, zero risk.
+8. **R9, R10, R13** — Only if profiling indicates need.
 
 ---
 
@@ -216,14 +406,39 @@
 After implementing:
 
 1. `npm run validate:html` — no regressions
-2. `npm run test:e2e` — all suites pass
-3. Chrome DevTools Performance tab: no layout thrashing during page transitions
-4. Chrome DevTools Performance tab: no layout thrashing during rating selection
-5. Chrome DevTools Layers panel: no unexpected compositing layers
-6. Network tab: Google Fonts request no longer includes `800` weight
-7. Grep: zero `backdrop-filter` in CSS
-8. Grep: zero `transition.*border-left-width` in CSS
-9. Grep: zero `border-left-width` inside `@keyframes` (except `print.css` overrides)
-10. Visual: surface overlay (about/help) looks identical without backdrop-filter
-11. Visual: rating selection pulse still perceptible
-12. Visual: page transitions still smooth
+2. `npm run test:e2e` — all 5 suites pass
+3. **Chrome DevTools → Performance tab**: Record a typing session in a text field. Verify:
+   - No layout shifts (purple bars) during typing
+   - No forced synchronous layouts (yellow triangles with red border)
+   - Total scripting time per keystroke < 5ms
+4. **Chrome DevTools → Performance tab**: Record a page transition. Verify:
+   - No layout recalculation during transition
+   - No paint spikes from `border-left-width` animation
+5. **Chrome DevTools → Layers panel**: Verify no unexpected compositing layers
+6. **Network tab**: Google Fonts request no longer includes `800` weight
+7. **grep**: Zero `backdrop-filter` in `static/css/`
+8. **grep**: Zero `transition.*border-left-width` in `static/css/` (except `print.css` overrides)
+9. **grep**: Zero `border-left-width` inside `@keyframes` (except `print.css` overrides)
+10. **Visual**: Page transitions remain smooth
+11. **Visual**: Rating selection pulse still perceptible
+12. **Visual**: All field values persist correctly after navigation
+13. **Visual**: Evidence items still render correctly after field edits
+
+---
+
+## Architecture Note: When to Pursue R10 (Derivation Memoization)
+
+The current derivation architecture is simple and correct: recompute everything from scratch on every change. For a 132-field form with 15 criteria and 13 sections, the total iteration count per keystroke is ~800-1000 simple operations (equality checks, rule evaluations, property reads). On modern hardware, this completes in 1-3ms — well within the 16ms frame budget.
+
+R10 (memoization) should only be pursued if:
+
+- Profiling shows derivation time > 5ms consistently
+- The form grows significantly beyond 132 fields
+- Evidence items grow to dozens of large data URLs
+- The app is used on low-powered devices (tablets, old laptops)
+
+The current simplicity is a feature — full recomputation guarantees correctness without cache invalidation bugs.
+
+---
+
+_End of Wave 4 Optimize Report_
