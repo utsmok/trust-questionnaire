@@ -3,13 +3,13 @@
   inset: 0 0 auto 0;
   height: 5px;
   background: var(--top-accent-color);
-  z-index: 50;
+  z-index: var(--z-top-accent);
 }
 
 .site-header {
   position: fixed;
   inset: 5px 0 auto 0;
-  z-index: 45;
+  z-index: var(--z-header-chrome);
   background: var(--ut-white);
   border-bottom: 2px solid var(--ut-border);
 }
@@ -21,7 +21,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 18px;
+  gap: var(--space-4-5);
 }
 
 .header-bar {
@@ -55,7 +55,7 @@
 
 .logo-dept {
   flex: 0 0 auto;
-  border-radius: 2px;
+  border-radius: var(--radius-md);
 }
 
 .brand-logos {
@@ -96,7 +96,7 @@
 .panel-progress {
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: var(--z-panel-progress);
   height: 4px;
   background: color-mix(in srgb, var(--active-section-accent, var(--ut-blue)) 14%, var(--ut-white));
 }
@@ -187,7 +187,7 @@
   left: 0;
   right: 0;
   height: 6px;
-  z-index: 4;
+  z-index: var(--z-panel-shadow);
   pointer-events: none;
   transition: opacity var(--duration-fast) var(--ease-out-quart);
 }
@@ -262,7 +262,7 @@
 
 .questionnaire-panel {
   order: 1;
-  background: var(--ut-white);
+  background: var(--neutral-50);
 }
 
 .framework-panel {
@@ -281,7 +281,7 @@
   left: calc(100% - var(--sidebar-width) - 3px);
   width: 6px;
   cursor: col-resize;
-  z-index: 10;
+  z-index: var(--z-divider);
   touch-action: none;
   user-select: none;
 }
@@ -300,8 +300,7 @@
   transform: translate(-50%, -50%);
   width: 2px;
   height: 24px;
-  border-radius: 1px;
-  background: color-mix(in srgb, var(--ut-navy) 25%, var(--ut-border));
+  border-radius: var(--radius-sm);
   transition: background var(--duration-fast) var(--ease-out-quart);
 }
 
@@ -331,12 +330,12 @@
   color: var(--ut-muted);
   font-size: var(--text-body);
   line-height: var(--lh-body);
-  max-width: 44ch;
+  max-width: 72ch;
 }
 
 .questionnaire-shell {
   display: grid;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .questionnaire-panel-header {
@@ -344,7 +343,7 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px 18px;
+  gap: var(--space-3) var(--space-4-5);
 }
 
 .questionnaire-panel-header .panel-title {
@@ -368,7 +367,7 @@
 .workspace-layout {
   display: grid;
   grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr);
-  gap: 22px;
+  gap: var(--space-5-5);
   align-items: start;
 }
 
@@ -381,7 +380,7 @@
 .questionnaire-workspace {
   min-width: 0;
   display: grid;
-  gap: 22px;
+  gap: var(--space-5-5);
 }
 
 .sidebar-tab-bar {
@@ -406,6 +405,7 @@
   font-size: var(--text-sm);
   font-weight: 700;
   font-family: var(--ff-heading);
+  min-height: 44px;
   text-transform: uppercase;
   letter-spacing: var(--ls-uppercase);
   cursor: pointer;
@@ -431,11 +431,11 @@
   height: 3px;
   background: var(--active-section-accent, var(--ut-darkblue));
   transition:
-    transform 200ms var(--ease-out-quint),
-    width 200ms var(--ease-out-quint),
+    transform var(--duration-normal) var(--ease-out-quint),
+    width var(--duration-normal) var(--ease-out-quint),
     background var(--duration-fast) var(--ease-out-quart);
   pointer-events: none;
-  border-radius: 2px 2px 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
 .sidebar-tab-panels {
@@ -457,12 +457,21 @@
 .context-drawer-backdrop {
   position: fixed;
   inset: var(--header-h) 0 0 0;
-  z-index: 18;
+  z-index: var(--z-drawer-backdrop);
   background: color-mix(in srgb, var(--ut-text) 20%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-normal) var(--ease-out-quart),
+    visibility 0ms var(--ease-out-quart) var(--duration-normal);
 }
 
-.context-drawer-backdrop[hidden] {
-  display: none;
+.context-drawer-backdrop[data-drawer-state='open'] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--duration-normal) var(--ease-out-quart),
+    visibility 0ms var(--ease-out-quart) 0ms;
 }
 
 .shell-layout.is-context-drawer-mode {
@@ -485,9 +494,9 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  z-index: 20;
+  z-index: var(--z-drawer);
   transition:
-    transform 280ms var(--ease-out-quint),
+    transform var(--duration-slow) var(--ease-out-quint),
     opacity var(--duration-fast) var(--ease-out-quart);
 }
 
