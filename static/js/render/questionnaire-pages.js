@@ -28,6 +28,7 @@ import {
   createFieldGroup,
   createInputControl,
   createRatingScale,
+  createScoreDropdown,
   createSection,
   createSectionKicker,
   createSelectControl,
@@ -40,10 +41,6 @@ import { EMPTY_ARRAY, freezeArray, isPlainObject } from '../utils/shared.js';
 const EMPTY_OBJECT = Object.freeze({});
 const SECTION_NOTE_HELP_TEXT =
   "Free-form note for observations that don't fit elsewhere. Does not satisfy any required field.";
-const SECTION_SKIP_SCAFFOLD_HELP_TEXT =
-  'Skip this section to mark it as not applicable. All fields inside become optional. A reason and rationale are required.';
-const CRITERION_SKIP_SCAFFOLD_HELP_TEXT =
-  'Skip only when the criterion cannot be assessed (e.g., insufficient data or tool unavailable). Score normally if you can evaluate it. Reason and rationale required. All child fields become optional.';
 
 const assertInvariant = (condition, message) => {
   if (!condition) {
@@ -646,6 +643,10 @@ const resolveFieldBodyKind = (field) => {
     return 'checkbox';
   }
 
+  if (field.control === 'score_dropdown') {
+    return 'score_dropdown';
+  }
+
   if (field.control === 'dropdown' || field.control === 'computed_select') {
     return 'select';
   }
@@ -1030,6 +1031,22 @@ const createFieldBodyElement = (fieldModel, documentRef) => {
           'aria-describedby': describedBy,
         },
       });
+    case 'score_dropdown':
+      return createScoreDropdown({
+        documentRef,
+        options: fieldModel.optionSet?.options ?? [],
+        selectedValue: fieldModel.rawValue,
+        placeholderText: fieldModel.placeholderText,
+        fieldId: fieldModel.fieldId,
+        labelId: fieldModel.labelId,
+        readOnly: fieldModel.fieldState.readOnly,
+        dataset: inputDataset,
+        attributes: {
+          id: fieldModel.controlId,
+          'aria-labelledby': fieldModel.labelId,
+          'aria-describedby': describedBy,
+        },
+      });
     case 'select':
       return createSelectControl({
         documentRef,
@@ -1292,15 +1309,9 @@ const createSectionMetaElement = (sectionMeta, documentRef) => {
     ],
   });
 
-  const skipScaffoldGroup = createFieldGroup({
+  const skipScaffoldGroup = createElement('details', {
     documentRef,
-    labelText: 'Section skip',
-    labelId: sectionMeta.skipScaffold.labelId,
-    tagText: sectionMeta.skipScaffold.requested ? 'Active' : 'Optional',
-    tagKind: 'display',
-    body: skipScaffoldBody,
-    helpText: SECTION_SKIP_SCAFFOLD_HELP_TEXT,
-    helpId: sectionMeta.skipScaffold.helpId,
+    className: 'skip-accordion',
     dataset: {
       pageId: sectionMeta.pageId,
       sectionMeta: 'skip-scaffold',
@@ -1308,6 +1319,25 @@ const createSectionMetaElement = (sectionMeta, documentRef) => {
     attributes: {
       id: sectionMeta.skipScaffold.elementId,
     },
+    children: [
+      createElement('summary', {
+        documentRef,
+        className: 'skip-accordion-summary',
+        children: [
+          createElement('span', { documentRef, text: 'Skip section' }),
+          createElement('span', {
+            documentRef,
+            className: 'display-tag',
+            text: sectionMeta.skipScaffold.requested ? 'Active' : 'Optional',
+          }),
+        ],
+      }),
+      createElement('div', {
+        documentRef,
+        className: 'skip-accordion-panel',
+        children: [skipScaffoldBody],
+      }),
+    ],
   });
 
   return createFieldGrid({
@@ -1352,99 +1382,9 @@ const createCriterionSkipElement = (criterionModel, documentRef) => {
   const toggleDisabled =
     !skipScaffold.isEditable || skipScaffold.inheritedSectionSkip || skipScaffold.systemSkipped;
 
-  const body = createElement('div', {
+  return createElement('details', {
     documentRef,
-    attributes: {
-      style: 'display:grid;gap:8px;',
-    },
-    children: [
-      createElement('div', {
-        documentRef,
-        attributes: {
-          style: 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;',
-        },
-        children: [
-          createElement('button', {
-            documentRef,
-            className: [
-              'evidence-button',
-              skipScaffold.requested ? null : 'evidence-button-primary',
-            ],
-            text: skipScaffold.requested ? 'Resume criterion' : 'Skip criterion',
-            dataset: {
-              criterionAction: 'toggle-skip',
-              criterionCode: criterionModel.criterionCode,
-            },
-            attributes: {
-              id: skipScaffold.toggleControlId,
-              type: 'button',
-              disabled: toggleDisabled ? true : null,
-              'aria-disabled': String(Boolean(toggleDisabled)),
-            },
-          }),
-          skipScaffold.inheritedSectionSkip
-            ? createElement('span', {
-                documentRef,
-                className: 'field-help',
-                text: 'Section skip currently overrides this criterion.',
-              })
-            : null,
-        ],
-      }),
-      createSelectControl({
-        documentRef,
-        options: skipScaffold.options,
-        valueText: skipScaffold.reasonValue,
-        placeholderText: 'Select a criterion skip reason',
-        dataset: {
-          criterionCode: criterionModel.criterionCode,
-          controlKind: 'criterion_skip_reason',
-          criterionRecordKey: 'skipReasonCode',
-        },
-        shellDataset: {
-          criterionCode: criterionModel.criterionCode,
-          criterionMeta: 'skip-scaffold',
-        },
-        attributes: {
-          id: skipScaffold.reasonControlId,
-          'aria-labelledby': skipScaffold.labelId,
-          'aria-describedby': skipScaffold.helpId,
-        },
-        disabled: controlsDisabled,
-      }),
-      createTextareaControl({
-        documentRef,
-        valueText: skipScaffold.rationaleValue,
-        placeholderText: 'Explain why this criterion is being skipped',
-        dataset: {
-          criterionCode: criterionModel.criterionCode,
-          controlKind: 'criterion_skip_rationale',
-          criterionRecordKey: 'skipRationale',
-        },
-        shellDataset: {
-          criterionCode: criterionModel.criterionCode,
-          criterionMeta: 'skip-scaffold',
-        },
-        attributes: {
-          id: skipScaffold.rationaleControlId,
-          rows: 4,
-          'aria-labelledby': skipScaffold.labelId,
-          'aria-describedby': skipScaffold.helpId,
-        },
-        readOnly: controlsDisabled,
-      }),
-    ],
-  });
-
-  return createFieldGroup({
-    documentRef,
-    labelText: 'Criterion skip',
-    labelId: skipScaffold.labelId,
-    tagText: statusText,
-    tagKind: 'display',
-    body,
-    helpText: CRITERION_SKIP_SCAFFOLD_HELP_TEXT,
-    helpId: skipScaffold.helpId,
+    className: 'skip-accordion',
     dataset: {
       pageId: criterionModel.pageId,
       criterion: criterionModel.criterionCode,
@@ -1456,6 +1396,101 @@ const createCriterionSkipElement = (criterionModel, documentRef) => {
     attributes: {
       id: skipScaffold.elementId,
     },
+    children: [
+      createElement('summary', {
+        documentRef,
+        className: 'skip-accordion-summary',
+        children: [
+          createElement('span', { documentRef, text: 'Skip criterion' }),
+          createElement('span', {
+            documentRef,
+            className: 'display-tag',
+            text: statusText,
+          }),
+        ],
+      }),
+      createElement('div', {
+        documentRef,
+        className: 'skip-accordion-panel',
+        children: [
+          createElement('div', {
+            documentRef,
+            attributes: {
+              style: 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;',
+            },
+            children: [
+              createElement('button', {
+                documentRef,
+                className: [
+                  'evidence-button',
+                  skipScaffold.requested ? null : 'evidence-button-primary',
+                ],
+                text: skipScaffold.requested ? 'Resume criterion' : 'Skip criterion',
+                dataset: {
+                  criterionAction: 'toggle-skip',
+                  criterionCode: criterionModel.criterionCode,
+                },
+                attributes: {
+                  id: skipScaffold.toggleControlId,
+                  type: 'button',
+                  disabled: toggleDisabled ? true : null,
+                  'aria-disabled': String(Boolean(toggleDisabled)),
+                },
+              }),
+              skipScaffold.inheritedSectionSkip
+                ? createElement('span', {
+                    documentRef,
+                    className: 'field-help',
+                    text: 'Section skip currently overrides this criterion.',
+                  })
+                : null,
+            ],
+          }),
+          createSelectControl({
+            documentRef,
+            options: skipScaffold.options,
+            valueText: skipScaffold.reasonValue,
+            placeholderText: 'Select a criterion skip reason',
+            dataset: {
+              criterionCode: criterionModel.criterionCode,
+              controlKind: 'criterion_skip_reason',
+              criterionRecordKey: 'skipReasonCode',
+            },
+            shellDataset: {
+              criterionCode: criterionModel.criterionCode,
+              criterionMeta: 'skip-scaffold',
+            },
+            attributes: {
+              id: skipScaffold.reasonControlId,
+              'aria-labelledby': skipScaffold.labelId,
+              'aria-describedby': skipScaffold.helpId,
+            },
+            disabled: controlsDisabled,
+          }),
+          createTextareaControl({
+            documentRef,
+            valueText: skipScaffold.rationaleValue,
+            placeholderText: 'Explain why this criterion is being skipped',
+            dataset: {
+              criterionCode: criterionModel.criterionCode,
+              controlKind: 'criterion_skip_rationale',
+              criterionRecordKey: 'skipRationale',
+            },
+            shellDataset: {
+              criterionCode: criterionModel.criterionCode,
+              criterionMeta: 'skip-scaffold',
+            },
+            attributes: {
+              id: skipScaffold.rationaleControlId,
+              rows: 4,
+              'aria-labelledby': skipScaffold.labelId,
+              'aria-describedby': skipScaffold.helpId,
+            },
+            readOnly: controlsDisabled,
+          }),
+        ],
+      }),
+    ],
   });
 };
 
