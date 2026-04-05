@@ -375,12 +375,15 @@
   position: sticky;
   top: 0;
   align-self: start;
+  contain: layout style paint;
+  overflow: hidden;
 }
 
 .questionnaire-workspace {
   min-width: 0;
   display: grid;
   gap: var(--space-5-5);
+  contain: layout style paint;
 }
 
 .sidebar-tab-bar {

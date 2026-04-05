@@ -809,6 +809,108 @@
   background: var(--score-3);
 }
 
+/* Score dropdown color states */
+.score-dropdown--score-0 .score-dropdown-trigger {
+  background: var(--score-0-tint);
+  border-color: var(--score-0-border);
+  border-left: 3px solid var(--score-0);
+  color: var(--score-0);
+  font-weight: 700;
+}
+.score-dropdown--score-0 .score-dropdown-indicator {
+  background: var(--score-0);
+}
+.score-dropdown--score-1 .score-dropdown-trigger {
+  background: var(--score-1-tint);
+  border-color: var(--score-1-border);
+  border-left: 3px solid var(--score-1);
+  color: var(--score-1);
+  font-weight: 700;
+}
+.score-dropdown--score-1 .score-dropdown-indicator {
+  background: var(--score-1);
+}
+.score-dropdown--score-2 .score-dropdown-trigger {
+  background: var(--score-2-tint);
+  border-color: var(--score-2-border);
+  border-left: 3px solid var(--score-2);
+  color: var(--score-2);
+  font-weight: 700;
+}
+.score-dropdown--score-2 .score-dropdown-indicator {
+  background: var(--score-2);
+}
+.score-dropdown--score-3 .score-dropdown-trigger {
+  background: var(--score-3-tint);
+  border-color: var(--score-3-border);
+  border-left: 3px solid var(--score-3);
+  color: var(--score-3);
+  font-weight: 700;
+}
+.score-dropdown--score-3 .score-dropdown-indicator {
+  background: var(--score-3);
+}
+
+.score-dropdown-option[data-option-value='0'] {
+  border-left-color: var(--score-0-border);
+}
+.score-dropdown-option[data-option-value='0']:hover,
+.score-dropdown-option[data-option-value='0'].is-selected {
+  background: var(--score-0-tint);
+  border-left-color: var(--score-0);
+}
+.score-dropdown-option[data-option-value='0'] .score-dropdown-option-dot {
+  border-color: var(--score-0);
+}
+.score-dropdown-option[data-option-value='0'].is-selected .score-dropdown-option-dot {
+  background: var(--score-0);
+}
+
+.score-dropdown-option[data-option-value='1'] {
+  border-left-color: var(--score-1-border);
+}
+.score-dropdown-option[data-option-value='1']:hover,
+.score-dropdown-option[data-option-value='1'].is-selected {
+  background: var(--score-1-tint);
+  border-left-color: var(--score-1);
+}
+.score-dropdown-option[data-option-value='1'] .score-dropdown-option-dot {
+  border-color: var(--score-1);
+}
+.score-dropdown-option[data-option-value='1'].is-selected .score-dropdown-option-dot {
+  background: var(--score-1);
+}
+
+.score-dropdown-option[data-option-value='2'] {
+  border-left-color: var(--score-2-border);
+}
+.score-dropdown-option[data-option-value='2']:hover,
+.score-dropdown-option[data-option-value='2'].is-selected {
+  background: var(--score-2-tint);
+  border-left-color: var(--score-2);
+}
+.score-dropdown-option[data-option-value='2'] .score-dropdown-option-dot {
+  border-color: var(--score-2);
+}
+.score-dropdown-option[data-option-value='2'].is-selected .score-dropdown-option-dot {
+  background: var(--score-2);
+}
+
+.score-dropdown-option[data-option-value='3'] {
+  border-left-color: var(--score-3-border);
+}
+.score-dropdown-option[data-option-value='3']:hover,
+.score-dropdown-option[data-option-value='3'].is-selected {
+  background: var(--score-3-tint);
+  border-left-color: var(--score-3);
+}
+.score-dropdown-option[data-option-value='3'] .score-dropdown-option-dot {
+  border-color: var(--score-3);
+}
+.score-dropdown-option[data-option-value='3'].is-selected .score-dropdown-option-dot {
+  background: var(--score-3);
+}
+
 .criterion-card {
   transition:
     border-color var(--duration-fast) var(--ease-out-quart),
@@ -1106,17 +1208,17 @@
 }
 
 .field-group[data-field-validation-state='attention']
-  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale, .score-dropdown),
 .field-group[data-field-validation-state='attention'] .date-range-control .mock-control {
   border-color: var(--state-warning-border);
   background: var(--state-warning-tint);
 }
 
 .field-group[data-field-validation-state='invalid']
-  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale, .score-dropdown),
 .field-group[data-field-validation-state='invalid'] .date-range-control .mock-control,
 .field-group[data-field-validation-state='blocked']
-  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale),
+  > :is(.mock-control, .textarea-mock, .checkbox-block, .rating-scale, .score-dropdown),
 .field-group[data-field-validation-state='blocked'] .date-range-control .mock-control {
   border-color: var(--state-error-border);
   background: var(--state-error-tint);
