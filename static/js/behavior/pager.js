@@ -1,11 +1,5 @@
-import { SECTION_WORKFLOW_STATES, getSectionDefinition } from '../config/sections.js';
+import { getSectionDefinition } from '../config/sections.js';
 import { getDocumentRef } from '../utils/shared.js';
-
-const WORKFLOW_STATE_LABELS = Object.freeze({
-  [SECTION_WORKFLOW_STATES.EDITABLE]: 'Editable',
-  [SECTION_WORKFLOW_STATES.READ_ONLY]: 'Read-only',
-  [SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED]: 'System-skipped',
-});
 
 const ensurePagerShell = (mount, documentRef) => {
   const existingShell = mount.querySelector('.pager-shell');
@@ -93,11 +87,8 @@ export const createPagerController = ({ root = document, store, navigateToPage }
 
   const sync = (state) => {
     const pagerState = getPagerState(state);
-    const workflowState = pagerState.activePageState?.workflowState ?? '';
-    const workflowLabel = WORKFLOW_STATE_LABELS[workflowState] ?? '';
 
     mount.hidden = false;
-    refs.shell.dataset.activeWorkflowState = workflowState;
 
     if (refs.previousButton instanceof HTMLButtonElement) {
       refs.previousButton.disabled = !pagerState.previousPageId;
@@ -128,16 +119,7 @@ export const createPagerController = ({ root = document, store, navigateToPage }
     }
 
     if (refs.status) {
-      const isLastPage = !pagerState.nextPageId;
-      const overallProgress = state.derived.completionProgress?.overall ?? null;
-
-      if (isLastPage && overallProgress?.canonicalState === 'complete') {
-        refs.status.textContent = `Evaluation complete — ${pagerState.pageOrder.length} sections reviewed`;
-      } else {
-        refs.status.textContent = pagerState.activePageDefinition
-          ? `Page ${pagerState.activePageIndex + 1} of ${pagerState.pageOrder.length} — ${pagerState.activePageDefinition.pageCode} ${pagerState.activePageDefinition.title}${workflowLabel ? ` · ${workflowLabel}` : ''}`
-          : `Page ${Math.max(pagerState.activePageIndex + 1, 1)} of ${pagerState.pageOrder.length}`;
-      }
+      refs.status.textContent = '';
     }
   };
 

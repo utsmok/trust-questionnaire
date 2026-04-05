@@ -1,5 +1,4 @@
 import {
-  COMPLETION_GROUPS,
   SECTION_WORKFLOW_STATES,
   getContentTopicDefinition,
   getSectionDefinition,
@@ -179,7 +178,7 @@ const formatGroupProgressSummary = (groupProgress) => {
 
   const base =
     groupProgress.applicableRequiredFieldCount > 0
-      ? `${groupProgress.satisfiedRequiredFieldCount}/${groupProgress.applicableRequiredFieldCount} req`
+      ? `${groupProgress.satisfiedRequiredFieldCount}/${groupProgress.applicableRequiredFieldCount}`
       : groupProgress.activeSectionCount > 0
         ? `${groupProgress.resolvedActiveSectionCount}/${groupProgress.activeSectionCount} pages`
         : 'No active pages';
@@ -732,13 +731,25 @@ export const createSidebarRenderer = ({
   const renderPageIndex = (state) => {
     const list = documentRef.createElement('ol');
     const heading = documentRef.createElement('h2');
-    let lastCompletionGroupId = null;
 
     pageSidebarMount.hidden = false;
     clearChildren(pageSidebarMount);
 
     heading.className = 'workspace-title';
     heading.textContent = 'Page index';
+
+    const toggleBtn = documentRef.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'nav-button sidebar-collapse-toggle';
+    toggleBtn.textContent = 'Collapse Index';
+    toggleBtn.style.cssText = 'width: 100%; margin-bottom: 12px; font-size: 10px;';
+    toggleBtn.onclick = () => {
+      const layout = documentRef.querySelector('.workspace-layout');
+      if (layout) {
+        layout.classList.toggle('is-compact');
+        toggleBtn.textContent = layout.classList.contains('is-compact') ? '' : 'Collapse Index';
+      }
+    };
 
     list.className = 'page-index-list';
 
@@ -749,41 +760,12 @@ export const createSidebarRenderer = ({
       const sectionProgress = state.derived.completionProgress?.bySectionId?.[pageId] ?? null;
       const isActive = state.ui.activePageId === pageId;
 
-      if (pageDefinition?.completionGroupId !== lastCompletionGroupId) {
-        const groupProgress =
-          state.derived.completionProgress?.byCompletionGroupId?.[
-            pageDefinition?.completionGroupId
-          ] ?? null;
-        const groupItem = documentRef.createElement('li');
-        const groupHeader = documentRef.createElement('div');
-        const groupLabel = documentRef.createElement('p');
-        const groupSummary = documentRef.createElement('p');
-
-        groupItem.className = 'page-index-group';
-        groupItem.dataset.progressState =
-          groupProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
-        groupHeader.className = 'page-index-group-header';
-        groupLabel.className = 'page-index-group-label';
-        groupLabel.textContent = getCompletionGroupLabel(
-          pageDefinition?.completionGroupId,
-          COMPLETION_GROUPS,
-        );
-        groupSummary.className = 'page-index-group-summary';
-        groupSummary.textContent = formatGroupProgressSummary(groupProgress);
-
-        groupHeader.append(groupLabel, groupSummary);
-        groupItem.appendChild(groupHeader);
-        list.appendChild(groupItem);
-        lastCompletionGroupId = pageDefinition?.completionGroupId ?? null;
-      }
-
       const item = documentRef.createElement('li');
       const button = documentRef.createElement('button');
       const code = documentRef.createElement('span');
       const content = documentRef.createElement('span');
       const label = documentRef.createElement('span');
       const meta = documentRef.createElement('span');
-      const workflowState = documentRef.createElement('span');
       const statusState = documentRef.createElement('span');
       const progressState = documentRef.createElement('span');
 
@@ -818,10 +800,6 @@ export const createSidebarRenderer = ({
       content.className = 'page-index-content';
       meta.className = 'page-index-meta';
 
-      workflowState.className = 'page-index-state';
-      workflowState.dataset.workflowState = pageState?.workflowState ?? '';
-      workflowState.textContent = WORKFLOW_STATE_LABELS[pageState?.workflowState] ?? 'Unavailable';
-
       statusState.className = 'page-index-status';
       statusState.dataset.sectionStatus = sectionState?.status ?? '';
       statusState.dataset.progressState =
@@ -836,7 +814,7 @@ export const createSidebarRenderer = ({
         sectionProgress?.canonicalState ?? PROGRESS_STATES.NOT_STARTED;
       progressState.textContent = formatSectionProgressCompact(sectionProgress);
 
-      meta.append(workflowState, statusState, progressState);
+      meta.append(statusState, progressState);
       content.append(label, meta);
 
       button.append(code, content);
@@ -844,7 +822,7 @@ export const createSidebarRenderer = ({
       list.appendChild(item);
     });
 
-    pageSidebarMount.append(heading, list);
+    pageSidebarMount.append(heading, toggleBtn, list);
   };
 
   const renderAnchorCard = (route) => {

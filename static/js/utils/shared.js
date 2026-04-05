@@ -156,7 +156,7 @@ export const formatSectionProgressCompact = (sectionProgress) => {
   }
 
   if (sectionProgress.applicableRequiredFieldCount > 0) {
-    return `${sectionProgress.satisfiedRequiredFieldCount}/${sectionProgress.applicableRequiredFieldCount} req`;
+    return `${sectionProgress.satisfiedRequiredFieldCount}/${sectionProgress.applicableRequiredFieldCount}`;
   }
 
   if (sectionProgress.criterionCount > 0) {

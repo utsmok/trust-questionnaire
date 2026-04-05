@@ -44,7 +44,7 @@ const formatProgressBadgeText = (sectionProgress) => {
   }
 
   if (sectionProgress.applicableRequiredFieldCount > 0) {
-    return `${label} · ${sectionProgress.satisfiedRequiredFieldCount}/${sectionProgress.applicableRequiredFieldCount} req`;
+    return `${label} · ${sectionProgress.satisfiedRequiredFieldCount}/${sectionProgress.applicableRequiredFieldCount}`;
   }
 
   return label;
