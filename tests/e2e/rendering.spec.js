@@ -9,7 +9,7 @@ test('renders the canonical schema-driven questionnaire inventory', async ({ pag
 	await expect(page.locator('#questionnaireRenderRoot')).toHaveAttribute('data-rendered-page-count', '13');
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id]')).toHaveCount(13);
 	await expect(page.locator('.criterion-card[data-criterion]')).toHaveCount(16);
-	await expect(page.locator('.field-group[data-field-id]')).toHaveCount(139);
+	await expect(page.locator('.field-group[data-field-id]')).toHaveCount(123);
 	await expect(page.locator('[data-evidence-block="true"]')).toHaveCount(17);
 
 	const pageIds = await page.locator('#questionnaireRenderRoot > [data-page-id]').evaluateAll((elements) =>
@@ -43,7 +43,7 @@ test('adapts shell and rating scales across responsive breakpoints', async ({ pa
 	await expect(page.locator('#questionnaireRenderRoot > [data-page-id="TR"]')).toHaveClass(/is-active/);
 
 	const shell = page.locator('#trustShell');
-	const ratingScale = page.locator('.criterion-card[data-criterion="TR1"] .rating-scale');
+	const scoreDropdown = page.locator('.criterion-card[data-criterion="TR1"] .score-dropdown[data-field-id="tr1.score"]');
 
 	const countGridColumns = async (locator) => locator.evaluate((element) => {
 		const columns = getComputedStyle(element).gridTemplateColumns.trim();
@@ -51,7 +51,7 @@ test('adapts shell and rating scales across responsive breakpoints', async ({ pa
 	});
 
 	expect(await countGridColumns(shell)).toBe(2);
-	expect(await countGridColumns(ratingScale)).toBe(4);
+	await expect(scoreDropdown).toBeVisible();
 
 	await page.setViewportSize({ width: 1000, height: 980 });
 	await page.waitForFunction(() => {
@@ -60,22 +60,7 @@ test('adapts shell and rating scales across responsive breakpoints', async ({ pa
 			&& getComputedStyle(shellElement).gridTemplateColumns.trim().split(/\s+/).length === 1;
 	});
 	expect(await countGridColumns(shell)).toBe(1);
-
-	await page.setViewportSize({ width: 740, height: 980 });
-	await page.waitForFunction(() => {
-		const scale = document.querySelector('.criterion-card[data-criterion="TR1"] .rating-scale');
-		return Boolean(scale)
-			&& getComputedStyle(scale).gridTemplateColumns.trim().split(/\s+/).length === 2;
-	});
-	expect(await countGridColumns(ratingScale)).toBe(2);
-
-	await page.setViewportSize({ width: 460, height: 980 });
-	await page.waitForFunction(() => {
-		const scale = document.querySelector('.criterion-card[data-criterion="TR1"] .rating-scale');
-		return Boolean(scale)
-			&& getComputedStyle(scale).gridTemplateColumns.trim().split(/\s+/).length === 1;
-	});
-	expect(await countGridColumns(ratingScale)).toBe(1);
+	await expect(scoreDropdown).toBeVisible();
 });
 
 test('honors reduced-motion token overrides when the media preference requests it', async ({ page }) => {

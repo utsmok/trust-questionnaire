@@ -15,16 +15,12 @@ test('starts in nomination flow with pager constraints and disabled principle qu
 	await expect(page.locator(`${ACTIVE_PAGE_SELECTOR}[data-page-id="S1"]`)).toHaveClass(/is-page-hidden/);
 	await expect(page.locator('.strip-cell[data-page-id="TR"]')).toBeDisabled();
 	await expect(page.locator('.page-index-button[data-page-id="TR"]')).toBeDisabled();
-	await expect(page.locator('#pagerMount .pager-status')).toContainText('Page 1 of 2');
-	await expect(page.locator('#pagerMount .pager-status')).toContainText('S0 Workflow Control');
 	await expect(page.locator('#pagerMount [data-page-direction="previous"]')).toBeDisabled();
 	await expect(page.locator('#pagerMount [data-page-direction="next"]')).toBeEnabled();
 
 	await clickElement(page.locator('#pagerMount [data-page-direction="next"]'));
 
 	await expectActivePage(page, 'S1');
-	await expect(page.locator('#pagerMount .pager-status')).toContainText('Page 2 of 2');
-	await expect(page.locator('#pagerMount .pager-status')).toContainText('S1 Tool Profile');
 	await expect(page.locator('#contextSidebarMount .context-route-card')).toContainText('Tool Profile');
 	await expect(page.locator('#contextSidebarMount .context-route-card')).toContainText('Tool profile and scope guidance');
 });

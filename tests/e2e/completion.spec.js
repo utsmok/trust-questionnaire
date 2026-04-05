@@ -12,6 +12,7 @@ test('tracks page progress through not-started, in-progress, invalid, complete, 
 	await clickElement(page.locator('.strip-cell[data-page-id="TR"]'));
 	await expectPageProgress(page, 'TR', 'not_started');
 
+	await page.locator('details[data-section-meta="skip-scaffold"][data-page-id="TR"] summary').click();
 	await page.locator('select[data-section-record-key="sectionSkipReasonCode"][data-section-id="TR"]').selectOption('test_not_performed');
 	await page.locator('textarea[data-section-record-key="sectionSkipRationale"][data-section-id="TR"]').fill('Detailed skip rationale explaining why this page is intentionally skipped in the active evaluation.');
 	await expectPageProgress(page, 'TR', 'skipped');

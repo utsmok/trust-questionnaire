@@ -65,7 +65,8 @@ test('flags typed validation issues and low-score blocker rules', async ({ page 
 	const blockerGroup = page.locator('.field-group[data-field-id="tr1.uncertaintyOrBlockers"]');
 	await expect(blockerGroup).toBeHidden();
 
-	await page.locator('.criterion-card[data-criterion="TR1"] .rating-option').nth(1).click();
+	await page.locator('.criterion-card[data-criterion="TR1"] .score-dropdown[data-field-id="tr1.score"] .score-dropdown-trigger').click();
+	await page.locator('.criterion-card[data-criterion="TR1"] .score-dropdown-option[data-option-value="1"]').click();
 	await expect(blockerGroup).toBeVisible();
 	await expect(blockerGroup).toHaveAttribute('data-field-required', 'true');
 
