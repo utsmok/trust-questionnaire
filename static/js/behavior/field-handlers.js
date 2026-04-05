@@ -1,10 +1,57 @@
 import { OPTION_SET_IDS } from '../config/option-sets.js';
-import { FIELD_TYPES, QUESTIONNAIRE_FIELDS_BY_ID } from '../config/questionnaire-schema.js';
+import {
+  FIELD_TYPES,
+  QUESTIONNAIRE_FIELDS_BY_ID,
+  CRITERIA_BY_CODE,
+} from '../config/questionnaire-schema.js';
 import { SKIP_STATES } from '../config/rules.js';
 import { getFieldControlId } from '../render/questionnaire-pages.js';
 import { initializeEvidenceUi } from '../render/evidence.js';
 import { toArray, getDocumentRef, isPlainObject } from '../utils/shared.js';
 const EVIDENCE_BLOCK_SELECTOR = '[data-evidence-block="true"]';
+const URL_REGEX = /(https?:\/\/[^\s]+)/g;
+
+const createUrlEvidenceItem = ({ url, criterionCode, sectionId }) => ({
+  id: `url-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  scope: 'criterion',
+  sectionId,
+  criterionCode,
+  evidenceType: 'link',
+  note: url,
+  name: url,
+  mimeType: null,
+  size: null,
+  isImage: false,
+  dataUrl: null,
+  previewDataUrl: null,
+  addedAt: new Date().toISOString(),
+});
+
+const extractUrlsToEvidence = (control, store) => {
+  const value = control.value;
+  if (!value) return;
+
+  const urls = value.match(URL_REGEX);
+  if (!urls || urls.length === 0) return;
+
+  const criterionCode = control.dataset.fieldId.split('.')[0];
+  const sectionId = CRITERIA_BY_CODE[criterionCode]?.sectionId;
+  if (!sectionId) return;
+
+  const state = store.getState();
+  const existingItems = state.evaluation?.evidence?.criteria?.[criterionCode] ?? [];
+  const existingUrls = existingItems
+    .filter((item) => item.evidenceType === 'link')
+    .map((item) => item.url);
+
+  const newItems = urls
+    .filter((url) => !existingUrls.includes(url))
+    .map((url) => createUrlEvidenceItem({ url, criterionCode, sectionId }));
+
+  if (newItems.length > 0) {
+    store.actions.addCriterionEvidenceItems(criterionCode, newItems);
+  }
+};
 
 const isFormControl = (value) =>
   value instanceof HTMLInputElement ||
@@ -388,6 +435,56 @@ const syncDateRangeControl = (fieldGroup, fieldState, field) => {
   );
 };
 
+const syncScoreDropdown = (fieldGroup, fieldState) => {
+  const dropdown = fieldGroup.querySelector('.score-dropdown');
+  if (!(dropdown instanceof HTMLElement)) return;
+
+  const trigger = dropdown.querySelector('.score-dropdown-trigger');
+  const indicator = dropdown.querySelector('.score-dropdown-indicator');
+  const valueSpan = dropdown.querySelector('.score-dropdown-value');
+  const panel = dropdown.querySelector('.score-dropdown-panel');
+  const rawValue = fieldState.value;
+
+  const isOpen = dropdown.classList.contains('is-open');
+  if (!isOpen) {
+    if (panel) {
+      panel.hidden = true;
+      panel.setAttribute('aria-hidden', 'true');
+    }
+    if (trigger) {
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  for (let i = 0; i <= 3; i++) dropdown.classList.remove(`score-dropdown--score-${i}`);
+
+  const options = dropdown.querySelectorAll('.score-dropdown-option');
+  options.forEach((opt) => {
+    const isSelected = String(rawValue ?? '') === String(opt.dataset.optionValue);
+    opt.classList.toggle('is-selected', isSelected);
+    opt.setAttribute('aria-selected', String(isSelected));
+  });
+
+  if (rawValue !== null && rawValue !== undefined && rawValue !== '') {
+    const numVal = Number(rawValue);
+    const selectedOpt = dropdown.querySelector(
+      `.score-dropdown-option[data-option-value="${numVal}"]`,
+    );
+    const label =
+      selectedOpt?.querySelector('.score-dropdown-option-label')?.textContent ?? String(numVal);
+    if (valueSpan) valueSpan.textContent = `${numVal} \u2014 ${label}`;
+    dropdown.classList.add(`score-dropdown--score-${numVal}`);
+  } else {
+    if (valueSpan) valueSpan.textContent = 'Select a score';
+  }
+
+  dropdown.classList.toggle('is-disabled', Boolean(fieldState.readOnly));
+  if (trigger) {
+    trigger.disabled = Boolean(fieldState.readOnly);
+    trigger.setAttribute('aria-disabled', String(Boolean(fieldState.readOnly)));
+  }
+};
+
 const syncFieldValidationAccessibility = (fieldGroup, fieldState, fieldId) => {
   const { validationState, issues } = fieldState;
   const isErrored = validationState === 'invalid' || validationState === 'blocked';
@@ -455,7 +552,17 @@ const syncFieldGroup = (fieldGroup, state) => {
   syncFieldTag(fieldGroup, field, fieldState);
   syncFieldValidationAccessibility(fieldGroup, fieldState, fieldId);
 
+  if (fieldId.endsWith('.evidence')) {
+    const textarea = fieldGroup.querySelector('textarea');
+    if (textarea && !textarea.placeholder) {
+      textarea.placeholder = 'Paste screenshots, links, or files to add as evidence.';
+    }
+  }
+
   switch (field.control) {
+    case 'score_dropdown':
+      syncScoreDropdown(fieldGroup, fieldState);
+      break;
     case 'radio_group':
       syncRatingScale(fieldGroup, fieldState);
       break;
@@ -526,6 +633,12 @@ const syncCriterionCards = (questionnaireRoot, state) => {
     setDatasetValue(skipFieldGroup, 'criterionSkipRequested', localSkipRequested);
     setDatasetValue(skipFieldGroup, 'criterionSkipInherited', inheritedSectionSkip);
     setDatasetValue(skipFieldGroup, 'criterionSkipSystem', systemSkipped);
+
+    if (localSkipRequested || inheritedSectionSkip || systemSkipped) {
+      if (skipFieldGroup instanceof HTMLDetailsElement && !skipFieldGroup.open) {
+        skipFieldGroup.open = true;
+      }
+    }
 
     const tag = skipFieldGroup.querySelector('.display-tag, .condition-tag');
     if (tag instanceof HTMLElement) {
@@ -649,6 +762,12 @@ const syncSectionMetaControls = (questionnaireRoot, state) => {
 
       if (tag instanceof HTMLElement) {
         tag.textContent = sectionState?.skipRequested ? 'Active' : 'Optional';
+      }
+
+      if (sectionState?.skipRequested) {
+        if (fieldGroup instanceof HTMLDetailsElement && !fieldGroup.open) {
+          fieldGroup.open = true;
+        }
       }
     },
   );
@@ -776,6 +895,14 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
     }
 
     handleFieldControlCommit(control, store);
+
+    if (
+      control instanceof HTMLTextAreaElement &&
+      control.dataset.fieldId &&
+      control.dataset.fieldId.endsWith('.evidence')
+    ) {
+      extractUrlsToEvidence(control, store);
+    }
   };
 
   const handleChange = (event) => {
@@ -804,10 +931,15 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
     }
 
     handleFieldControlCommit(control, store);
-  };
 
-  questionnaireRoot.addEventListener('input', handleInput);
-  questionnaireRoot.addEventListener('change', handleChange);
+    if (
+      control instanceof HTMLTextAreaElement &&
+      control.dataset.fieldId &&
+      control.dataset.fieldId.endsWith('.evidence')
+    ) {
+      extractUrlsToEvidence(control, store);
+    }
+  };
 
   const handleClick = (event) => {
     const actionTarget =
@@ -847,6 +979,13 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
 
     store.actions.setCriterionSkipRequested(criterionCode, true);
 
+    const skipDetails = questionnaireRoot.querySelector(
+      `details[data-criterion-meta="skip-scaffold"][data-criterion="${criterionCode}"]`,
+    );
+    if (skipDetails instanceof HTMLDetailsElement) {
+      skipDetails.open = true;
+    }
+
     queueMicrotask(() => {
       const reasonControl = questionnaireRoot.querySelector(
         `select[data-criterion-record-key="skipReasonCode"][data-criterion-code="${criterionCode}"]`,
@@ -858,11 +997,65 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
     });
   };
 
+  const handleScoreDropdownClick = (event) => {
+    if (!(event.target instanceof HTMLElement)) return;
+
+    const openDropdowns = questionnaireRoot.querySelectorAll('.score-dropdown.is-open');
+    openDropdowns.forEach((d) => {
+      if (!d.contains(event.target)) {
+        d.classList.remove('is-open');
+        const panel = d.querySelector('.score-dropdown-panel');
+        if (panel) {
+          panel.hidden = true;
+          panel.setAttribute('aria-hidden', 'true');
+        }
+        const trig = d.querySelector('.score-dropdown-trigger');
+        if (trig) trig.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    const triggerEl = event.target.closest('.score-dropdown-trigger');
+    if (triggerEl) {
+      const dropdown = triggerEl.closest('.score-dropdown');
+      const panel = dropdown?.querySelector('.score-dropdown-panel');
+      if (dropdown && panel) {
+        const isOpen = dropdown.classList.toggle('is-open');
+        panel.hidden = !isOpen;
+        panel.setAttribute('aria-hidden', String(!isOpen));
+        triggerEl.setAttribute('aria-expanded', String(isOpen));
+      }
+      return;
+    }
+
+    const option = event.target.closest('.score-dropdown-option');
+    if (option) {
+      const dropdown = option.closest('.score-dropdown');
+      const fieldIdValue = dropdown?.dataset?.fieldId;
+      if (fieldIdValue) {
+        store.actions.setFieldValue(fieldIdValue, option.dataset.optionValue);
+      }
+      if (dropdown) {
+        dropdown.classList.remove('is-open');
+        const panel = dropdown.querySelector('.score-dropdown-panel');
+        if (panel) {
+          panel.hidden = true;
+          panel.setAttribute('aria-hidden', 'true');
+        }
+        const trig = dropdown.querySelector('.score-dropdown-trigger');
+        if (trig) trig.setAttribute('aria-expanded', 'false');
+      }
+    }
+  };
+
+  questionnaireRoot.addEventListener('input', handleInput);
+  questionnaireRoot.addEventListener('change', handleChange);
   questionnaireRoot.addEventListener('click', handleClick);
+  questionnaireRoot.addEventListener('click', handleScoreDropdownClick);
   cleanup.push(() => {
     questionnaireRoot.removeEventListener('input', handleInput);
     questionnaireRoot.removeEventListener('change', handleChange);
     questionnaireRoot.removeEventListener('click', handleClick);
+    questionnaireRoot.removeEventListener('click', handleScoreDropdownClick);
   });
 
   const evidenceUi = initializeEvidenceUi({
