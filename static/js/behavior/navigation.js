@@ -737,8 +737,10 @@ export const initializeNavigation = ({ root = document, store }) => {
     updatePanelMetricsFromDom(PANEL_NAMES.QUESTIONNAIRE, dom.questionnairePanel);
 
     if (focusTarget) {
-      windowRef.requestAnimationFrame(() => {
-        target.focus();
+      focusElementWithRetry({
+        windowRef,
+        documentRef,
+        primaryTarget: target,
       });
     }
   };
