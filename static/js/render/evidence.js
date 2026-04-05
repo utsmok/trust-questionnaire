@@ -296,30 +296,6 @@ const createEvidenceItemsContainer = ({ documentRef } = {}) =>
   });
 
 export const createEvidenceBlockElement = ({ documentRef, scope, editable = true } = {}) => {
-  const typeControl = createEvidenceSelect({
-    documentRef,
-    disabled: !editable,
-  });
-  const existingAssetControl =
-    scope.level === 'criterion'
-      ? createReusableEvidenceSelect({
-          documentRef,
-          disabled: !editable,
-        })
-      : null;
-  const noteControl = createTextareaControl({
-    documentRef,
-    placeholderText: 'Required note: why this file supports the evaluation or criterion.',
-    dataset: {
-      evidenceControl: 'note',
-    },
-    attributes: {
-      rows: 3,
-      'aria-label': 'Evidence note',
-    },
-    readOnly: !editable,
-  });
-
   const fileInput = createElement('input', {
     documentRef,
     dataset: {
@@ -334,81 +310,28 @@ export const createEvidenceBlockElement = ({ documentRef, scope, editable = true
     },
   });
 
-  const fileButton = createElement('span', {
+  const dropZone = createElement('div', {
     documentRef,
-    className: 'evidence-file-button',
-    text: 'Choose files…',
+    className: 'evidence-drop-zone',
+    text: 'Drop files here or paste from clipboard',
     attributes: {
       role: 'button',
-      tabindex: '0',
+      tabindex: editable ? '0' : '-1',
     },
   });
 
-  fileButton.addEventListener('click', () => fileInput.click());
-  fileButton.addEventListener('keydown', (e) => {
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       fileInput.click();
     }
   });
 
-  const fileNameSpan = createElement('span', {
-    documentRef,
-    className: 'evidence-file-name',
-  });
-
-  const fileControl = createElement('div', {
-    documentRef,
-    className: 'mock-control evidence-file-control',
-    children: [fileInput, fileButton, fileNameSpan],
-  });
-
-  const actionButtons = [
-    createElement('button', {
-      documentRef,
-      className: 'evidence-button evidence-button-primary',
-      text: 'Add evidence',
-      dataset: {
-        evidenceAction: 'add-files',
-      },
-      attributes: {
-        type: 'button',
-        disabled: editable ? true : null,
-      },
-    }),
-  ];
-
-  if (scope.level === 'criterion') {
-    actionButtons.push(
-      createElement('button', {
-        documentRef,
-        className: 'evidence-button',
-        text: 'Reuse selected evidence',
-        dataset: {
-          evidenceAction: 'reuse-asset',
-        },
-        attributes: {
-          type: 'button',
-          disabled: true,
-        },
-      }),
-      createElement('button', {
-        documentRef,
-        className: 'evidence-button',
-        text: 'Cancel replace',
-        dataset: {
-          evidenceAction: 'cancel-replace',
-        },
-        attributes: {
-          type: 'button',
-          disabled: true,
-        },
-      }),
-    );
-  }
+  const actionButtons = [];
 
   if (scope.level === 'evaluation') {
-    actionButtons.unshift(
+    actionButtons.push(
       createElement('button', {
         documentRef,
         className: 'evidence-button',
@@ -473,35 +396,8 @@ export const createEvidenceBlockElement = ({ documentRef, scope, editable = true
         documentRef,
         className: 'evidence-intake',
         children: [
-          createElement('div', {
-            documentRef,
-            className: 'evidence-intake-grid',
-            children: [
-              createEvidenceInputGroup({
-                documentRef,
-                label: 'Evidence type',
-                control: typeControl,
-              }),
-              createEvidenceInputGroup({
-                documentRef,
-                label: 'Association note',
-                control: noteControl,
-                className: 'evidence-note-group',
-              }),
-              existingAssetControl
-                ? createEvidenceInputGroup({
-                    documentRef,
-                    label: 'Reuse existing file',
-                    control: existingAssetControl,
-                  })
-                : null,
-              createEvidenceInputGroup({
-                documentRef,
-                label: 'Select file(s)',
-                control: fileControl,
-              }),
-            ],
-          }),
+          dropZone,
+          fileInput,
           createElement('div', {
             documentRef,
             className: 'evidence-intake-footer',
@@ -701,19 +597,6 @@ const createEvidenceItemElement = ({ documentRef, item, editable = true } = {}) 
                         createElement('button', {
                           documentRef,
                           className: 'evidence-button',
-                          text: 'Replace',
-                          dataset: {
-                            evidenceAction: 'start-replace',
-                            evidenceItemId: item.id,
-                          },
-                          attributes: {
-                            type: 'button',
-                            disabled: editable ? null : true,
-                          },
-                        }),
-                        createElement('button', {
-                          documentRef,
-                          className: 'evidence-button',
                           text: 'Unlink',
                           dataset: {
                             evidenceAction: 'unlink-item',
@@ -760,11 +643,18 @@ const createEvidenceItemElement = ({ documentRef, item, editable = true } = {}) 
           createElement('div', {
             documentRef,
             className: 'evidence-note-label',
-            text: 'Association note',
+            text: 'Notes',
           }),
           createElement('p', {
             documentRef,
             className: 'evidence-note',
+            dataset: {
+              evidenceAction: 'edit-note',
+              evidenceItemId: item.id,
+            },
+            attributes: {
+              title: 'Click to edit',
+            },
             text: item.note ?? 'No note recorded.',
           }),
         ],
@@ -786,6 +676,16 @@ const renderEvidenceItems = ({ container, items, scope, editable } = {}) => {
   }
 
   const documentRef = container.ownerDocument ?? document;
+  const fingerprint =
+    Array.isArray(items) && items.length > 0
+      ? items.map((i) => `${i.id}:${i.note ?? ''}`).join('|')
+      : '__empty__';
+
+  if (container.dataset.renderedFingerprint === fingerprint) {
+    return;
+  }
+
+  container.dataset.renderedFingerprint = fingerprint;
 
   if (!Array.isArray(items) || items.length === 0) {
     container.replaceChildren(createEvidenceEmptyState({ documentRef, scope }));
@@ -1136,7 +1036,12 @@ const syncEvidenceBlock = ({ block, state, draftsByKey } = {}) => {
 };
 
 const syncEvidenceBlocks = ({ questionnaireRoot, state, draftsByKey } = {}) => {
+  const activePageId = state.ui?.activePageId;
   toArray(questionnaireRoot.querySelectorAll(EVIDENCE_BLOCK_SELECTOR)).forEach((block) => {
+    if (activePageId) {
+      const blockPageId = block.dataset.evidencePageId;
+      if (blockPageId && blockPageId !== activePageId) return;
+    }
     syncEvidenceBlock({
       block,
       state,
@@ -1246,25 +1151,8 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     updateBlockFromElement(control);
   };
 
-  const handleChange = (event) => {
+  const handleChange = async (event) => {
     const control = event.target;
-
-    if (
-      control instanceof HTMLSelectElement &&
-      control.dataset.evidenceControl === 'existing-asset'
-    ) {
-      const block = control.closest(EVIDENCE_BLOCK_SELECTOR);
-      if (!(block instanceof HTMLElement)) {
-        return;
-      }
-
-      const scope = resolveScopeFromElement(block);
-      const draftState = ensureDraftState(draftsByKey, scope.key);
-      draftState.existingAssetId = control.value;
-      draftState.message = '';
-      updateBlockFromElement(control);
-      return;
-    }
 
     if (!(control instanceof HTMLInputElement)) {
       return;
@@ -1280,11 +1168,38 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     }
 
     const scope = resolveScopeFromElement(block);
-    const draftState = ensureDraftState(draftsByKey, scope.key);
-    draftState.files = toArray(control.files).filter((file) => file instanceof File);
-    draftState.message = '';
+    const editable = getScopeEditableState(store.getState(), scope);
+    if (!editable) return;
 
-    updateBlockFromElement(control);
+    const files = toArray(control.files).filter((file) => file instanceof File);
+    control.value = '';
+
+    if (files.length === 0) return;
+
+    try {
+      const nextItems = await Promise.all(
+        files.map((file) =>
+          createStoredEvidenceItem({
+            file,
+            scope,
+            evidenceType: 'screenshot',
+            note: file.name,
+          }),
+        ),
+      );
+
+      if (nextItems.length > 0) {
+        if (scope.level === 'criterion') {
+          store.actions.addCriterionEvidenceItems(scope.criterionCode, nextItems);
+        } else {
+          store.actions.addEvaluationEvidenceItems(nextItems);
+        }
+      }
+    } catch (error) {
+      const draftState = ensureDraftState(draftsByKey, scope.key);
+      draftState.message = error instanceof Error ? error.message : 'Failed to add evidence.';
+      syncEvidenceBlock({ block, state: store.getState(), draftsByKey });
+    }
   };
 
   const handleClick = async (event) => {
@@ -1299,6 +1214,63 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
 
     if (action === 'close-lightbox') {
       closeEvidenceLightbox(documentRef);
+      return;
+    }
+
+    if (action === 'edit-note') {
+      const noteEl = actionTarget;
+      const itemId = noteEl.dataset.evidenceItemId;
+      const block = noteEl.closest(EVIDENCE_BLOCK_SELECTOR);
+      if (!itemId || !block) return;
+
+      const scope = resolveScopeFromElement(block);
+      const editable = getScopeEditableState(store.getState(), scope);
+      if (!editable) return;
+
+      const currentText = noteEl.textContent === 'No note recorded.' ? '' : noteEl.textContent;
+
+      const textarea = createElement('textarea', {
+        documentRef,
+        className: 'evidence-note-editor',
+        text: currentText,
+        attributes: {
+          rows: 2,
+          'aria-label': 'Edit note',
+        },
+      });
+
+      noteEl.replaceWith(textarea);
+      textarea.focus();
+
+      const handleBlur = () => {
+        textarea.removeEventListener('blur', handleBlur);
+        const newNote = textarea.value.trim();
+
+        if (!newNote || newNote === currentText) {
+          const p = createElement('p', {
+            documentRef,
+            className: 'evidence-note',
+            dataset: {
+              evidenceAction: 'edit-note',
+              evidenceItemId: itemId,
+            },
+            attributes: {
+              title: 'Click to edit',
+            },
+            text: currentText || 'No note recorded.',
+          });
+          textarea.replaceWith(p);
+          return;
+        }
+
+        if (scope.level === 'criterion') {
+          store.actions.updateCriterionEvidenceItemNote(scope.criterionCode, itemId, newNote);
+        } else {
+          store.actions.updateEvaluationEvidenceItemNote(itemId, newNote);
+        }
+      };
+
+      textarea.addEventListener('blur', handleBlur);
       return;
     }
 
@@ -1603,16 +1575,146 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     }
   };
 
+  const handlePaste = async (event) => {
+    const clipboard = event.clipboardData;
+    if (!clipboard || !clipboard.files || clipboard.files.length === 0) {
+      return;
+    }
+
+    const control = event.target;
+    const block =
+      control instanceof HTMLElement
+        ? control.closest(EVIDENCE_BLOCK_SELECTOR) || control.closest('.criterion-card')
+        : null;
+    if (!block) return;
+
+    let scope;
+    if (block.matches(EVIDENCE_BLOCK_SELECTOR)) {
+      scope = resolveScopeFromElement(block);
+    } else {
+      const criterionCode = block.dataset.criterion;
+      if (!criterionCode) return;
+      scope = createEvidenceScope({ criterionCode });
+    }
+
+    const editable = getScopeEditableState(store.getState(), scope);
+    if (!editable) return;
+
+    event.preventDefault();
+    const files = Array.from(clipboard.files);
+
+    try {
+      const nextItems = await Promise.all(
+        files.map((file) =>
+          createStoredEvidenceItem({
+            file,
+            scope,
+            evidenceType: 'screenshot',
+            note: 'Pasted from clipboard',
+          }),
+        ),
+      );
+
+      if (nextItems.length > 0) {
+        if (scope.level === 'criterion') {
+          store.actions.addCriterionEvidenceItems(scope.criterionCode, nextItems);
+        } else {
+          store.actions.addEvaluationEvidenceItems(nextItems);
+        }
+
+        const draftState = ensureDraftState(draftsByKey, scope.key);
+        draftState.message = `${nextItems.length} file(s) pasted and added.`;
+
+        const evidenceBlock = block.matches(EVIDENCE_BLOCK_SELECTOR)
+          ? block
+          : block.querySelector(EVIDENCE_BLOCK_SELECTOR);
+        if (evidenceBlock) {
+          syncEvidenceBlock({ block: evidenceBlock, state: store.getState(), draftsByKey });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to attach pasted evidence', error);
+    }
+  };
+
+  const handleDragOver = (event) => {
+    const block =
+      event.target instanceof HTMLElement ? event.target.closest(EVIDENCE_BLOCK_SELECTOR) : null;
+    if (!block) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    block.classList.add('is-drag-active');
+  };
+
+  const handleDragLeave = (event) => {
+    const block =
+      event.target instanceof HTMLElement ? event.target.closest(EVIDENCE_BLOCK_SELECTOR) : null;
+    if (!block) return;
+    if (block.contains(event.relatedTarget)) return;
+    block.classList.remove('is-drag-active');
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    const block =
+      event.target instanceof HTMLElement ? event.target.closest(EVIDENCE_BLOCK_SELECTOR) : null;
+    if (!block) return;
+    block.classList.remove('is-drag-active');
+
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length === 0) return;
+
+    const scope = resolveScopeFromElement(block);
+    const editable = getScopeEditableState(store.getState(), scope);
+    if (!editable) return;
+
+    try {
+      const nextItems = await Promise.all(
+        files.map((file) =>
+          createStoredEvidenceItem({
+            file,
+            scope,
+            evidenceType: 'screenshot',
+            note: file.name,
+          }),
+        ),
+      );
+
+      if (nextItems.length > 0) {
+        if (scope.level === 'criterion') {
+          store.actions.addCriterionEvidenceItems(scope.criterionCode, nextItems);
+        } else {
+          store.actions.addEvaluationEvidenceItems(nextItems);
+        }
+        const draftState = ensureDraftState(draftsByKey, scope.key);
+        draftState.message = `${nextItems.length} file(s) added.`;
+        syncEvidenceBlock({ block, state: store.getState(), draftsByKey });
+      }
+    } catch (error) {
+      const draftState = ensureDraftState(draftsByKey, scope.key);
+      draftState.message = error instanceof Error ? error.message : 'Failed to add evidence.';
+      syncEvidenceBlock({ block, state: store.getState(), draftsByKey });
+    }
+  };
+
   questionnaireRoot.addEventListener('input', handleInput);
   questionnaireRoot.addEventListener('change', handleChange);
   documentRef.addEventListener('click', handleClick);
   documentRef.addEventListener('keydown', handleKeydown);
+  documentRef.addEventListener('paste', handlePaste);
+  documentRef.addEventListener('dragover', handleDragOver);
+  documentRef.addEventListener('dragleave', handleDragLeave);
+  documentRef.addEventListener('drop', handleDrop);
 
   cleanup.push(() => {
     questionnaireRoot.removeEventListener('input', handleInput);
     questionnaireRoot.removeEventListener('change', handleChange);
     documentRef.removeEventListener('click', handleClick);
     documentRef.removeEventListener('keydown', handleKeydown);
+    documentRef.removeEventListener('paste', handlePaste);
+    documentRef.removeEventListener('dragover', handleDragOver);
+    documentRef.removeEventListener('dragleave', handleDragLeave);
+    documentRef.removeEventListener('drop', handleDrop);
   });
 
   const unsubscribe = store.subscribe(

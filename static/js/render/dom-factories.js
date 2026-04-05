@@ -780,6 +780,127 @@ export const createRatingScale = ({
   return scale;
 };
 
+export const createScoreDropdown = ({
+  documentRef = document,
+  options = [],
+  selectedValue = null,
+  placeholderText = 'Select a score',
+  fieldId = null,
+  labelId = null,
+  readOnly = false,
+  dataset = {},
+  inputDataset = {},
+  attributes = {},
+} = {}) => {
+  const normalizedSelectedValue =
+    selectedValue === null || selectedValue === undefined
+      ? null
+      : Number.isFinite(Number(selectedValue))
+        ? Number(selectedValue)
+        : selectedValue;
+
+  const dropdown = createElement('div', {
+    documentRef,
+    className: 'score-dropdown',
+    dataset: {
+      ...dataset,
+      fieldId,
+      controlKind: 'score_dropdown',
+    },
+    attributes,
+  });
+
+  if (normalizedSelectedValue !== null && Number.isFinite(normalizedSelectedValue)) {
+    dropdown.classList.add(`score-dropdown--score-${normalizedSelectedValue}`);
+  }
+
+  let triggerText = placeholderText;
+  if (normalizedSelectedValue !== null) {
+    const matchingOption = options.find((o) => Number(o.value) === normalizedSelectedValue);
+    if (matchingOption) {
+      triggerText = `${matchingOption.value} \u2014 ${matchingOption.shortLabel ?? matchingOption.label}`;
+    }
+  }
+
+  const trigger = createElement('button', {
+    documentRef,
+    className: 'score-dropdown-trigger',
+    attributes: {
+      type: 'button',
+      'aria-haspopup': 'listbox',
+      'aria-expanded': 'false',
+      disabled: readOnly ? true : null,
+    },
+    children: [
+      createElement('span', {
+        documentRef,
+        className: 'score-dropdown-indicator',
+      }),
+      createElement('span', {
+        documentRef,
+        className: 'score-dropdown-value',
+        text: triggerText,
+      }),
+      createElement('span', {
+        documentRef,
+        className: 'score-dropdown-arrow',
+        text: '\u25BE',
+      }),
+    ],
+  });
+
+  const panel = createElement('div', {
+    documentRef,
+    className: 'score-dropdown-panel',
+    attributes: {
+      role: 'listbox',
+      hidden: true,
+      'aria-hidden': 'true',
+    },
+  });
+
+  options.forEach((option) => {
+    const numVal = Number(option.value);
+    const isSelected = normalizedSelectedValue === numVal;
+
+    const opt = createElement('div', {
+      documentRef,
+      className: ['score-dropdown-option', isSelected ? 'is-selected' : null],
+      dataset: {
+        optionValue: String(option.value),
+      },
+      attributes: {
+        role: 'option',
+        tabindex: '-1',
+        'aria-selected': String(isSelected),
+      },
+      children: [
+        createElement('span', {
+          documentRef,
+          className: 'score-dropdown-option-dot',
+        }),
+        createElement('span', {
+          documentRef,
+          className: 'score-dropdown-option-value',
+          text: String(option.value),
+        }),
+        createElement('span', {
+          documentRef,
+          className: 'score-dropdown-option-label',
+          text: option.shortLabel ?? option.label,
+        }),
+      ],
+    });
+
+    panel.appendChild(opt);
+  });
+
+  dropdown.appendChild(trigger);
+  dropdown.appendChild(panel);
+
+  return dropdown;
+};
+
 export const createCriterionCard = ({
   documentRef,
   criterionCode,
