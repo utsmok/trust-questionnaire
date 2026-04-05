@@ -132,7 +132,7 @@ export const createPagerController = ({ root = document, store, navigateToPage }
       const overallProgress = state.derived.completionProgress?.overall ?? null;
 
       if (isLastPage && overallProgress?.canonicalState === 'complete') {
-        refs.status.textContent = `Evaluation complete — ${pagerState.pageOrder.length} sections completed`;
+        refs.status.textContent = `Evaluation complete — ${pagerState.pageOrder.length} sections reviewed`;
       } else {
         refs.status.textContent = pagerState.activePageDefinition
           ? `Page ${pagerState.activePageIndex + 1} of ${pagerState.pageOrder.length} — ${pagerState.activePageDefinition.pageCode} ${pagerState.activePageDefinition.title}${workflowLabel ? ` · ${workflowLabel}` : ''}`

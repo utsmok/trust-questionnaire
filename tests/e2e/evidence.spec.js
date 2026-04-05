@@ -133,7 +133,7 @@ test('supports criterion add, reuse, replace, unlink, and remove-everywhere flow
 	await replacedItem.locator('[data-evidence-action="remove-asset"]').click();
 	await page.locator('.confirm-overlay .confirm-btn[data-primary="true"]').click();
 	await expect(block.locator('[data-evidence-role="count"]')).toHaveText('0 files');
-	await expect(block).toContainText('No evidence attached. Attach source documentation.');
+	await expect(block).toContainText('No evidence attached. Attach source documentation, screenshots, or methodology disclosures.');
 	await expect(evaluationBlock.locator('[data-evidence-role="count"]')).toHaveText('1 file');
 	await expect(evaluationBlock.locator('.evidence-item').filter({ hasText: 'evaluation-b.png' })).toHaveCount(0);
 });

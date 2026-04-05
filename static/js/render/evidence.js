@@ -92,20 +92,20 @@ const getEvidenceFieldGroupLabel = (scope) =>
     : `${scope.criterionCode} evidence association`;
 
 const PRINCIPLE_EVIDENCE_HINTS = Object.freeze({
-  tr: 'No evidence attached. Attach source documentation.',
-  re: 'No evidence attached. Attach verification records.',
-  uc: 'No evidence attached. Attach usability observations.',
-  se: 'No evidence attached. Attach compliance records.',
-  tc: 'No evidence attached. Attach provenance records.',
+  tr: 'No evidence attached. Attach source documentation, screenshots, or methodology disclosures.',
+  re: 'No evidence attached. Attach repeated-query results, verification records, or accuracy test data.',
+  uc: 'No evidence attached. Attach usability observations, accessibility test results, or workflow screenshots.',
+  se: 'No evidence attached. Attach privacy policy excerpts, DPIA notes, or compliance records.',
+  tc: 'No evidence attached. Attach provenance path screenshots, source verification records, or attribution samples.',
 });
 
 const getEvidenceEmptyStateText = (scope) => {
   if (scope.level === 'evaluation') {
-    return 'No evidence attached.';
+    return 'No evaluation-level evidence attached yet.';
   }
 
   const principleKey = scope.criterionCode?.slice(0, 2).toLowerCase();
-  return PRINCIPLE_EVIDENCE_HINTS[principleKey] ?? 'No evidence attached.';
+  return PRINCIPLE_EVIDENCE_HINTS[principleKey] ?? 'No criterion-level evidence attached yet.';
 };
 
 const getEvidenceScopeKey = ({ criterionCode = null } = {}) =>

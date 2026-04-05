@@ -30,12 +30,10 @@
       <div class="brand">
         <img src="static/ut-logo.png" alt="UNIVERSITY TWENTE" class="logo-dept" height="48" width="48" />
         <img src="static/lisa-eis.svg" alt="LISA EIS" class="logo-dept" height="48" width="48" />
-        <div class="brand-text">
-          <div class="brand-logos">
-            <div class="trust-label">
-              <img src="static/trust.svg" alt="TRUST" class="logo-trust" height="32" width="32" />
-              <p>Framework</p>
-            </div>
+        <div class="brand-logos">
+          <div class="trust-label">
+            <img src="static/trust.svg" alt="TRUST" class="logo-trust" height="32" width="32" />
+            <p>Framework</p>
           </div>
         </div>
       </div>
@@ -53,7 +51,7 @@
   <div id="sidebarFocusReturn" class="shell-focus-anchor" tabindex="-1"></div>
 
   <main class="shell-layout" id="trustShell" data-shell-architecture="page-based">
-    <div id="contextDrawerBackdrop" class="context-drawer-backdrop" data-sidebar-dismiss hidden aria-hidden="true"></div>
+    <div id="contextDrawerBackdrop" class="context-drawer-backdrop" data-sidebar-dismiss aria-hidden="true"></div>
 
     <section class="panel questionnaire-panel" id="questionnairePanel" aria-labelledby="questionnairePanelTitle" tabindex="-1">
       <div class="panel-progress"><div class="panel-progress-bar" id="questionnaireProgress"></div></div>
@@ -104,7 +102,7 @@
           <div class="sidebar-tab-panel" role="tabpanel" id="sidebarPanelGuidance" data-sidebar-panel="guidance" aria-labelledby="sidebarTabGuidance">
             <div id="contextSidebarMount" data-shell-mount="context-sidebar" data-shell-fallback="literal-framework-content">
               <section class="doc-section context-empty-state" data-section="control" id="contextSidebarFallback" aria-labelledby="contextSidebarFallbackTitle">
-                <h2 id="contextSidebarFallbackTitle">Context route ready</h2>
+                <h2 id="contextSidebarFallbackTitle">Context guidance</h2>
                 <p>Select a page to see context guidance.</p>
               </section>
 
@@ -471,28 +469,28 @@
                 <p>TRUST is the EIS-IS team's structured evaluation framework for AI-based information search tools used in academic contexts. Version 2 keeps the static, auditable evaluation workflow while tightening reliability standards, adding cognitive guardrails, and formalizing scoring, evidence, and governance.</p>
                 <p>The framework is intentionally stricter than generic AI checklists because academic recommendation requires verifiable provenance, faithful synthesis, explicit limitations, and a defensible institutional review trail.</p>
                 <div class="principle-list">
-                  <div class="principle-item">
+                  <div class="principle-item" data-section="tr">
                     <strong>Transparent</strong>
                     Clear documentation of sources, methods, and limitations.
                   </div>
-                  <div class="principle-item">
+                  <div class="principle-item" data-section="re">
                     <strong>Reliable</strong>
                     Accurate, verifiable outputs with stable core conclusions and faithful synthesis.
                   </div>
-                  <div class="principle-item">
+                  <div class="principle-item" data-section="uc">
                     <strong>User-centric</strong>
                     Fit for academic workflows, usable by the target audience, and explicit about AI assistance.
                   </div>
-                  <div class="principle-item">
+                  <div class="principle-item" data-section="se">
                     <strong>Secure</strong>
                     Acceptable privacy, security, compliance, and bias-mitigation posture.
                   </div>
-                  <div class="principle-item">
+                  <div class="principle-item" data-section="tc">
                     <strong>Traceable</strong>
                     Inspectable provenance from generated answers back to original sources.
                   </div>
                 </div>
-                <div class="notice">Operational additions in version 2 include the scoring model, minimum evidence requirements, critical-fail flags, confidence levels, and a formal governance workflow.</div>
+                <div class="notice info">Operational additions in version 2 include the scoring model, minimum evidence requirements, critical-fail flags, confidence levels, and a formal governance workflow.</div>
               </section>
 
               <section class="doc-section" data-section="profile" data-topic-area="about" data-topic-ids="about.scope-and-definitions" aria-labelledby="aboutScopeTitle">

@@ -652,7 +652,6 @@ export const initializeNavigation = ({ root = document, store }) => {
     }
 
     if (dom.contextBackdrop) {
-      dom.contextBackdrop.hidden = !contextDrawerOpen;
       dom.contextBackdrop.dataset.drawerState = contextDrawerOpen ? 'open' : 'closed';
     }
 
