@@ -997,32 +997,49 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
     });
   };
 
+  const closeScoreDropdown = (dropdown) => {
+    dropdown.classList.remove('is-open');
+    const panel = dropdown.querySelector('.score-dropdown-panel');
+    if (panel) {
+      panel.hidden = true;
+      panel.setAttribute('aria-hidden', 'true');
+    }
+    const trig = dropdown.querySelector('.score-dropdown-trigger');
+    if (trig) {
+      trig.setAttribute('aria-expanded', 'false');
+      trig.focus();
+    }
+  };
+
+  const openScoreDropdown = (dropdown) => {
+    const panel = dropdown?.querySelector('.score-dropdown-panel');
+    const trigger = dropdown?.querySelector('.score-dropdown-trigger');
+    if (!dropdown || !panel) return;
+    dropdown.classList.add('is-open');
+    panel.hidden = false;
+    panel.setAttribute('aria-hidden', 'false');
+    if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    const selected =
+      panel.querySelector('.score-dropdown-option.is-selected') ||
+      panel.querySelector('.score-dropdown-option');
+    if (selected instanceof HTMLElement) selected.focus();
+  };
+
   const handleScoreDropdownClick = (event) => {
     if (!(event.target instanceof HTMLElement)) return;
 
     const openDropdowns = questionnaireRoot.querySelectorAll('.score-dropdown.is-open');
     openDropdowns.forEach((d) => {
-      if (!d.contains(event.target)) {
-        d.classList.remove('is-open');
-        const panel = d.querySelector('.score-dropdown-panel');
-        if (panel) {
-          panel.hidden = true;
-          panel.setAttribute('aria-hidden', 'true');
-        }
-        const trig = d.querySelector('.score-dropdown-trigger');
-        if (trig) trig.setAttribute('aria-expanded', 'false');
-      }
+      if (!d.contains(event.target)) closeScoreDropdown(d);
     });
 
     const triggerEl = event.target.closest('.score-dropdown-trigger');
     if (triggerEl) {
       const dropdown = triggerEl.closest('.score-dropdown');
-      const panel = dropdown?.querySelector('.score-dropdown-panel');
-      if (dropdown && panel) {
-        const isOpen = dropdown.classList.toggle('is-open');
-        panel.hidden = !isOpen;
-        panel.setAttribute('aria-hidden', String(!isOpen));
-        triggerEl.setAttribute('aria-expanded', String(isOpen));
+      if (dropdown?.classList.contains('is-open')) {
+        closeScoreDropdown(dropdown);
+      } else {
+        openScoreDropdown(dropdown);
       }
       return;
     }
@@ -1034,16 +1051,74 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
       if (fieldIdValue) {
         store.actions.setFieldValue(fieldIdValue, option.dataset.optionValue);
       }
-      if (dropdown) {
-        dropdown.classList.remove('is-open');
-        const panel = dropdown.querySelector('.score-dropdown-panel');
-        if (panel) {
-          panel.hidden = true;
-          panel.setAttribute('aria-hidden', 'true');
-        }
-        const trig = dropdown.querySelector('.score-dropdown-trigger');
-        if (trig) trig.setAttribute('aria-expanded', 'false');
+      if (dropdown) closeScoreDropdown(dropdown);
+    }
+  };
+
+  const handleScoreDropdownKeydown = (event) => {
+    if (!(event.target instanceof HTMLElement)) return;
+
+    const trigger = event.target.closest('.score-dropdown-trigger');
+    const option = event.target.closest('.score-dropdown-option');
+
+    if (!trigger && !option) return;
+
+    const dropdown = (trigger || option).closest('.score-dropdown');
+    const panel = dropdown?.querySelector('.score-dropdown-panel');
+    if (!dropdown || !panel) return;
+
+    const options = Array.from(panel.querySelectorAll('.score-dropdown-option'));
+    if (options.length === 0) return;
+
+    const isOpen = dropdown.classList.contains('is-open');
+
+    if (trigger && !isOpen && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      openScoreDropdown(dropdown);
+      return;
+    }
+
+    if (!isOpen) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeScoreDropdown(dropdown);
+      return;
+    }
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const currentIndex = options.indexOf(event.target);
+      let nextIndex;
+      if (event.key === 'ArrowDown') {
+        nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+      } else {
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
       }
+      options[nextIndex].focus();
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      const fieldIdValue = dropdown.dataset?.fieldId;
+      if (fieldIdValue && option?.dataset?.optionValue) {
+        store.actions.setFieldValue(fieldIdValue, option.dataset.optionValue);
+      }
+      closeScoreDropdown(dropdown);
+      return;
+    }
+
+    if (event.key === 'Home' || event.key === 'PageUp') {
+      event.preventDefault();
+      options[0].focus();
+      return;
+    }
+
+    if (event.key === 'End' || event.key === 'PageDown') {
+      event.preventDefault();
+      options[options.length - 1].focus();
+      return;
     }
   };
 
@@ -1051,11 +1126,13 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
   questionnaireRoot.addEventListener('change', handleChange);
   questionnaireRoot.addEventListener('click', handleClick);
   questionnaireRoot.addEventListener('click', handleScoreDropdownClick);
+  questionnaireRoot.addEventListener('keydown', handleScoreDropdownKeydown);
   cleanup.push(() => {
     questionnaireRoot.removeEventListener('input', handleInput);
     questionnaireRoot.removeEventListener('change', handleChange);
     questionnaireRoot.removeEventListener('click', handleClick);
     questionnaireRoot.removeEventListener('click', handleScoreDropdownClick);
+    questionnaireRoot.removeEventListener('keydown', handleScoreDropdownKeydown);
   });
 
   const evidenceUi = initializeEvidenceUi({
