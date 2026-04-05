@@ -406,6 +406,68 @@ export const createEvidenceActions = ({
       return createStateWithEvaluation(previousState, evaluation);
     });
 
+  const updateCriterionEvidenceItemNote = (criterionCode, itemId, note) =>
+    commit((previousState) => {
+      if (!criterionCode || !CRITERIA_BY_CODE[criterionCode]) {
+        return previousState;
+      }
+
+      const normalizedItemId = normalizeTextValue(itemId);
+      if (!normalizedItemId) {
+        return previousState;
+      }
+
+      const currentItems = previousState.evaluation.evidence.criteria?.[criterionCode] ?? [];
+      const itemIndex = currentItems.findIndex((item) => item?.id === normalizedItemId);
+
+      if (itemIndex === -1) {
+        return previousState;
+      }
+
+      const newNote = typeof note === 'string' ? note.trim() : '';
+      const currentNote = currentItems[itemIndex].note ?? '';
+
+      if (currentNote === newNote) {
+        return previousState;
+      }
+
+      const evaluation = cloneEvaluation(previousState.evaluation);
+      evaluation.evidence.criteria[criterionCode] = evaluation.evidence.criteria[criterionCode].map(
+        (item, index) => (index === itemIndex ? { ...item, note: newNote || null } : item),
+      );
+
+      return createStateWithEvaluation(previousState, evaluation);
+    });
+
+  const updateEvaluationEvidenceItemNote = (itemId, note) =>
+    commit((previousState) => {
+      const normalizedItemId = normalizeTextValue(itemId);
+      if (!normalizedItemId) {
+        return previousState;
+      }
+
+      const currentItems = previousState.evaluation.evidence.evaluation ?? [];
+      const itemIndex = currentItems.findIndex((item) => item?.id === normalizedItemId);
+
+      if (itemIndex === -1) {
+        return previousState;
+      }
+
+      const newNote = typeof note === 'string' ? note.trim() : '';
+      const currentNote = currentItems[itemIndex].note ?? '';
+
+      if (currentNote === newNote) {
+        return previousState;
+      }
+
+      const evaluation = cloneEvaluation(previousState.evaluation);
+      evaluation.evidence.evaluation = evaluation.evidence.evaluation.map((item, index) =>
+        index === itemIndex ? { ...item, note: newNote || null } : item,
+      );
+
+      return createStateWithEvaluation(previousState, evaluation);
+    });
+
   return {
     addEvaluationEvidenceItems,
     addCriterionEvidenceItems,
@@ -414,6 +476,8 @@ export const createEvidenceActions = ({
     removeEvaluationEvidenceItem,
     removeCriterionEvidenceItem,
     removeEvidenceAsset,
+    updateCriterionEvidenceItemNote,
+    updateEvaluationEvidenceItemNote,
   };
 };
 

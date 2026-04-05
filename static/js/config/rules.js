@@ -632,9 +632,8 @@ export const EVIDENCE_COMPLETENESS_RULES = freezeArray([
   Object.freeze({
     id: 'evidence_criterion_payload_required',
     scope: 'criterion',
-    fieldKeys: freezeArray(['evidenceSummary', 'evidenceLinks']),
-    description:
-      'Every answered criterion must carry both an evidence summary and at least one evidence link.',
+    fieldKeys: freezeArray(['evidence']),
+    description: 'Every answered criterion must carry evidence.',
   }),
   Object.freeze({
     id: 'evidence_criterion_association_note_hook',

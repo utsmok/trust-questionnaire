@@ -46,14 +46,12 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
   const fieldIds = CRITERION_FIELD_IDS[criterionCode];
   const fieldDefinitions = {
     score: QUESTIONNAIRE_FIELDS_BY_ID[fieldIds.score],
-    evidenceSummary: QUESTIONNAIRE_FIELDS_BY_ID[fieldIds.evidenceSummary],
-    evidenceLinks: QUESTIONNAIRE_FIELDS_BY_ID[fieldIds.evidenceLinks],
+    evidence: QUESTIONNAIRE_FIELDS_BY_ID[fieldIds.evidence],
     uncertaintyOrBlockers: QUESTIONNAIRE_FIELDS_BY_ID[fieldIds.uncertaintyOrBlockers],
   };
   const values = {
     score: getFieldValue(state, fieldIds.score),
-    evidenceSummary: getFieldValue(state, fieldIds.evidenceSummary),
-    evidenceLinks: getFieldValue(state, fieldIds.evidenceLinks),
+    evidence: getFieldValue(state, fieldIds.evidence),
     uncertaintyOrBlockers: getFieldValue(state, fieldIds.uncertaintyOrBlockers),
   };
 
@@ -76,11 +74,7 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
 
   const score = toNumber(values.score);
   const scorePresent = isFieldValuePresent(fieldDefinitions.score, values.score);
-  const summaryPresent = isFieldValuePresent(
-    fieldDefinitions.evidenceSummary,
-    values.evidenceSummary,
-  );
-  const linksPresent = isFieldValuePresent(fieldDefinitions.evidenceLinks, values.evidenceLinks);
+  const evidencePresent = isFieldValuePresent(fieldDefinitions.evidence, values.evidence);
   const blockersPresent = isFieldValuePresent(
     fieldDefinitions.uncertaintyOrBlockers,
     values.uncertaintyOrBlockers,
@@ -94,8 +88,7 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
       ? EMPTY_ARRAY
       : [
           fieldIds.score,
-          fieldIds.evidenceSummary,
-          fieldIds.evidenceLinks,
+          fieldIds.evidence,
           ...(lowScoreFollowUpRequired ? [fieldIds.uncertaintyOrBlockers] : []),
         ];
 
@@ -124,11 +117,6 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
     skipState !== SKIP_STATES.INHERITED_SECTION_SKIP &&
     skipState !== SKIP_STATES.SYSTEM_SKIPPED
   ) {
-    addFieldIssues(
-      fieldIds.evidenceLinks,
-      getTypedFieldValidationIssues(fieldDefinitions.evidenceLinks, values.evidenceLinks),
-    );
-
     if (lowScoreFollowUpRequired) {
       addFieldIssues(
         fieldIds.uncertaintyOrBlockers,
@@ -166,8 +154,7 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
       : SECTION_STATUS.ATTENTION_REQUIRED;
   } else if (
     !scorePresent &&
-    !summaryPresent &&
-    !linksPresent &&
+    !evidencePresent &&
     !blockersPresent &&
     fieldValidationIssues.length === 0
   ) {
@@ -178,15 +165,14 @@ export const deriveCriterionState = (criterionCode, evaluation, context = EMPTY_
   } else if (logicalMissingFieldIds.length === 0) {
     status = SECTION_STATUS.COMPLETE;
     validationState = VALIDATION_STATES.CLEAR;
-  } else if (scorePresent || summaryPresent || linksPresent || blockersPresent) {
+  } else if (scorePresent || evidencePresent || blockersPresent) {
     validationState = VALIDATION_STATES.ATTENTION;
     status = SECTION_STATUS.ATTENTION_REQUIRED;
   } else {
     status = SECTION_STATUS.IN_PROGRESS;
   }
 
-  const evidenceComplete =
-    summaryPresent && linksPresent && !invalidFieldIds.includes(fieldIds.evidenceLinks);
+  const evidenceComplete = evidencePresent;
 
   return {
     criterionCode,

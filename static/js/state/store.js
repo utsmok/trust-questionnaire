@@ -805,6 +805,16 @@ export const createAppStore = ({
         return previousState;
       }
 
+      const prevMetrics = previousState.ui.panelMetrics[panelName];
+      if (
+        prevMetrics &&
+        prevMetrics.progressPercent === metrics.progressPercent &&
+        prevMetrics.canScrollUp === metrics.canScrollUp &&
+        prevMetrics.canScrollDown === metrics.canScrollDown
+      ) {
+        return previousState;
+      }
+
       return {
         ...previousState,
         ui: createUiState({
@@ -905,6 +915,8 @@ export const createAppStore = ({
       removeCriterionEvidenceItem: evidenceActions.removeCriterionEvidenceItem,
       unlinkCriterionEvidenceItem: evidenceActions.removeCriterionEvidenceItem,
       removeEvidenceAsset: evidenceActions.removeEvidenceAsset,
+      updateCriterionEvidenceItemNote: evidenceActions.updateCriterionEvidenceItemNote,
+      updateEvaluationEvidenceItemNote: evidenceActions.updateEvaluationEvidenceItemNote,
       setActivePage,
       setActiveSubAnchor,
       setActivePageWithAnchor,

@@ -15,7 +15,6 @@ import {
   hasMeaningfulText,
   isFieldValuePresent,
   normalizeState,
-  normalizeUrlList,
 } from './helpers.js';
 import { derivePageStates } from './workflow.js';
 import { deriveCriterionStates } from './criterion.js';
@@ -39,7 +38,6 @@ export const deriveEvidenceCompleteness = (evaluation, context = EMPTY_OBJECT) =
   for (const criterion of CRITERIA) {
     const evidenceItems = extractEvidenceItems(state.evidence.criteria?.[criterion.code]);
     const criterionState = criterionStatesBundle.byCode[criterion.code];
-    const evidenceLinksFieldId = CRITERION_FIELD_IDS[criterion.code].evidenceLinks;
 
     criteria[criterion.code] = {
       criterionCode: criterion.code,
@@ -51,10 +49,7 @@ export const deriveEvidenceCompleteness = (evaluation, context = EMPTY_OBJECT) =
             ? true
             : criterionState.evidenceComplete,
       summaryPresent:
-        criterionState.evidenceComplete || hasMeaningfulText(criterionState.values.evidenceSummary),
-      linksPresent:
-        normalizeUrlList(criterionState.values.evidenceLinks).length > 0 &&
-        !criterionState.invalidFieldIds.includes(evidenceLinksFieldId),
+        criterionState.evidenceComplete || hasMeaningfulText(criterionState.values.evidence),
       itemCount: evidenceItems.length,
       noteHookComplete: evidenceItems.length === 0 || evidenceItems.every(hasEvidenceNote),
     };

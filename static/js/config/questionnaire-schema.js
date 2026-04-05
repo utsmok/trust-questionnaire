@@ -44,6 +44,7 @@ const createField = ({
   supportsCustomValue = false,
   notes = null,
   tooltip = null,
+  placeholder = null,
 }) =>
   Object.freeze({
     id,
@@ -61,6 +62,7 @@ const createField = ({
     supportsCustomValue,
     notes,
     tooltip,
+    placeholder,
   });
 
 const createSectionSchema = ({ sectionId, fields, criterionCodes = [] }) => {
@@ -83,8 +85,7 @@ const createCriterionFieldIds = (criterionCode) => {
 
   return Object.freeze({
     score: `${prefix}.score`,
-    evidenceSummary: `${prefix}.evidenceSummary`,
-    evidenceLinks: `${prefix}.evidenceLinks`,
+    evidence: `${prefix}.evidence`,
     uncertaintyOrBlockers: `${prefix}.uncertaintyOrBlockers`,
   });
 };
@@ -344,27 +345,19 @@ const createCriterionFields = (criterion) => {
       criterionCode: criterion.code,
       label: `${criterion.code} Score`,
       type: FIELD_TYPES.SINGLE_SELECT,
-      control: 'radio_group',
+      control: 'score_dropdown',
       optionSetId: OPTION_SET_IDS.CRITERION_SCORE,
       tooltip: '0 = Fails, 1 = Partial/unclear, 2 = Meets baseline, 3 = Strong',
     }),
     createField({
-      id: fieldIds.evidenceSummary,
-      code: `${criterion.code} Evidence summary`,
+      id: fieldIds.evidence,
+      code: `${criterion.code} Evidence`,
       sectionId: criterion.sectionId,
       criterionCode: criterion.code,
-      label: `${criterion.code} Evidence summary`,
+      label: `${criterion.code} Evidence`,
       type: FIELD_TYPES.LONG_TEXT,
       control: 'textarea',
-    }),
-    createField({
-      id: fieldIds.evidenceLinks,
-      code: `${criterion.code} Evidence links`,
-      sectionId: criterion.sectionId,
-      criterionCode: criterion.code,
-      label: `${criterion.code} Evidence links`,
-      type: FIELD_TYPES.URL_LIST,
-      control: 'url_list',
+      placeholder: 'Paste screenshots, links, or files to add as evidence.',
     }),
     createField({
       id: fieldIds.uncertaintyOrBlockers,
@@ -1221,12 +1214,12 @@ export const QUESTIONNAIRE_SCHEMA_META = Object.freeze({
 
 assertInvariant(CRITERIA.length === 16, `Expected 16 criteria, received ${CRITERIA.length}.`);
 assertInvariant(
-  QUESTIONNAIRE_FIELDS.length === 139,
-  `Expected 139 explicit questionnaire fields, received ${QUESTIONNAIRE_FIELDS.length}.`,
+  QUESTIONNAIRE_FIELDS.length === 123,
+  `Expected 123 explicit questionnaire fields, received ${QUESTIONNAIRE_FIELDS.length}.`,
 );
 assertInvariant(
-  SECTION_FIELD_COUNTS[SECTION_IDS.SE] === 21,
-  `Expected Section 6 (SE) to resolve to 21 fields, received ${SECTION_FIELD_COUNTS[SECTION_IDS.SE]}.`,
+  SECTION_FIELD_COUNTS[SECTION_IDS.SE] === 17,
+  `Expected Section 6 (SE) to resolve to 17 fields, received ${SECTION_FIELD_COUNTS[SECTION_IDS.SE]}.`,
 );
 
 export const QUESTIONNAIRE_SCHEMA = Object.freeze({
