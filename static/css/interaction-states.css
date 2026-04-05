@@ -64,6 +64,7 @@
 .form-section {
   transition:
     border-left-color var(--duration-fast) var(--ease-out-quart),
+    border-left-width var(--duration-fast) var(--ease-out-quart),
     background var(--duration-fast) var(--ease-out-quart);
   opacity: 0;
   animation: sectionEnter 120ms var(--ease-out-quart) forwards;
@@ -688,14 +689,14 @@
 
 .checkbox-item:hover {
   background: color-mix(in srgb, var(--ut-navy) 2%, var(--ut-white));
-  border-radius: 2px;
+  border-radius: var(--radius-md);
 }
 
 .checkbox-item:has(input:checked) {
   color: var(--ut-navy);
   font-weight: 700;
   background: color-mix(in srgb, var(--ut-navy) 3%, var(--ut-white));
-  border-radius: 2px;
+  border-radius: var(--radius-md);
   margin: -2px -4px;
   padding: 2px 4px;
   transition: background var(--duration-instant) var(--ease-out-quart);
@@ -705,7 +706,7 @@
   color: var(--ut-navy);
   font-weight: 700;
   background: color-mix(in srgb, var(--ut-navy) 3%, var(--ut-white));
-  border-radius: 2px;
+  border-radius: var(--radius-md);
   margin: -2px -4px;
   padding: 2px 4px;
 }
@@ -773,6 +774,19 @@
   border-left: 3px solid var(--score-3);
   background: var(--score-3-tint);
   border-color: var(--score-3-border);
+}
+
+.rating-option:nth-child(1) .rating-dot {
+  border-color: var(--score-0);
+}
+.rating-option:nth-child(2) .rating-dot {
+  border-color: var(--score-1);
+}
+.rating-option:nth-child(3) .rating-dot {
+  border-color: var(--score-2);
+}
+.rating-option:nth-child(4) .rating-dot {
+  border-color: var(--score-3);
 }
 
 .rating-option.score-0 .rating-dot {
@@ -1440,7 +1454,7 @@
 }
 
 .form-section[data-page-progress-state='skipped'] {
-  opacity: 0.9;
+  opacity: 0.75;
 }
 
 .form-section[data-page-progress-state='invalid_attention'] {
