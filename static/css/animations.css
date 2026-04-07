@@ -1,4 +1,8 @@
 @media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
   :root {
     --duration-instant: 0ms;
     --duration-fast: 0ms;
@@ -18,6 +22,20 @@
   .form-section {
     opacity: 1 !important;
     animation: none !important;
+  }
+
+  .shell-layout,
+  .workspace-layout,
+  .criterion-card,
+  .evidence-drop-zone,
+  .evidence-note-button,
+  .score-dropdown-arrow,
+  .skip-accordion-summary::after,
+  .panel-progress-bar,
+  .sidebar-tab-indicator,
+  .panel-title-section,
+  .shell-divider::after {
+    transition: none !important;
   }
 }
 
@@ -98,6 +116,11 @@
   .evidence-item {
     opacity: 1 !important;
     animation: none !important;
+  }
+
+  .evidence-item.is-removing {
+    opacity: 1 !important;
+    transform: none !important;
   }
 
   .rating-option.is-just-selected {

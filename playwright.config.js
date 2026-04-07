@@ -25,7 +25,7 @@ export default defineConfig({
 		},
 	},
 	webServer: {
-		command: `python3 -m http.server ${PORT} --bind ${HOST}`,
+		command: 'npm run serve:app',
 		url: BASE_URL,
 		reuseExistingServer: !process.env.CI,
 		timeout: 15_000,

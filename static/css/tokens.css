@@ -177,6 +177,12 @@
   --state-info: var(--ut-blue);
   --state-info-tint: color-mix(in srgb, var(--state-info) 10%, var(--ut-white));
   --state-info-border: color-mix(in srgb, var(--state-info) 24%, var(--ut-border));
+  --state-pending: var(--ut-slate);
+  --state-pending-tint: color-mix(in srgb, var(--state-pending) 12%, var(--ut-white));
+  --state-pending-border: color-mix(in srgb, var(--state-pending) 28%, var(--ut-border));
+  --state-processing: var(--ut-purple);
+  --state-processing-tint: color-mix(in srgb, var(--state-processing) 10%, var(--ut-white));
+  --state-processing-border: color-mix(in srgb, var(--state-processing) 24%, var(--ut-border));
   --state-warning: #d97706;
   --state-warning-tint: color-mix(in srgb, var(--state-warning) 10%, var(--ut-white));
   --state-warning-border: color-mix(in srgb, var(--state-warning) 24%, var(--ut-border));
@@ -370,6 +376,13 @@
   --border-thick: 4px;
   --border-accent: 6px;
   --border-accent-active: 8px;
+
+  --workspace-gap-compact: var(--space-4-5);
+  --criterion-header-gap: 10px;
+  --criterion-body-gap: 12px;
+  --criterion-statement-max-width: 90ch;
+  --evidence-intake-control-min: 11rem;
+  --evidence-intake-note-min: 16rem;
 
   --z-panel-shadow: 4;
   --z-panel-progress: 5;

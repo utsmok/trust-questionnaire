@@ -6,6 +6,8 @@ import { createReferenceDrawersRenderer } from '../render/reference-drawers.js';
 import { createSidebarRenderer } from '../render/sidebar.js';
 import { PROGRESS_STATES } from '../state/derive.js';
 import { selectSidebarOpen, selectSidebarActiveTab } from '../state/store.js';
+import { focusElementWithRetry } from '../utils/focus-trap.js';
+import { ensureSurfaceManager } from '../utils/surface-manager.js';
 import { toArray, getDocumentRef } from '../utils/shared.js';
 import { PRINCIPLE_SECTION_IDS, getSectionDefinition } from '../config/sections.js';
 
@@ -133,47 +135,6 @@ const syncPageControlAvailability = (section, isEditable) => {
   });
 };
 
-const focusElementWithRetry = ({
-  windowRef,
-  documentRef,
-  primaryTarget,
-  fallbackTarget = null,
-  remainingAttempts = 3,
-}) => {
-  const primary =
-    primaryTarget instanceof HTMLElement && primaryTarget.isConnected ? primaryTarget : null;
-  const fallback =
-    fallbackTarget instanceof HTMLElement && fallbackTarget.isConnected ? fallbackTarget : null;
-  const target = primary ?? fallback;
-
-  if (!(target instanceof HTMLElement) || typeof target.focus !== 'function') {
-    return;
-  }
-
-  target.focus({ preventScroll: true });
-
-  if (documentRef.activeElement === target) {
-    return;
-  }
-
-  if (remainingAttempts <= 1) {
-    if (primary && fallback && primary !== fallback && typeof fallback.focus === 'function') {
-      fallback.focus({ preventScroll: true });
-    }
-    return;
-  }
-
-  windowRef.requestAnimationFrame(() => {
-    focusElementWithRetry({
-      windowRef,
-      documentRef,
-      primaryTarget,
-      fallbackTarget,
-      remainingAttempts: remainingAttempts - 1,
-    });
-  });
-};
-
 const getRenderedPageSections = (root) =>
   toArray(root?.children).filter(
     (element) => element instanceof HTMLElement && element.matches('[data-page-id]'),
@@ -201,13 +162,22 @@ const resolveShellDom = (root) => {
   };
 };
 
-export const initializeNavigation = ({ root = document, store }) => {
+export const initializeNavigation = ({
+  root = document,
+  store,
+  routeContext = null,
+  preferences = null,
+} = {}) => {
   const dom = resolveShellDom(root);
   const documentRef = dom.documentRef;
   const windowRef = getWindowRef(root);
   const cleanup = [];
   const lastSurfaceTriggers = new Map();
   const activeTimers = new Set();
+  const surfaceManager = ensureSurfaceManager({
+    documentRef,
+    statusRegion: documentRef.getElementById('reviewShellStatusLiveRegion'),
+  });
 
   if (!dom.questionnairePanel || !dom.questionnaireRenderRoot) {
     const shellDivider = documentRef.querySelector('.shell-divider');
@@ -310,9 +280,63 @@ export const initializeNavigation = ({ root = document, store }) => {
   const aboutPanel = createAboutPanelController({ root });
   const helpPanel = createHelpPanelController({ root });
   const referenceDrawers = createReferenceDrawersRenderer({ root, store });
+  const helpLegendDrawer = documentRef.querySelector('.sidebar-help-drawer');
 
   const getContextDrawerDismissTarget = () =>
     dom.contextPanel?.querySelector('[data-sidebar-dismiss]') ?? dom.contextPanel;
+
+  const resolveContextDrawerRestoreTarget = () => {
+    const lastTriggerId = lastSurfaceTriggers.get('sidebar');
+    return (
+      (lastTriggerId ? documentRef.getElementById(lastTriggerId) : null) ??
+      documentRef.getElementById('sidebarToggle') ??
+      dom.contextFocusReturn
+    );
+  };
+
+  if (dom.contextPanel instanceof HTMLElement) {
+    surfaceManager.registerSurface({
+      id: 'context-drawer',
+      element: dom.contextPanel,
+      label: 'context drawer',
+      priority: 30,
+      modal: true,
+      resolveInitialFocusTarget: () => getContextDrawerDismissTarget(),
+      resolveRestoreFocusTarget: () => resolveContextDrawerRestoreTarget(),
+      fallbackRestoreFocusTarget: dom.contextFocusReturn,
+      restoreFocusDelayMs: 320,
+      closeAnnouncement: 'Closed context drawer.',
+      onAfterClose: () => {
+        if (isContextDrawerMode && selectSidebarOpen(store.getState())) {
+          store.actions.setSidebarOpen(false);
+        }
+      },
+    });
+  }
+
+  const buildNavSyncSignature = (state) => {
+    const completionBySection = state.derived.completionProgress?.bySectionId ?? {};
+    const pageStates = state.derived.pageStates.bySectionId ?? {};
+
+    return JSON.stringify({
+      activePageId: state.ui.activePageId,
+      activeSubAnchorId: state.ui.activeSubAnchorId,
+      sidebarOpen: selectSidebarOpen(state),
+      pageOrder: state.ui.pageOrder,
+      sidebarPanel: state.ui.sidebarPanel,
+      referenceDrawers: state.ui.referenceDrawers,
+      reviewMeta: state.reviewMeta?.workflowAuthority ?? {},
+      pageStates: state.ui.pageOrder.map((pageId) => ({
+        pageId,
+        workflowState: pageStates[pageId]?.workflowState ?? '',
+        isEditable: Boolean(pageStates[pageId]?.isEditable),
+        isAccessible: Boolean(pageStates[pageId]?.isAccessible),
+        reasonCode: pageStates[pageId]?.reasonCode ?? '',
+        completionState: completionBySection[pageId]?.canonicalState ?? '',
+        completionPercent: completionBySection[pageId]?.completionPercent ?? 0,
+      })),
+    });
+  };
 
   const setSidebarOpenState = (isOpen, { trigger = null, focusAfterClose = true } = {}) => {
     const currentlyOpen = selectSidebarOpen(store.getState());
@@ -328,21 +352,6 @@ export const initializeNavigation = ({ root = document, store }) => {
       lastSurfaceTriggers.set('sidebar', trigger.id || null);
     }
 
-    const lastTriggerId = lastSurfaceTriggers.get('sidebar');
-    const lastTrigger = lastTriggerId ? documentRef.getElementById(lastTriggerId) : null;
-    const stableToggle = documentRef.getElementById('sidebarToggle');
-
-    if (!isOpen && focusAfterClose) {
-      const precloseTarget =
-        lastTrigger instanceof HTMLElement && lastTrigger.isConnected
-          ? lastTrigger
-          : dom.contextFocusReturn;
-
-      if (precloseTarget instanceof HTMLElement && typeof precloseTarget.focus === 'function') {
-        precloseTarget.focus({ preventScroll: true });
-      }
-    }
-
     store.actions.setSidebarOpen(isOpen);
 
     if (!isContextDrawerMode) {
@@ -350,56 +359,17 @@ export const initializeNavigation = ({ root = document, store }) => {
     }
 
     if (isOpen) {
-      windowRef.requestAnimationFrame(() => {
-        focusElementWithRetry({
-          windowRef,
-          documentRef,
-          primaryTarget: getContextDrawerDismissTarget(),
-          fallbackTarget: dom.contextPanel,
-        });
+      surfaceManager.openSurface('context-drawer', {
+        trigger,
+        announceMessage: 'Opened context drawer.',
       });
       return;
     }
 
-    if (!focusAfterClose) {
-      return;
-    }
-
-    const drawerPanel = dom.contextPanel;
-    if (drawerPanel instanceof HTMLElement) {
-      const handleTransitionEnd = (event) => {
-        if (event.target !== drawerPanel) {
-          return;
-        }
-        drawerPanel.removeEventListener('transitionend', handleTransitionEnd);
-        clearTimeout(fallbackTimer);
-        focusElementWithRetry({
-          windowRef,
-          documentRef,
-          primaryTarget: stableToggle ?? lastTrigger,
-          fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
-        });
-      };
-      drawerPanel.addEventListener('transitionend', handleTransitionEnd);
-      const fallbackTimer = windowRef.setTimeout(() => {
-        activeTimers.delete(fallbackTimer);
-        drawerPanel.removeEventListener('transitionend', handleTransitionEnd);
-        focusElementWithRetry({
-          windowRef,
-          documentRef,
-          primaryTarget: stableToggle ?? lastTrigger,
-          fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
-        });
-      }, 320);
-      activeTimers.add(fallbackTimer);
-    } else {
-      focusElementWithRetry({
-        windowRef,
-        documentRef,
-        primaryTarget: stableToggle ?? lastTrigger,
-        fallbackTarget: lastTrigger ?? dom.contextFocusReturn,
-      });
-    }
+    surfaceManager.closeSurface('context-drawer', {
+      reason: 'sidebar-dismiss',
+      skipFocusRestore: !focusAfterClose,
+    });
   };
 
   const ensureContextDrawerClosedForFormFocus = () => {
@@ -552,6 +522,7 @@ export const initializeNavigation = ({ root = document, store }) => {
       section.dataset.workflowState = pageState?.workflowState ?? '';
       section.dataset.pageEditable = String(Boolean(pageState?.isEditable));
       section.dataset.pageAccessible = String(Boolean(pageState?.isAccessible));
+      section.dataset.pageEditReason = pageState?.reasonCode ?? '';
       section.dataset.pageStatus = sectionState?.status ?? '';
       section.dataset.pageProgressState = sectionProgress?.canonicalState ?? '';
       section.dataset.pageCompletionPercent = String(sectionProgress?.completionPercent ?? 0);
@@ -560,6 +531,10 @@ export const initializeNavigation = ({ root = document, store }) => {
       );
       section.dataset.pageRequiredTotal = String(
         sectionProgress?.applicableRequiredFieldCount ?? 0,
+      );
+      section.classList.toggle(
+        'is-page-lifecycle-locked',
+        String(pageState?.reasonCode ?? '').startsWith('lifecycle_locked_'),
       );
 
       if (isActive) {
@@ -686,26 +661,35 @@ export const initializeNavigation = ({ root = document, store }) => {
     }
   };
 
-  const syncFromState = (state) => {
+  let lastNavSyncSignature = '';
+
+  const syncFromState = (state, previousState = null) => {
     lastSyncedState = state;
 
-    pager?.sync(state);
-    sidebar?.sync(state);
-    referenceDrawers.sync(state);
-    aboutPanel.sync(state);
-    helpPanel.sync(state);
-    syncPageVisibility(state);
-    syncActiveAccent(state);
-    syncSidebarPanel(state);
-    syncShellProgressState(state);
-    syncPanelTitles(state);
+    const nextNavSyncSignature = buildNavSyncSignature(state);
+    const shouldSyncNavigation = !previousState || nextNavSyncSignature !== lastNavSyncSignature;
+
+    if (shouldSyncNavigation) {
+      lastNavSyncSignature = nextNavSyncSignature;
+      pager?.sync(state);
+      sidebar?.sync(state);
+      referenceDrawers.sync(state);
+      aboutPanel.sync(state);
+      helpPanel.sync(state);
+      syncPageVisibility(state);
+      syncActiveAccent(state);
+      syncSidebarPanel(state);
+      syncShellProgressState(state);
+      syncPanelTitles(state);
+      scheduleCanonicalProgressDecorations(state);
+    }
+
     syncPanelMetrics(dom.contextPanel, dom.contextProgressBar, state.ui.panelMetrics.context);
     syncPanelMetrics(
       dom.questionnairePanel,
       dom.questionnaireProgressBar,
       state.ui.panelMetrics.questionnaire,
     );
-    scheduleCanonicalProgressDecorations(state);
   };
 
   const refreshPageSections = () => {
@@ -854,7 +838,23 @@ export const initializeNavigation = ({ root = document, store }) => {
     root,
     store,
     navigateToPage,
+    routeContext,
   });
+
+  const preferredSidebarTab = ['guidance', 'reference', 'about'].includes(
+    preferences?.defaultSidebarTab,
+  )
+    ? preferences.defaultSidebarTab
+    : 'guidance';
+
+  if (preferredSidebarTab !== 'guidance') {
+    store.actions.setSidebarActiveTab(preferredSidebarTab);
+  }
+
+  if (helpLegendDrawer instanceof HTMLDetailsElement) {
+    helpLegendDrawer.open = preferences?.keyboardShortcutsCollapsed !== true;
+  }
+
   refreshPageSections();
 
   const handleSidebarToggle = () => {
@@ -875,33 +875,9 @@ export const initializeNavigation = ({ root = document, store }) => {
     store.actions.setSidebarActiveTab(tab.dataset.sidebarTab);
   };
 
-  const handleTabKeydown = (event) => {
-    const tab = event.target.closest('[data-sidebar-tab]');
-    if (!(tab instanceof HTMLButtonElement)) return;
-
-    const tabs = Array.from(dom.tabButtons ?? []);
-    const currentIndex = tabs.indexOf(tab);
-
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-      event.preventDefault();
-      const next = tabs[(currentIndex + 1) % tabs.length];
-      next?.focus();
-      store.actions.setSidebarActiveTab(next.dataset.sidebarTab);
-      return;
-    }
-
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-      event.preventDefault();
-      const prev = tabs[(currentIndex - 1 + tabs.length) % tabs.length];
-      prev?.focus();
-      store.actions.setSidebarActiveTab(prev.dataset.sidebarTab);
-      return;
-    }
-  };
-
   const unsubscribe = store.subscribe(
-    (state) => {
-      syncFromState(state);
+    (state, previousState) => {
+      syncFromState(state, previousState);
     },
     { immediate: true },
   );
@@ -921,10 +897,8 @@ export const initializeNavigation = ({ root = document, store }) => {
 
   if (dom.tabBar) {
     dom.tabBar.addEventListener('click', handleTabClick);
-    dom.tabBar.addEventListener('keydown', handleTabKeydown);
     cleanup.push(() => {
       dom.tabBar.removeEventListener('click', handleTabClick);
-      dom.tabBar.removeEventListener('keydown', handleTabKeydown);
     });
   }
 
@@ -962,22 +936,6 @@ export const initializeNavigation = ({ root = document, store }) => {
     dom.questionnairePanel.removeEventListener('scroll', handleQuestionnaireScroll);
   });
   handleQuestionnaireScroll();
-
-  const handleDocumentKeydown = (event) => {
-    if (event.key !== 'Escape') {
-      return;
-    }
-
-    if (isContextDrawerMode && selectSidebarOpen(store.getState())) {
-      event.preventDefault();
-      setSidebarOpenState(false);
-    }
-  };
-
-  documentRef.addEventListener('keydown', handleDocumentKeydown);
-  cleanup.push(() => {
-    documentRef.removeEventListener('keydown', handleDocumentKeydown);
-  });
 
   if (contextDrawerMediaQuery) {
     const handleContextDrawerModeChange = (event) => {
@@ -1042,6 +1000,7 @@ export const initializeNavigation = ({ root = document, store }) => {
 
   return {
     navigateToPage,
+    toggleSidebar: handleSidebarToggle,
     destroy() {
       windowRef.cancelAnimationFrame(progressDecorationFrame);
       activeTimers.forEach((timer) => windowRef.clearTimeout(timer));
@@ -1056,6 +1015,7 @@ export const initializeNavigation = ({ root = document, store }) => {
       referenceDrawers.destroy();
       aboutPanel.destroy();
       helpPanel.destroy();
+      surfaceManager.unregisterSurface('context-drawer');
     },
   };
 };

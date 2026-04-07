@@ -3,6 +3,7 @@ import {
   getContentTopicDefinition,
   getSectionDefinition,
 } from '../config/sections.js';
+import { getGuidanceTopicDefinition } from '../content/guidance-topics.js';
 import { CRITERIA_BY_CODE } from '../config/questionnaire-schema.js';
 import { PROGRESS_STATES } from '../state/derive.js';
 import {
@@ -18,86 +19,12 @@ import {
   createSourceList,
 } from '../utils/shared.js';
 import { REFERENCE_DRAWER_BY_TOPIC_ID } from './reference-drawers.js';
+import { buildGuidanceTopicSection } from './content-topic-blocks.js';
 
 export const CONTEXT_ROUTE_KINDS = Object.freeze({
   PAGE: 'page',
   CRITERION: 'criterion',
   SUMMARY: 'summary',
-});
-
-const PAGE_FALLBACK_COPY = Object.freeze({
-  S0: Object.freeze({
-    summary:
-      'Set the workflow mode, canonical tool identity, and responder role first. Later pages and editability rules depend on this control layer.',
-    bullets: Object.freeze([
-      'Confirm the submission type before interpreting later sections.',
-      'Use the canonical tool name and URL fields as the stable evaluation identity.',
-      'Nomination-only rationale remains local to this opening page.',
-    ]),
-  }),
-  S1: Object.freeze({
-    summary:
-      'Capture what the tool is, who provides it, how it is deployed, and whether it belongs in the evaluation scope before deeper scoring begins.',
-    bullets: Object.freeze([
-      'Use the scope check and rationale fields to record in/out-of-scope decisions explicitly.',
-      'Account, sign-in, and access model data often drive later security and governance interpretation.',
-      'Open Info > Scope and definitions for the broader framework boundary when needed.',
-    ]),
-  }),
-  S2: Object.freeze({
-    summary:
-      'Document the test setup, scenarios, and evidence boundary here. This page establishes whether later claims are auditable.',
-    bullets: Object.freeze([
-      'Record the exact repeated-query and benchmark setup when used.',
-      'Keep the evidence folder link stable for later criterion-level associations.',
-      'Use REF-E for minimum evidence requirements and REF-S for score interpretation.',
-    ]),
-  }),
-  S8: Object.freeze({
-    summary:
-      'Critical fails and confidence are evaluation-wide controls. Use this page to record blockers that can override otherwise positive principle scores.',
-    bullets: Object.freeze([
-      'Critical-fail flags are distinct from low scores and must be traceable.',
-      'Confidence reflects evidence quality and verification depth, not optimism.',
-      'Use REF-S when translating flags and confidence into later recommendation logic.',
-    ]),
-  }),
-  S9: Object.freeze({
-    summary:
-      'Convert the principle-level evidence into a final institutional recommendation, explicit caveats, and a public-facing rationale.',
-    bullets: Object.freeze([
-      'Recommendation status must stay aligned with the per-principle judgment model.',
-      'Document suitable and unsuitable use cases explicitly; do not rely on implication.',
-      'Public summary text should remain consistent with the evidence bundle and governance outcome.',
-    ]),
-  }),
-  S10A: Object.freeze({
-    summary:
-      'This handoff page packages the primary evaluation for second review. It should expose uncertainties rather than smoothing them away.',
-    bullets: Object.freeze([
-      'Use this page to tell the next reviewer where to look hardest.',
-      'Keep uncertainty notes specific enough to support targeted re-checking.',
-      'Open Info > Governance and review workflow for the full review sequence.',
-    ]),
-  }),
-  S10B: Object.freeze({
-    summary:
-      'Record agreement, disagreement, and any criteria that need to be revisited during the second review step.',
-    bullets: Object.freeze([
-      'Conflict documentation matters as much as the second reviewer recommendation itself.',
-      'Use criteria-to-revisit as a constrained, explicit list rather than a vague note.',
-      'Open Info > Governance and review workflow for disagreement handling and escalation context.',
-    ]),
-  }),
-  S10C: Object.freeze({
-    summary:
-      'Capture the final team decision, publication status, and review cadence in a way that can survive handoff and later re-evaluation.',
-    bullets: Object.freeze([
-      'Final status, rationale, and publication handling belong together.',
-      'Review frequency should reflect real operational follow-up, not boilerplate.',
-      'Open Info > Governance and review workflow for the institutional lifecycle view.',
-    ]),
-  }),
 });
 
 const SUMMARY_ANCHOR_LABELS = Object.freeze({
@@ -122,14 +49,6 @@ const PROGRESS_STATE_LABELS = Object.freeze({
   [PROGRESS_STATES.SKIPPED]: 'Skipped',
   [PROGRESS_STATES.BLOCKED_ESCALATED]: 'Blocked / escalated',
 });
-
-const parseTopicIds = (rawValue) =>
-  typeof rawValue === 'string' ? rawValue.trim().split(/\s+/).filter(Boolean) : [];
-
-const getSectionHeadingText = (section) => {
-  const heading = section?.querySelector('h2');
-  return heading?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-};
 
 const getCriterionAnchorLabel = (criterionCode) => {
   const criterion = CRITERIA_BY_CODE[criterionCode];
@@ -281,28 +200,6 @@ const createSectionTag = (documentRef, pageDefinition) => {
   return tag;
 };
 
-const extractContextSources = (mount) => {
-  const contextSectionsByTopicId = new Map();
-  const fallback = mount?.querySelector('#contextSidebarFallback') ?? null;
-
-  toArray(mount?.querySelectorAll('[data-topic-area="context"][data-topic-ids]')).forEach(
-    (section) => {
-      parseTopicIds(section.dataset.topicIds)
-        .filter((topicId) => topicId.startsWith('context.'))
-        .forEach((topicId) => {
-          const list = contextSectionsByTopicId.get(topicId) ?? [];
-          list.push(section);
-          contextSectionsByTopicId.set(topicId, list);
-        });
-    },
-  );
-
-  return {
-    fallback,
-    contextSectionsByTopicId,
-  };
-};
-
 const buildContextShell = (mount, documentRef) => {
   clearChildren(mount);
 
@@ -314,7 +211,6 @@ const buildContextShell = (mount, documentRef) => {
 
   shell.className = 'context-sidebar-shell';
   routeCard.className = 'context-route-card';
-  routeCard.setAttribute('aria-live', 'polite');
   anchorCard.className = 'context-anchor-card';
   generatedSlot.className = 'context-generated-slot';
   topicStack.className = 'context-topic-stack';
@@ -391,36 +287,29 @@ const buildSummaryCompanion = (documentRef, route) => {
   return section;
 };
 
-const buildPageFallback = (documentRef, route) => {
-  const fallbackCopy = PAGE_FALLBACK_COPY[route.pageId];
+const buildMissingGuidanceFallback = (documentRef, route) => {
   const section = documentRef.createElement('section');
-  const kicker = documentRef.createElement('div');
   const heading = documentRef.createElement('h2');
   const summary = documentRef.createElement('p');
 
-  section.className = 'doc-section context-generated-section';
+  section.className = 'doc-section context-generated-section context-empty-state';
   section.dataset.section = route.pageDefinition?.accentKey ?? 'control';
+  heading.textContent = route.pageDefinition?.title ?? 'Context guidance';
+  summary.textContent = 'No registered page guidance exists for this topic yet.';
+  section.append(heading, summary);
+  return section;
+};
 
-  kicker.className = 'section-kicker';
-  kicker.textContent = 'Page guidance';
+const buildGuidanceContent = (documentRef, route) => {
+  const guidanceTopic = getGuidanceTopicDefinition(route.topicId);
 
-  heading.textContent =
-    route.topicDefinition?.title ?? route.pageDefinition?.title ?? 'Context guidance';
-  summary.textContent = fallbackCopy?.summary ?? '';
-
-  section.append(kicker, heading, summary);
-
-  if (fallbackCopy?.bullets?.length) {
-    const list = documentRef.createElement('ul');
-    fallbackCopy.bullets.forEach((bullet) => {
-      const item = documentRef.createElement('li');
-      item.textContent = bullet;
-      list.appendChild(item);
-    });
-    section.appendChild(list);
+  if (!guidanceTopic) {
+    return buildMissingGuidanceFallback(documentRef, route);
   }
 
-  return section;
+  return buildGuidanceTopicSection(documentRef, guidanceTopic, {
+    accentKey: route.pageDefinition?.accentKey ?? 'control',
+  });
 };
 
 const createAnchorDescriptor = ({
@@ -500,8 +389,9 @@ export const createSidebarRenderer = ({
   }
 
   const cleanup = [];
-  const contextSources = extractContextSources(contextSidebarMount);
   const contextShell = buildContextShell(contextSidebarMount, documentRef);
+  const prefersReducedMotion = () =>
+    Boolean(documentRef.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
 
   let pageAnchorsByPageId = new Map();
   let anchorById = new Map();
@@ -591,9 +481,6 @@ export const createSidebarRenderer = ({
     const topicId = pageDefinition?.contextTopicId ?? null;
     const topicDefinition = getContentTopicDefinition(topicId);
     const activeAnchor = subAnchorId ? (anchorById.get(subAnchorId) ?? null) : null;
-    const literalSections = topicId
-      ? (contextSources.contextSectionsByTopicId.get(topicId) ?? [])
-      : [];
     const pageState = state.derived.pageStates.bySectionId[pageId] ?? null;
     const sectionState = state.derived.sectionStates.bySectionId[pageId] ?? null;
     const sectionProgress = state.derived.completionProgress?.bySectionId?.[pageId] ?? null;
@@ -607,7 +494,6 @@ export const createSidebarRenderer = ({
       topicId,
       topicDefinition,
       activeAnchor,
-      literalSections,
       referenceTopicIds: pageDefinition?.referenceTopicIds ?? [],
       aboutTopicIds: pageDefinition?.aboutTopicIds ?? [],
       sourceRefs: topicDefinition?.sourceRefs ?? [],
@@ -1029,28 +915,15 @@ export const createSidebarRenderer = ({
         ? buildCriterionCompanion(documentRef, route)
         : route.kind === CONTEXT_ROUTE_KINDS.SUMMARY
           ? buildSummaryCompanion(documentRef, route)
-          : route.literalSections.length === 0
-            ? buildPageFallback(documentRef, route)
-            : null;
+          : null;
+
+    const pageGuidanceSection = buildGuidanceContent(documentRef, route);
 
     if (generatedSection) {
       contextShell.generatedSlot.appendChild(generatedSection);
     }
 
-    if (route.literalSections.length) {
-      route.literalSections.forEach((section) => {
-        section.classList.remove('is-context-hidden');
-        section.hidden = false;
-        contextShell.topicStack.appendChild(section);
-      });
-      return;
-    }
-
-    if (!generatedSection && contextSources.fallback) {
-      contextSources.fallback.classList.remove('is-context-hidden');
-      contextSources.fallback.hidden = false;
-      contextShell.topicStack.appendChild(contextSources.fallback);
-    }
+    contextShell.topicStack.appendChild(pageGuidanceSection);
   };
 
   const sync = (state) => {
@@ -1157,7 +1030,10 @@ export const createSidebarRenderer = ({
         `.reference-drawer[data-drawer-id="${drawerButton.dataset.contextDrawerId}"]`,
       );
       if (drawerEl) {
-        drawerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        drawerEl.scrollIntoView({
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+          block: 'start',
+        });
       }
       return;
     }
@@ -1232,8 +1108,7 @@ export const createSidebarRenderer = ({
         );
       }
 
-      const literalHeading = getSectionHeadingText(route.literalSections[0]);
-      return literalHeading || route.topicDefinition?.title || route.pageDefinition?.title || '';
+      return route.topicDefinition?.title || route.pageDefinition?.title || '';
     },
     isPinned() {
       return Boolean(pinnedRoute?.pageId);

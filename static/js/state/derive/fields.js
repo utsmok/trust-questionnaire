@@ -75,7 +75,7 @@ export const buildDerivedFieldValues = (state, context = EMPTY_OBJECT) => {
     return context.derivedFieldValues;
   }
 
-  const pageStates = context.pageStates ?? derivePageStates(state);
+  const pageStates = context.pageStates ?? derivePageStates(state, context);
   const criterionStates = context.criterionStates ?? deriveCriterionStates(state, pageStates);
   const principleJudgments =
     context.principleJudgments ??
@@ -98,7 +98,7 @@ export const buildDerivedFieldValues = (state, context = EMPTY_OBJECT) => {
 
 export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) => {
   const state = normalizeState(evaluation);
-  const pageStates = context.pageStates ?? derivePageStates(state);
+  const pageStates = context.pageStates ?? derivePageStates(state, context);
   const criterionStatesBundle = context.criterionStates ?? deriveCriterionStates(state, pageStates);
   const sectionSkipMetaLookup =
     context.sectionSkipMeta ?? criterionStatesBundle.sectionSkipMeta ?? buildSectionSkipMeta(state);
@@ -154,6 +154,9 @@ export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) =>
   const suppressedBySkip = sectionUserSkipped || criterionSkipped;
   const hiddenByCondition = !visible && !suppressedBySkip;
   const validationIssues = [];
+  const authorityLocked = Array.isArray(context.workflowAuthority?.lockedFieldIds)
+    ? context.workflowAuthority.lockedFieldIds.includes(fieldId)
+    : false;
 
   if (field.requiredPolicy === 'conditional' && logicalMissing) {
     validationIssues.push(
@@ -197,7 +200,11 @@ export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) =>
     answered,
     missing,
     logicalMissing,
-    readOnly: !pageState.isEditable || (field.derived && field.overridePolicy === 'none'),
+    readOnly:
+      authorityLocked ||
+      !pageState.isEditable ||
+      (field.derived && field.overridePolicy === 'none'),
+    authorityLocked,
     baseRequiredPolicy: field.requiredPolicy,
     validationState,
     issues,
@@ -216,7 +223,7 @@ export const deriveFieldState = (fieldId, evaluation, context = EMPTY_OBJECT) =>
 
 export const deriveFieldStates = (evaluation, context = EMPTY_OBJECT) => {
   const state = normalizeState(evaluation);
-  const pageStates = context.pageStates ?? derivePageStates(state);
+  const pageStates = context.pageStates ?? derivePageStates(state, context);
   const criterionStatesBundle = context.criterionStates ?? deriveCriterionStates(state, pageStates);
   const derivedFieldValues = buildDerivedFieldValues(state, {
     ...context,

@@ -6,6 +6,17 @@ import {
   createSelectControl,
   createTextareaControl,
 } from './dom-factories.js';
+import {
+  buildEvidenceDownloadUrl,
+  createEvidenceLink,
+  deleteEvidenceAsset,
+  deleteEvidenceLink,
+  finalizeEvidenceUpload,
+  getEvidenceManifest,
+  initializeEvidenceUpload,
+  listEvidence,
+  updateEvidenceLink,
+} from '../api/evidence.js';
 import { createEvidenceManifest, serializeEvidenceManifest } from '../adapters/evidence-storage.js';
 import {
   EMPTY_ARRAY,
@@ -17,13 +28,15 @@ import {
   isImageMimeType,
 } from '../utils/shared.js';
 import { confirmDialog } from '../utils/confirm-dialog.js';
-import { createFocusTrap } from '../utils/focus-trap.js';
+import { ensureSurfaceManager } from '../utils/surface-manager.js';
 
 const EVIDENCE_BLOCK_SELECTOR = '[data-evidence-block="true"]';
 const LIGHTBOX_ELEMENT_ID = 'questionnaire-evidence-lightbox';
 const MANIFEST_DOWNLOAD_NAME = 'trust-evidence-manifest.json';
+const REVIEW_WORKSPACE_PATH_PATTERN = /^\/reviews\/([^/]+)\/workspace(?:\/|$)/;
+const TEST_RUN_SYNC_EVENT = 'trust:test-runs-sync';
 
-let lightboxFocusTrap = null;
+const LIGHTBOX_SURFACE_ID = 'questionnaire-evidence-lightbox-surface';
 
 export const EVIDENCE_TYPE_OPTIONS = Object.freeze([
   Object.freeze({ value: 'screenshot', label: 'Screenshot' }),
@@ -39,6 +52,101 @@ const EVIDENCE_TYPE_LABELS = Object.freeze(
 );
 
 const hasMeaningfulText = (value) => typeof value === 'string' && value.trim().length > 0;
+
+const isDataUrl = (value) => typeof value === 'string' && value.startsWith('data:');
+
+const resolveEvidenceAccessUrl = (item) =>
+  normalizeTextValue(item?.downloadUrl) ??
+  (isDataUrl(item?.dataUrl) ? normalizeTextValue(item?.dataUrl) : null);
+
+const resolveBackendReviewId = (documentRef) => {
+  const pathname = documentRef?.defaultView?.location?.pathname ?? '';
+  const match = pathname.match(REVIEW_WORKSPACE_PATH_PATTERN);
+
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
+};
+
+const createQueueEntry = ({ id, name, status, detail = '' } = {}) => ({
+  id: id ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  name: name ?? 'Evidence item',
+  status: status ?? 'pending',
+  detail: detail ?? '',
+});
+
+const formatQueueEntry = (entry) => {
+  if (!entry) {
+    return '';
+  }
+
+  const statusLabel =
+    entry.status === 'uploading'
+      ? 'Uploading'
+      : entry.status === 'linking'
+        ? 'Linking'
+        : entry.status === 'linked'
+          ? 'Linked'
+          : entry.status === 'error'
+            ? 'Failed'
+            : 'Queued';
+
+  return `${statusLabel}: ${entry.name}${entry.detail ? ` — ${entry.detail}` : ''}`;
+};
+
+const projectEvidenceResponseToCompatibility = ({ evidence, reviewId } = {}) => {
+  const assets = Array.isArray(evidence?.assets) ? evidence.assets : [];
+  const links = Array.isArray(evidence?.links) ? evidence.links : [];
+  const assetMap = new Map(assets.map((asset) => [asset.assetId, asset]));
+  const nextEvidence = {
+    evaluation: [],
+    criteria: {},
+  };
+
+  links.forEach((link) => {
+    if (link.scopeType === 'review_inbox') {
+      return;
+    }
+
+    const asset = assetMap.get(link.assetId);
+    if (!asset) {
+      return;
+    }
+
+    const item = {
+      id: link.linkId,
+      assetId: link.assetId,
+      scope: link.scopeType,
+      sectionId: link.scopeType === 'criterion' ? link.sectionId : SECTION_IDS.S2,
+      criterionCode: link.criterionCode,
+      evidenceType: link.evidenceType,
+      note: link.note,
+      name: asset.originalName ?? asset.sanitizedName ?? asset.assetId,
+      mimeType: asset.mimeType,
+      size: asset.sizeBytes,
+      isImage: asset.assetKind === 'image' || isImageMimeType(asset.mimeType),
+      dataUrl: null,
+      downloadUrl:
+        normalizeTextValue(asset.downloadUrl) ??
+        (reviewId
+          ? buildEvidenceDownloadUrl(reviewId, asset.assetId, { linkId: link.linkId })
+          : null),
+      previewDataUrl: null,
+      addedAt: asset.capturedAtClient ?? link.linkedAt ?? asset.createdAt ?? asset.receivedAtServer,
+    };
+
+    if (link.scopeType === 'criterion' && link.criterionCode) {
+      if (!nextEvidence.criteria[link.criterionCode]) {
+        nextEvidence.criteria[link.criterionCode] = [];
+      }
+
+      nextEvidence.criteria[link.criterionCode].push(item);
+      return;
+    }
+
+    nextEvidence.evaluation.push(item);
+  });
+
+  return nextEvidence;
+};
 
 const formatFileSize = (value) => {
   const size = Number(value);
@@ -67,6 +175,7 @@ const createEmptyDraftState = () => ({
   existingAssetId: '',
   replaceItemId: null,
   busy: false,
+  queue: [],
   message: '',
 });
 
@@ -106,6 +215,37 @@ const getEvidenceEmptyStateText = (scope) => {
 
   const principleKey = scope.criterionCode?.slice(0, 2).toLowerCase();
   return PRINCIPLE_EVIDENCE_HINTS[principleKey] ?? 'No criterion-level evidence attached yet.';
+};
+
+const getEvidenceBlockDescription = (scope) => {
+  if (scope.level === 'evaluation') {
+    return 'Attach review-level evidence used across multiple criteria or general workflow setup.';
+  }
+
+  return `Attach only evidence that directly supports ${scope.criterionCode}. Reuse shared review evidence when appropriate.`;
+};
+
+const getEvidenceStatusKind = ({ draftState, items, replaceTarget } = {}) => {
+  if (
+    Array.isArray(draftState?.queue) &&
+    draftState.queue.some((entry) => entry.status === 'error')
+  ) {
+    return 'error';
+  }
+
+  if (draftState?.busy || (Array.isArray(draftState?.queue) && draftState.queue.length > 0)) {
+    return 'processing';
+  }
+
+  if (replaceTarget) {
+    return 'attention';
+  }
+
+  if (Array.isArray(items) && items.length > 0) {
+    return 'ready';
+  }
+
+  return 'empty';
 };
 
 const getEvidenceScopeKey = ({ criterionCode = null } = {}) =>
@@ -296,6 +436,30 @@ const createEvidenceItemsContainer = ({ documentRef } = {}) =>
   });
 
 export const createEvidenceBlockElement = ({ documentRef, scope, editable = true } = {}) => {
+  const typeControl = createEvidenceSelect({
+    documentRef,
+    disabled: !editable,
+  });
+  const noteControl = createTextareaControl({
+    documentRef,
+    valueText: '',
+    placeholderText:
+      scope.level === 'evaluation'
+        ? 'Describe what this evidence supports at review level.'
+        : `Explain how this evidence supports ${scope.criterionCode}.`,
+    dataset: {
+      evidenceControl: 'note',
+    },
+    attributes: {
+      rows: '2',
+      'aria-label': 'Evidence note',
+    },
+    disabled: !editable,
+  });
+  const existingAssetControl = createReusableEvidenceSelect({
+    documentRef,
+    disabled: !editable,
+  });
   const fileInput = createElement('input', {
     documentRef,
     dataset: {
@@ -313,11 +477,23 @@ export const createEvidenceBlockElement = ({ documentRef, scope, editable = true
   const dropZone = createElement('div', {
     documentRef,
     className: 'evidence-drop-zone',
-    text: 'Drop files here or paste from clipboard',
     attributes: {
       role: 'button',
       tabindex: editable ? '0' : '-1',
+      'aria-label': 'Drop files here or paste evidence from the clipboard',
     },
+    children: [
+      createElement('span', {
+        documentRef,
+        className: 'evidence-drop-zone-title',
+        text: 'Drop files here or paste clipboard evidence',
+      }),
+      createElement('span', {
+        documentRef,
+        className: 'evidence-drop-zone-hint',
+        text: 'Use Browse files for the picker input. Attach only direct support for the current scope.',
+      }),
+    ],
   });
 
   dropZone.addEventListener('click', () => fileInput.click());
@@ -376,6 +552,7 @@ export const createEvidenceBlockElement = ({ documentRef, scope, editable = true
                 children: [
                   createElement('span', {
                     documentRef,
+                    className: 'evidence-block-title',
                     text: getEvidenceFieldGroupLabel(scope),
                   }),
                   createElement('span', {
@@ -388,6 +565,11 @@ export const createEvidenceBlockElement = ({ documentRef, scope, editable = true
                   }),
                 ],
               }),
+              createElement('p', {
+                documentRef,
+                className: 'evidence-block-description',
+                text: getEvidenceBlockDescription(scope),
+              }),
             ],
           }),
         ],
@@ -398,6 +580,28 @@ export const createEvidenceBlockElement = ({ documentRef, scope, editable = true
         children: [
           dropZone,
           fileInput,
+          createElement('div', {
+            documentRef,
+            className: 'evidence-intake-grid',
+            children: [
+              createEvidenceInputGroup({
+                documentRef,
+                label: 'Evidence type',
+                control: typeControl,
+              }),
+              createEvidenceInputGroup({
+                documentRef,
+                label: scope.level === 'criterion' ? 'Reuse stored evidence' : 'Reuse',
+                control: existingAssetControl,
+                className: scope.level === 'criterion' ? '' : 'is-disabled',
+              }),
+              createEvidenceInputGroup({
+                documentRef,
+                label: 'Note',
+                control: noteControl,
+              }),
+            ],
+          }),
           createElement('div', {
             documentRef,
             className: 'evidence-intake-footer',
@@ -413,15 +617,80 @@ export const createEvidenceBlockElement = ({ documentRef, scope, editable = true
               createElement('div', {
                 documentRef,
                 className: 'evidence-action-strip',
-                children: actionButtons,
+                children: [
+                  createElement('button', {
+                    documentRef,
+                    className: 'evidence-button',
+                    text: 'Browse files',
+                    dataset: {
+                      evidenceAction: 'choose-files',
+                    },
+                    attributes: {
+                      type: 'button',
+                      disabled: !editable ? true : null,
+                    },
+                  }),
+                  createElement('button', {
+                    documentRef,
+                    className: 'evidence-button',
+                    text: 'Add evidence',
+                    dataset: {
+                      evidenceAction: 'add-files',
+                    },
+                    attributes: {
+                      type: 'button',
+                      disabled: !editable ? true : null,
+                    },
+                  }),
+                  ...(scope.level === 'criterion'
+                    ? [
+                        createElement('button', {
+                          documentRef,
+                          className: 'evidence-button',
+                          text: 'Reuse selected evidence',
+                          dataset: {
+                            evidenceAction: 'reuse-asset',
+                          },
+                          attributes: {
+                            type: 'button',
+                            disabled: !editable ? true : null,
+                          },
+                        }),
+                        createElement('button', {
+                          documentRef,
+                          className: 'evidence-button',
+                          text: 'Cancel replace',
+                          dataset: {
+                            evidenceAction: 'cancel-replace',
+                          },
+                          attributes: {
+                            type: 'button',
+                            disabled: true,
+                          },
+                        }),
+                      ]
+                    : []),
+                  ...actionButtons,
+                ],
               }),
             ],
+          }),
+          createElement('div', {
+            documentRef,
+            className: 'evidence-queue',
+            dataset: {
+              evidenceRole: 'queue',
+            },
+            attributes: {
+              'aria-live': 'polite',
+            },
           }),
           createElement('p', {
             documentRef,
             className: 'evidence-status',
             dataset: {
               evidenceRole: 'status',
+              evidenceStatusKind: 'empty',
             },
             attributes: {
               'aria-live': 'polite',
@@ -445,14 +714,6 @@ const createEvidenceMetaItem = ({ documentRef, text, className = '' } = {}) =>
 const createEvidencePreviewButton = ({ documentRef, item } = {}) => {
   const imageSrc = normalizeTextValue(item.previewDataUrl ?? item.dataUrl);
 
-  if (!imageSrc) {
-    return createElement('div', {
-      documentRef,
-      className: 'evidence-preview evidence-preview-empty',
-      text: 'Preview unavailable',
-    });
-  }
-
   return createElement('button', {
     documentRef,
     className: 'evidence-preview-button',
@@ -462,31 +723,35 @@ const createEvidencePreviewButton = ({ documentRef, item } = {}) => {
     },
     attributes: {
       type: 'button',
-      title: `Open preview for ${item.name ?? 'image evidence'}`,
+      'aria-label': `Open preview for ${item.name ?? 'image evidence'}`,
     },
     children: [
-      createElement('img', {
-        documentRef,
-        className: 'evidence-preview-image',
-        attributes: {
-          src: imageSrc,
-          alt: item.name ?? 'Evidence preview',
-          loading: 'lazy',
-        },
-      }),
+      ...(imageSrc
+        ? [
+            createElement('img', {
+              documentRef,
+              className: 'evidence-preview-image',
+              attributes: {
+                src: imageSrc,
+                alt: item.name ?? 'Evidence preview',
+                loading: 'lazy',
+              },
+            }),
+          ]
+        : []),
       createElement('span', {
         documentRef,
         className: 'evidence-preview-caption',
-        text: 'Open preview',
+        text: imageSrc ? 'Open preview' : 'Preview file',
       }),
     ],
   });
 };
 
 const createEvidenceDownloadLink = ({ documentRef, item } = {}) => {
-  const dataUrl = normalizeTextValue(item.dataUrl);
+  const downloadUrl = resolveEvidenceAccessUrl(item);
 
-  if (!dataUrl) {
+  if (!downloadUrl) {
     return createElement('span', {
       documentRef,
       className: 'evidence-file-link evidence-file-link-disabled',
@@ -499,11 +764,39 @@ const createEvidenceDownloadLink = ({ documentRef, item } = {}) => {
     className: 'evidence-file-link',
     text: item.name ?? 'Evidence file',
     attributes: {
-      href: dataUrl,
+      href: downloadUrl,
       download: item.name ?? 'evidence-file',
       target: '_blank',
       rel: 'noreferrer noopener',
     },
+  });
+};
+
+const createLinkedTestRunSummary = ({ documentRef, linkedRuns = [] } = {}) => {
+  if (!Array.isArray(linkedRuns) || linkedRuns.length === 0) {
+    return null;
+  }
+
+  return createElement('div', {
+    documentRef,
+    className: 'evidence-linked-test-runs',
+    children: [
+      createElement('div', {
+        documentRef,
+        className: 'evidence-note-label',
+        text: 'Linked test runs',
+      }),
+      createElement('div', {
+        documentRef,
+        className: 'evidence-item-meta',
+        children: linkedRuns.map((run) =>
+          createEvidenceMetaItem({
+            documentRef,
+            text: `${run.criterionCode ?? 'Review'} · case ${run.caseOrdinal} · ${run.status}`,
+          }),
+        ),
+      }),
+    ],
   });
 };
 
@@ -540,6 +833,15 @@ const createEvidenceItemElement = ({ documentRef, item, editable = true } = {}) 
       createEvidenceMetaItem({
         documentRef,
         text: `${item.associationCount} links`,
+      }),
+    );
+  }
+
+  if (Array.isArray(item.linkedTestRuns) && item.linkedTestRuns.length > 0) {
+    metaItems.push(
+      createEvidenceMetaItem({
+        documentRef,
+        text: `${item.linkedTestRuns.length} test ${item.linkedTestRuns.length === 1 ? 'run' : 'runs'}`,
       }),
     );
   }
@@ -597,6 +899,19 @@ const createEvidenceItemElement = ({ documentRef, item, editable = true } = {}) 
                         createElement('button', {
                           documentRef,
                           className: 'evidence-button',
+                          text: 'Replace',
+                          dataset: {
+                            evidenceAction: 'start-replace',
+                            evidenceItemId: item.id,
+                          },
+                          attributes: {
+                            type: 'button',
+                            disabled: editable ? null : true,
+                          },
+                        }),
+                        createElement('button', {
+                          documentRef,
+                          className: 'evidence-button',
                           text: 'Unlink',
                           dataset: {
                             evidenceAction: 'unlink-item',
@@ -645,17 +960,28 @@ const createEvidenceItemElement = ({ documentRef, item, editable = true } = {}) 
             className: 'evidence-note-label',
             text: 'Notes',
           }),
-          createElement('p', {
+          editable
+            ? createElement('button', {
+                documentRef,
+                className: 'evidence-note evidence-note-button',
+                dataset: {
+                  evidenceAction: 'edit-note',
+                  evidenceItemId: item.id,
+                },
+                attributes: {
+                  type: 'button',
+                  'aria-label': `Edit note for ${item.name ?? 'evidence item'}`,
+                },
+                text: item.note ?? 'No note recorded.',
+              })
+            : createElement('p', {
+                documentRef,
+                className: 'evidence-note',
+                text: item.note ?? 'No note recorded.',
+              }),
+          createLinkedTestRunSummary({
             documentRef,
-            className: 'evidence-note',
-            dataset: {
-              evidenceAction: 'edit-note',
-              evidenceItemId: item.id,
-            },
-            attributes: {
-              title: 'Click to edit',
-            },
-            text: item.note ?? 'No note recorded.',
+            linkedRuns: item.linkedTestRuns,
           }),
         ],
       }),
@@ -678,7 +1004,16 @@ const renderEvidenceItems = ({ container, items, scope, editable } = {}) => {
   const documentRef = container.ownerDocument ?? document;
   const fingerprint =
     Array.isArray(items) && items.length > 0
-      ? items.map((i) => `${i.id}:${i.note ?? ''}`).join('|')
+      ? items
+          .map(
+            (i) =>
+              `${i.id}:${i.note ?? ''}:${i.downloadUrl ?? ''}:${i.dataUrl ?? ''}:${(
+                i.linkedTestRuns ?? []
+              )
+                .map((run) => `${run.runId}:${run.status}`)
+                .join(',')}`,
+          )
+          .join('|')
       : '__empty__';
 
   if (container.dataset.renderedFingerprint === fingerprint) {
@@ -698,6 +1033,33 @@ const renderEvidenceItems = ({ container, items, scope, editable } = {}) => {
         documentRef,
         item,
         editable,
+      }),
+    ),
+  );
+};
+
+const renderEvidenceQueue = ({ container, queue = [] } = {}) => {
+  if (!(container instanceof HTMLElement)) {
+    return;
+  }
+
+  if (!Array.isArray(queue) || queue.length === 0) {
+    container.replaceChildren();
+    container.hidden = true;
+    return;
+  }
+
+  const documentRef = container.ownerDocument ?? document;
+  container.hidden = false;
+  container.replaceChildren(
+    ...queue.map((entry) =>
+      createElement('div', {
+        documentRef,
+        className: ['evidence-queue-item', `is-${entry.status ?? 'queued'}`],
+        dataset: {
+          queueStatus: entry.status ?? 'queued',
+        },
+        text: formatQueueEntry(entry),
       }),
     ),
   );
@@ -805,14 +1167,53 @@ const ensureEvidenceLightbox = (documentRef) => {
   return lightbox;
 };
 
-const openEvidenceLightbox = ({ documentRef, item, trigger } = {}) => {
+const loadEvidencePreviewSource = async (item) => {
+  const inlineSource = normalizeTextValue(item?.previewDataUrl ?? item?.dataUrl);
+
+  if (inlineSource) {
+    return {
+      src: inlineSource,
+      revoke() {},
+    };
+  }
+
+  const downloadUrl = normalizeTextValue(item?.downloadUrl);
+  if (!downloadUrl) {
+    return null;
+  }
+
+  const response = await fetch(downloadUrl, {
+    credentials: 'same-origin',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Preview request failed with status ${response.status}.`);
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+
+  return {
+    src: objectUrl,
+    revoke() {
+      URL.revokeObjectURL(objectUrl);
+    },
+  };
+};
+
+const openEvidenceLightbox = async ({ documentRef, item, trigger } = {}) => {
   const lightbox = ensureEvidenceLightbox(documentRef);
+  const closeButton = lightbox.querySelector('.evidence-lightbox-close');
   const image = lightbox.querySelector('.evidence-lightbox-image');
   const title = lightbox.querySelector('.evidence-lightbox-title');
   const note = lightbox.querySelector('.evidence-lightbox-note');
-  const imageSrc = normalizeTextValue(item?.previewDataUrl ?? item?.dataUrl);
+  const surfaceManager = ensureSurfaceManager({
+    documentRef,
+    statusRegion: documentRef.getElementById('reviewShellStatusLiveRegion'),
+  });
+  const previewSource = await loadEvidencePreviewSource(item);
 
-  if (!(image instanceof HTMLImageElement) || !imageSrc) {
+  if (!(image instanceof HTMLImageElement) || !previewSource?.src) {
     return;
   }
 
@@ -824,51 +1225,61 @@ const openEvidenceLightbox = ({ documentRef, item, trigger } = {}) => {
     note.textContent = item?.note ?? '';
   }
 
-  image.src = imageSrc;
-  image.alt = item?.name ?? 'Evidence preview image';
-  lightbox.hidden = false;
-  lightbox.setAttribute('aria-hidden', 'false');
-  lightbox.dataset.returnFocus = trigger instanceof HTMLElement ? 'true' : 'false';
-
-  const closeButton = lightbox.querySelector('.evidence-lightbox-close');
-  if (closeButton instanceof HTMLButtonElement) {
-    closeButton.focus();
+  if (typeof lightbox._revokePreviewSource === 'function') {
+    lightbox._revokePreviewSource();
   }
 
-  if (lightboxFocusTrap) lightboxFocusTrap.deactivate();
-  lightboxFocusTrap = createFocusTrap(lightbox, {
-    onEscape: () => {
-      closeEvidenceLightbox(document);
+  lightbox._returnFocusTarget = trigger instanceof HTMLElement ? trigger : null;
+  lightbox._revokePreviewSource = previewSource.revoke;
+
+  image.src = previewSource.src;
+  image.alt = item?.name ?? 'Evidence preview image';
+
+  const initialFocusTarget = closeButton instanceof HTMLButtonElement ? closeButton : lightbox;
+
+  surfaceManager.registerSurface({
+    id: LIGHTBOX_SURFACE_ID,
+    element: lightbox,
+    label: 'evidence preview',
+    priority: 40,
+    modal: true,
+    initialFocusTarget,
+    restoreFocusTarget: trigger instanceof HTMLElement ? trigger : null,
+    closeAnnouncement: 'Closed evidence preview.',
+    onBeforeClose() {
+      const lightboxImage = lightbox.querySelector('.evidence-lightbox-image');
+      if (lightboxImage instanceof HTMLImageElement) {
+        lightboxImage.removeAttribute('src');
+      }
+
+      if (typeof lightbox._revokePreviewSource === 'function') {
+        lightbox._revokePreviewSource();
+      }
+
+      lightbox._revokePreviewSource = null;
+      lightbox._returnFocusTarget = null;
     },
   });
-  lightboxFocusTrap.activate();
 
-  lightbox._returnFocusTarget = trigger instanceof HTMLElement ? trigger : null;
+  surfaceManager.openSurface(LIGHTBOX_SURFACE_ID, {
+    trigger: trigger instanceof HTMLElement ? trigger : null,
+    initialFocusTarget,
+    announceMessage: 'Opened evidence preview.',
+  });
 };
 
 const closeEvidenceLightbox = (documentRef) => {
   const lightbox = documentRef.getElementById(LIGHTBOX_ELEMENT_ID);
+  const surfaceManager = ensureSurfaceManager({
+    documentRef,
+    statusRegion: documentRef.getElementById('reviewShellStatusLiveRegion'),
+  });
 
   if (!(lightbox instanceof HTMLElement) || lightbox.hidden) {
     return;
   }
 
-  if (lightboxFocusTrap) {
-    lightboxFocusTrap.deactivate();
-    lightboxFocusTrap = null;
-  }
-
-  const image = lightbox.querySelector('.evidence-lightbox-image');
-  if (image instanceof HTMLImageElement) {
-    image.removeAttribute('src');
-  }
-
-  lightbox.hidden = true;
-  lightbox.setAttribute('aria-hidden', 'true');
-
-  if (lightbox._returnFocusTarget instanceof HTMLElement) {
-    lightbox._returnFocusTarget.focus();
-  }
+  surfaceManager.closeSurface(LIGHTBOX_SURFACE_ID, { reason: 'dismiss' });
 
   lightbox._returnFocusTarget = null;
 };
@@ -893,7 +1304,7 @@ const exportEvidenceManifest = ({ documentRef, evaluation } = {}) => {
   URL.revokeObjectURL(objectUrl);
 };
 
-const syncEvidenceBlock = ({ block, state, draftsByKey } = {}) => {
+const syncEvidenceBlock = ({ block, state, draftsByKey, testRunLinksByEvidenceId } = {}) => {
   if (!(block instanceof HTMLElement)) {
     return;
   }
@@ -914,10 +1325,14 @@ const syncEvidenceBlock = ({ block, state, draftsByKey } = {}) => {
   const decoratedItems = items.map((item) => ({
     ...item,
     associationCount: getEvidenceItemUsageCount(state, getEvidenceAssetId(item)),
+    linkedTestRuns: Array.isArray(testRunLinksByEvidenceId?.get(item.id))
+      ? testRunLinksByEvidenceId.get(item.id)
+      : EMPTY_ARRAY,
   }));
   const countElement = block.querySelector('[data-evidence-role="count"]');
   const selectionSummaryElement = block.querySelector('[data-evidence-role="selection-summary"]');
   const statusElement = block.querySelector('[data-evidence-role="status"]');
+  const queueElement = block.querySelector('[data-evidence-role="queue"]');
   const itemsContainer = block.querySelector('[data-evidence-role="items"]');
   const typeControl = block.querySelector('[data-evidence-control="type"]');
   const noteControl = block.querySelector('[data-evidence-control="note"]');
@@ -927,18 +1342,35 @@ const syncEvidenceBlock = ({ block, state, draftsByKey } = {}) => {
   const reuseButton = block.querySelector('[data-evidence-action="reuse-asset"]');
   const cancelReplaceButton = block.querySelector('[data-evidence-action="cancel-replace"]');
   const exportButton = block.querySelector('[data-evidence-action="export-manifest"]');
+  const chooseFilesButton = block.querySelector('[data-evidence-action="choose-files"]');
+  const statusKind = getEvidenceStatusKind({
+    draftState,
+    items: decoratedItems,
+    replaceTarget,
+  });
 
   if (countElement instanceof HTMLElement) {
-    countElement.textContent = `${decoratedItems.length} ${decoratedItems.length === 1 ? 'file' : 'files'}`;
+    countElement.textContent = `${decoratedItems.length} ${
+      decoratedItems.length === 1 ? 'file' : 'files'
+    }`;
   }
 
   if (selectionSummaryElement instanceof HTMLElement) {
     selectionSummaryElement.textContent = describeSelectedFiles(draftState.files);
   }
 
+  renderEvidenceQueue({
+    container: queueElement,
+    queue: draftState.queue,
+  });
+
   if (statusElement instanceof HTMLElement) {
+    statusElement.dataset.evidenceStatusKind = statusKind;
     statusElement.textContent =
       draftState.message ||
+      (draftState.queue.length > 0
+        ? formatQueueEntry(draftState.queue[draftState.queue.length - 1])
+        : '') ||
       (replaceTarget
         ? `Replace mode active for ${replaceTarget.name ?? 'selected evidence'}. Select one new file or one existing evidence item.`
         : decoratedItems.length > 0
@@ -1006,6 +1438,10 @@ const syncEvidenceBlock = ({ block, state, draftsByKey } = {}) => {
         : 'Add evidence';
   }
 
+  if (chooseFilesButton instanceof HTMLButtonElement) {
+    chooseFilesButton.disabled = !editable || draftState.busy;
+  }
+
   if (reuseButton instanceof HTMLButtonElement) {
     reuseButton.disabled =
       !editable ||
@@ -1035,7 +1471,12 @@ const syncEvidenceBlock = ({ block, state, draftsByKey } = {}) => {
   });
 };
 
-const syncEvidenceBlocks = ({ questionnaireRoot, state, draftsByKey } = {}) => {
+const syncEvidenceBlocks = ({
+  questionnaireRoot,
+  state,
+  draftsByKey,
+  testRunLinksByEvidenceId,
+} = {}) => {
   const activePageId = state.ui?.activePageId;
   toArray(questionnaireRoot.querySelectorAll(EVIDENCE_BLOCK_SELECTOR)).forEach((block) => {
     if (activePageId) {
@@ -1046,6 +1487,7 @@ const syncEvidenceBlocks = ({ questionnaireRoot, state, draftsByKey } = {}) => {
       block,
       state,
       draftsByKey,
+      testRunLinksByEvidenceId,
     });
   });
 };
@@ -1101,12 +1543,14 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     };
   }
 
+  const reviewId = resolveBackendReviewId(documentRef);
+  const usesBackendEvidence = hasMeaningfulText(reviewId);
   const draftsByKey = new Map();
+  const testRunLinksByEvidenceId = new Map();
   const cleanup = [];
+  let destroyed = false;
 
-  const updateBlockFromElement = (element) => {
-    const block = element.closest(EVIDENCE_BLOCK_SELECTOR);
-
+  const syncBlock = (block) => {
     if (!(block instanceof HTMLElement)) {
       return;
     }
@@ -1115,7 +1559,154 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
       block,
       state: store.getState(),
       draftsByKey,
+      testRunLinksByEvidenceId,
     });
+  };
+
+  const syncAllBlocks = (state = store.getState()) => {
+    syncEvidenceBlocks({
+      questionnaireRoot,
+      state,
+      draftsByKey,
+      testRunLinksByEvidenceId,
+    });
+  };
+
+  const setDraftMessage = (scope, message) => {
+    const draftState = ensureDraftState(draftsByKey, scope.key);
+    draftState.message = message;
+  };
+
+  const resetDraftIntake = (draftState, block) => {
+    draftState.files = [];
+    draftState.existingAssetId = '';
+    draftState.replaceItemId = null;
+    draftState.queue = [];
+
+    const fileInput = block?.querySelector('[data-evidence-control="files"]');
+    if (fileInput instanceof HTMLInputElement) {
+      fileInput.value = '';
+    }
+  };
+
+  const inferDraftEvidenceType = (files) => {
+    if (!Array.isArray(files) || files.length === 0) {
+      return '';
+    }
+
+    const mimeTypes = files.map(
+      (file) => normalizeTextValue(file?.type) ?? inferMimeTypeFromName(file?.name),
+    );
+    if (mimeTypes.every((mimeType) => isImageMimeType(mimeType))) {
+      return 'screenshot';
+    }
+
+    if (mimeTypes.some((mimeType) => mimeType === 'application/json')) {
+      return 'export';
+    }
+
+    return 'document';
+  };
+
+  const syncEvidenceProjectionFromServer = async () => {
+    if (!usesBackendEvidence) {
+      return null;
+    }
+
+    const response = await listEvidence(reviewId);
+    if (destroyed) {
+      return response;
+    }
+
+    const nextEvidence = projectEvidenceResponseToCompatibility({
+      evidence: response?.evidence,
+      reviewId,
+    });
+
+    store.actions.replaceEvidenceProjection({
+      evaluationItems: nextEvidence.evaluation,
+      criterionItems: nextEvidence.criteria,
+    });
+
+    return response;
+  };
+
+  const removeLinkOrAsset = async (stateSnapshot, item, { forceDeleteAsset = false } = {}) => {
+    if (!usesBackendEvidence || !item) {
+      return;
+    }
+
+    const usageCount = getEvidenceItemUsageCount(stateSnapshot, getEvidenceAssetId(item));
+
+    if (forceDeleteAsset || usageCount <= 1) {
+      await deleteEvidenceAsset(reviewId, item.assetId);
+      return;
+    }
+
+    await deleteEvidenceLink(reviewId, item.id);
+  };
+
+  const uploadFileToBackend = async ({ file, queueEntry } = {}) => {
+    if (!(file instanceof File)) {
+      throw new Error('A file is required to upload evidence.');
+    }
+
+    queueEntry.status = 'uploading';
+    queueEntry.detail = 'Initializing upload';
+
+    const upload = await initializeEvidenceUpload(reviewId, {
+      originalName: file.name,
+      mimeType:
+        normalizeTextValue(file.type) ??
+        inferMimeTypeFromName(file.name) ??
+        'application/octet-stream',
+      sizeBytes: Number.isFinite(file.size) ? file.size : null,
+      assetKind:
+        isImageMimeType(file.type) || isImageMimeType(inferMimeTypeFromName(file.name))
+          ? 'image'
+          : 'document',
+      sourceType: 'manual_upload',
+      capturedAtClient: new Date().toISOString(),
+    });
+
+    queueEntry.detail = 'Finalizing asset';
+    const dataUrl = await readFileAsDataUrl(file);
+    const finalized = await finalizeEvidenceUpload(reviewId, {
+      uploadToken: upload?.upload?.uploadToken,
+      dataUrl,
+    });
+
+    return finalized?.asset ?? null;
+  };
+
+  const createBackendLinkForScope = ({ scope, assetId, evidenceType, note } = {}) =>
+    createEvidenceLink(reviewId, {
+      assetId,
+      scopeType: scope.level,
+      criterionCode: scope.criterionCode,
+      evidenceType,
+      note,
+    });
+
+  const updateBlockFromElement = (element) => {
+    const block = element.closest(EVIDENCE_BLOCK_SELECTOR);
+
+    if (!(block instanceof HTMLElement)) {
+      return;
+    }
+
+    syncBlock(block);
+  };
+
+  const handleTestRunSync = (event) => {
+    const linkedRunsByEvidenceId = event?.detail?.byEvidenceLinkId ?? {};
+
+    testRunLinksByEvidenceId.clear();
+    Object.entries(linkedRunsByEvidenceId).forEach(([evidenceLinkId, linkedRuns]) => {
+      testRunLinksByEvidenceId.set(evidenceLinkId, Array.isArray(linkedRuns) ? linkedRuns : []);
+    });
+
+    syncAllBlocks();
   };
 
   const handleInput = (event) => {
@@ -1151,7 +1742,7 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     updateBlockFromElement(control);
   };
 
-  const handleChange = async (event) => {
+  const handleChange = (event) => {
     const control = event.target;
 
     if (!(control instanceof HTMLInputElement)) {
@@ -1172,34 +1763,27 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     if (!editable) return;
 
     const files = toArray(control.files).filter((file) => file instanceof File);
-    control.value = '';
-
     if (files.length === 0) return;
 
-    try {
-      const nextItems = await Promise.all(
-        files.map((file) =>
-          createStoredEvidenceItem({
-            file,
-            scope,
-            evidenceType: 'screenshot',
-            note: file.name,
-          }),
-        ),
-      );
+    const draftState = ensureDraftState(draftsByKey, scope.key);
+    draftState.files = files;
+    draftState.queue = files.map((file) => createQueueEntry({ name: file.name, status: 'queued' }));
+    draftState.message = `${files.length} ${
+      files.length === 1 ? 'file staged' : 'files staged'
+    }. Review type and note, then add.`;
 
-      if (nextItems.length > 0) {
-        if (scope.level === 'criterion') {
-          store.actions.addCriterionEvidenceItems(scope.criterionCode, nextItems);
-        } else {
-          store.actions.addEvaluationEvidenceItems(nextItems);
-        }
-      }
-    } catch (error) {
-      const draftState = ensureDraftState(draftsByKey, scope.key);
-      draftState.message = error instanceof Error ? error.message : 'Failed to add evidence.';
-      syncEvidenceBlock({ block, state: store.getState(), draftsByKey });
+    if (!hasMeaningfulText(draftState.evidenceType)) {
+      draftState.evidenceType = inferDraftEvidenceType(files);
     }
+
+    if (!hasMeaningfulText(draftState.note)) {
+      draftState.note =
+        files.length === 1 ? files[0].name : `${files.length} files uploaded together`;
+    }
+
+    control.value = '';
+
+    syncBlock(block);
   };
 
   const handleClick = async (event) => {
@@ -1242,31 +1826,48 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
       noteEl.replaceWith(textarea);
       textarea.focus();
 
-      const handleBlur = () => {
+      const handleBlur = async () => {
         textarea.removeEventListener('blur', handleBlur);
         const newNote = textarea.value.trim();
 
         if (!newNote || newNote === currentText) {
-          const p = createElement('p', {
+          const noteButton = createElement('button', {
             documentRef,
-            className: 'evidence-note',
+            className: 'evidence-note evidence-note-button',
             dataset: {
               evidenceAction: 'edit-note',
               evidenceItemId: itemId,
             },
             attributes: {
-              title: 'Click to edit',
+              type: 'button',
+              'aria-label': 'Edit evidence note',
             },
             text: currentText || 'No note recorded.',
           });
-          textarea.replaceWith(p);
+          textarea.replaceWith(noteButton);
           return;
         }
 
-        if (scope.level === 'criterion') {
-          store.actions.updateCriterionEvidenceItemNote(scope.criterionCode, itemId, newNote);
-        } else {
-          store.actions.updateEvaluationEvidenceItemNote(itemId, newNote);
+        try {
+          if (usesBackendEvidence) {
+            await updateEvidenceLink(reviewId, itemId, {
+              note: newNote,
+            });
+            await syncEvidenceProjectionFromServer();
+          } else if (scope.level === 'criterion') {
+            store.actions.updateCriterionEvidenceItemNote(scope.criterionCode, itemId, newNote);
+          } else {
+            store.actions.updateEvaluationEvidenceItemNote(itemId, newNote);
+          }
+
+          setDraftMessage(scope, 'Evidence note updated.');
+          syncBlock(block);
+        } catch (error) {
+          setDraftMessage(
+            scope,
+            error instanceof Error ? error.message : 'Failed to update the evidence note.',
+          );
+          syncBlock(block);
         }
       };
 
@@ -1275,17 +1876,47 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     }
 
     if (action === 'export-manifest') {
-      exportEvidenceManifest({
-        documentRef,
-        evaluation: store.getState().evaluation,
-      });
-
       const block = actionTarget.closest(EVIDENCE_BLOCK_SELECTOR);
       if (block instanceof HTMLElement) {
         const scope = resolveScopeFromElement(block);
         const draftState = ensureDraftState(draftsByKey, scope.key);
-        draftState.message = 'Evidence manifest exported.';
-        updateBlockFromElement(actionTarget);
+
+        try {
+          const manifest = usesBackendEvidence
+            ? await getEvidenceManifest(reviewId)
+            : createEvidenceManifest(store.getState().evaluation);
+          const blob = new Blob([serializeEvidenceManifest(manifest)], {
+            type: 'application/json',
+          });
+          const objectUrl = URL.createObjectURL(blob);
+          const anchor = createElement('a', {
+            documentRef,
+            attributes: {
+              href: objectUrl,
+              download: MANIFEST_DOWNLOAD_NAME,
+            },
+          });
+
+          documentRef.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          URL.revokeObjectURL(objectUrl);
+
+          draftState.message = 'Evidence manifest exported.';
+          updateBlockFromElement(actionTarget);
+        } catch (error) {
+          draftState.message =
+            error instanceof Error ? error.message : 'Failed to export evidence manifest.';
+          updateBlockFromElement(actionTarget);
+        }
+      }
+      return;
+    }
+
+    if (action === 'choose-files') {
+      const fileControl = block.querySelector('[data-evidence-control="files"]');
+      if (fileControl instanceof HTMLInputElement && !fileControl.disabled) {
+        fileControl.click();
       }
       return;
     }
@@ -1298,13 +1929,7 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     const scope = resolveScopeFromElement(block);
     const draftState = ensureDraftState(draftsByKey, scope.key);
     const clearReplaceMode = () => {
-      draftState.replaceItemId = null;
-      draftState.existingAssetId = '';
-      draftState.files = [];
-      const fileInput = block.querySelector('[data-evidence-control="files"]');
-      if (fileInput instanceof HTMLInputElement) {
-        fileInput.value = '';
-      }
+      resetDraftIntake(draftState, block);
     };
 
     if (action === 'open-lightbox') {
@@ -1318,22 +1943,23 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
         return;
       }
 
-      openEvidenceLightbox({
-        documentRef,
-        item,
-        trigger: actionTarget,
-      });
+      try {
+        await openEvidenceLightbox({
+          documentRef,
+          item,
+          trigger: actionTarget,
+        });
+      } catch (error) {
+        draftState.message = error instanceof Error ? error.message : 'Failed to open preview.';
+        syncBlock(block);
+      }
       return;
     }
 
     if (action === 'cancel-replace') {
       clearReplaceMode();
       draftState.message = 'Replace mode cancelled.';
-      syncEvidenceBlock({
-        block,
-        state: store.getState(),
-        draftsByKey,
-      });
+      syncBlock(block);
       return;
     }
 
@@ -1360,11 +1986,7 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
         fileInput.value = '';
       }
 
-      syncEvidenceBlock({
-        block,
-        state: store.getState(),
-        draftsByKey,
-      });
+      syncBlock(block);
       return;
     }
 
@@ -1375,18 +1997,24 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
         return;
       }
 
-      if (scope.level === 'criterion') {
-        store.actions.removeCriterionEvidenceItem(scope.criterionCode, itemId);
-      } else {
-        store.actions.removeEvaluationEvidenceItem(itemId);
-      }
+      try {
+        if (usesBackendEvidence) {
+          const stateSnapshot = store.getState();
+          const item = getEvidenceItemById({ state: stateSnapshot, scope, itemId });
+          await removeLinkOrAsset(stateSnapshot, item);
+          await syncEvidenceProjectionFromServer();
+        } else if (scope.level === 'criterion') {
+          store.actions.removeCriterionEvidenceItem(scope.criterionCode, itemId);
+        } else {
+          store.actions.removeEvaluationEvidenceItem(itemId);
+        }
 
-      draftState.message = 'Evidence item removed.';
-      syncEvidenceBlock({
-        block,
-        state: store.getState(),
-        draftsByKey,
-      });
+        draftState.message = 'Evidence item removed.';
+      } catch (error) {
+        draftState.message =
+          error instanceof Error ? error.message : 'Failed to remove evidence item.';
+      }
+      syncBlock(block);
       return;
     }
 
@@ -1397,18 +2025,28 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
         return;
       }
 
-      store.actions.unlinkCriterionEvidenceItem(scope.criterionCode, itemId);
+      try {
+        if (usesBackendEvidence) {
+          const stateSnapshot = store.getState();
+          const item = getEvidenceItemById({ state: stateSnapshot, scope, itemId });
+          await removeLinkOrAsset(stateSnapshot, item);
+          await syncEvidenceProjectionFromServer();
+        } else {
+          store.actions.unlinkCriterionEvidenceItem(scope.criterionCode, itemId);
+        }
 
-      if (draftState.replaceItemId === itemId) {
-        clearReplaceMode();
+        if (draftState.replaceItemId === itemId) {
+          clearReplaceMode();
+        }
+
+        draftState.message = 'Evidence association removed from this criterion.';
+      } catch (error) {
+        draftState.message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to remove the criterion evidence association.';
       }
-
-      draftState.message = 'Evidence association removed from this criterion.';
-      syncEvidenceBlock({
-        block,
-        state: store.getState(),
-        draftsByKey,
-      });
+      syncBlock(block);
       return;
     }
 
@@ -1429,25 +2067,31 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
         return;
       }
 
-      store.actions.removeEvidenceAsset(assetId);
+      try {
+        if (usesBackendEvidence) {
+          await deleteEvidenceAsset(reviewId, assetId);
+          await syncEvidenceProjectionFromServer();
+        } else {
+          store.actions.removeEvidenceAsset(assetId);
+        }
 
-      if (
-        draftState.replaceItemId &&
-        getEvidenceItemById({
-          state: store.getState(),
-          scope,
-          itemId: draftState.replaceItemId,
-        }) === null
-      ) {
-        clearReplaceMode();
+        if (
+          draftState.replaceItemId &&
+          getEvidenceItemById({
+            state: store.getState(),
+            scope,
+            itemId: draftState.replaceItemId,
+          }) === null
+        ) {
+          clearReplaceMode();
+        }
+
+        draftState.message = 'Evidence file removed everywhere it was linked.';
+      } catch (error) {
+        draftState.message =
+          error instanceof Error ? error.message : 'Failed to remove the evidence file.';
       }
-
-      draftState.message = 'Evidence file removed everywhere it was linked.';
-      syncEvidenceBlock({
-        block,
-        state: store.getState(),
-        draftsByKey,
-      });
+      syncBlock(block);
       return;
     }
 
@@ -1468,18 +2112,82 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
       }
 
       if (draftState.replaceItemId) {
-        store.actions.replaceCriterionEvidenceItem(scope.criterionCode, draftState.replaceItemId, {
-          assetId: draftState.existingAssetId,
-          evidenceType: draftState.evidenceType,
-          note: draftState.note,
-        });
-        draftState.message = 'Criterion evidence association replaced with existing evidence.';
+        try {
+          if (usesBackendEvidence) {
+            const stateSnapshot = store.getState();
+            const currentItem = getEvidenceItemById({
+              state: stateSnapshot,
+              scope,
+              itemId: draftState.replaceItemId,
+            });
+
+            if (!currentItem) {
+              throw new Error('The evidence association to replace was not found.');
+            }
+
+            if (currentItem.assetId === draftState.existingAssetId) {
+              await updateEvidenceLink(reviewId, currentItem.id, {
+                evidenceType: draftState.evidenceType,
+                note: draftState.note,
+              });
+            } else {
+              await createBackendLinkForScope({
+                scope,
+                assetId: draftState.existingAssetId,
+                evidenceType: draftState.evidenceType,
+                note: draftState.note,
+              });
+              await removeLinkOrAsset(stateSnapshot, currentItem);
+            }
+
+            await syncEvidenceProjectionFromServer();
+          } else {
+            store.actions.replaceCriterionEvidenceItem(
+              scope.criterionCode,
+              draftState.replaceItemId,
+              {
+                assetId: draftState.existingAssetId,
+                evidenceType: draftState.evidenceType,
+                note: draftState.note,
+              },
+            );
+          }
+
+          draftState.message = 'Criterion evidence association replaced with existing evidence.';
+        } catch (error) {
+          draftState.message =
+            error instanceof Error ? error.message : 'Failed to reuse existing evidence.';
+          updateBlockFromElement(actionTarget);
+          return;
+        }
       } else {
-        store.actions.reuseCriterionEvidenceAsset(scope.criterionCode, draftState.existingAssetId, {
-          evidenceType: draftState.evidenceType,
-          note: draftState.note,
-        });
-        draftState.message = 'Existing evidence linked to this criterion.';
+        try {
+          if (usesBackendEvidence) {
+            await createBackendLinkForScope({
+              scope,
+              assetId: draftState.existingAssetId,
+              evidenceType: draftState.evidenceType,
+              note: draftState.note,
+            });
+            await syncEvidenceProjectionFromServer();
+          } else {
+            store.actions.reuseCriterionEvidenceAsset(
+              scope.criterionCode,
+              draftState.existingAssetId,
+              {
+                evidenceType: draftState.evidenceType,
+                note: draftState.note,
+              },
+            );
+          }
+
+          draftState.message = 'Existing evidence linked to this criterion.';
+        } catch (error) {
+          draftState.message =
+            error instanceof Error ? error.message : 'Failed to link existing evidence.';
+          updateBlockFromElement(actionTarget);
+          return;
+        }
       }
 
       draftState.note = '';
@@ -1521,61 +2229,120 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     updateBlockFromElement(actionTarget);
 
     try {
-      const nextItems = await Promise.all(
-        draftState.files.map((file) =>
-          createStoredEvidenceItem({
-            file,
+      if (usesBackendEvidence) {
+        draftState.queue = draftState.files.map((file) =>
+          createQueueEntry({
+            name: file.name,
+            status: 'queued',
+          }),
+        );
+        syncBlock(block);
+
+        const uploadedAssets = [];
+        for (const [index, file] of draftState.files.entries()) {
+          const queueEntry = draftState.queue[index];
+          const asset = await uploadFileToBackend({ file, queueEntry });
+          queueEntry.status = 'linking';
+          queueEntry.detail = 'Creating evidence link';
+          uploadedAssets.push(asset);
+        }
+
+        const stateSnapshot = store.getState();
+        const replaceTarget = draftState.replaceItemId
+          ? getEvidenceItemById({
+              state: stateSnapshot,
+              scope,
+              itemId: draftState.replaceItemId,
+            })
+          : null;
+
+        if (scope.level === 'criterion' && draftState.replaceItemId) {
+          await createBackendLinkForScope({
             scope,
+            assetId: uploadedAssets[0]?.assetId,
             evidenceType: draftState.evidenceType,
             note: draftState.note,
-          }),
-        ),
-      );
+          });
 
-      const addedCount = nextItems.length;
-      draftState.busy = false;
+          if (replaceTarget) {
+            await removeLinkOrAsset(stateSnapshot, replaceTarget);
+          }
+        } else {
+          for (const asset of uploadedAssets) {
+            await createBackendLinkForScope({
+              scope,
+              assetId: asset?.assetId,
+              evidenceType: draftState.evidenceType,
+              note: draftState.note,
+            });
+          }
+        }
 
-      const fileInput = block.querySelector('[data-evidence-control="files"]');
-      if (fileInput instanceof HTMLInputElement) {
-        fileInput.value = '';
+        draftState.queue = draftState.queue.map((entry) => ({
+          ...entry,
+          status: 'linked',
+          detail: 'Stored on server',
+        }));
+        await syncEvidenceProjectionFromServer();
+      } else {
+        const nextItems = await Promise.all(
+          draftState.files.map((file) =>
+            createStoredEvidenceItem({
+              file,
+              scope,
+              evidenceType: draftState.evidenceType,
+              note: draftState.note,
+            }),
+          ),
+        );
+
+        if (scope.level === 'criterion' && draftState.replaceItemId) {
+          store.actions.replaceCriterionEvidenceItem(
+            scope.criterionCode,
+            draftState.replaceItemId,
+            {
+              ...nextItems[0],
+              evidenceType: draftState.evidenceType,
+              note: draftState.note,
+            },
+          );
+          draftState.message = 'Criterion evidence association replaced with a new upload.';
+          clearReplaceMode();
+        } else if (scope.level === 'criterion') {
+          store.actions.addCriterionEvidenceItems(scope.criterionCode, nextItems);
+          draftState.message = `${nextItems.length} ${nextItems.length === 1 ? 'file' : 'files'} added.`;
+        } else {
+          store.actions.addEvaluationEvidenceItems(nextItems);
+          draftState.message = `${nextItems.length} ${nextItems.length === 1 ? 'file' : 'files'} added.`;
+        }
       }
 
+      const addedCount = draftState.files.length;
+      draftState.busy = false;
+
       if (scope.level === 'criterion' && draftState.replaceItemId) {
-        store.actions.replaceCriterionEvidenceItem(scope.criterionCode, draftState.replaceItemId, {
-          ...nextItems[0],
-          evidenceType: draftState.evidenceType,
-          note: draftState.note,
-        });
         draftState.message = 'Criterion evidence association replaced with a new upload.';
-        clearReplaceMode();
-      } else if (scope.level === 'criterion') {
-        store.actions.addCriterionEvidenceItems(scope.criterionCode, nextItems);
-        draftState.files = [];
-        draftState.existingAssetId = '';
-        draftState.message = `${addedCount} ${addedCount === 1 ? 'file' : 'files'} added.`;
       } else {
-        store.actions.addEvaluationEvidenceItems(nextItems);
-        draftState.files = [];
-        draftState.existingAssetId = '';
         draftState.message = `${addedCount} ${addedCount === 1 ? 'file' : 'files'} added.`;
       }
 
       draftState.note = '';
       draftState.evidenceType = '';
+      resetDraftIntake(draftState, block);
+      syncBlock(block);
     } catch (error) {
       draftState.busy = false;
+      draftState.queue = draftState.queue.map((entry) => ({
+        ...entry,
+        status: 'error',
+        detail: error instanceof Error ? error.message : 'Upload failed',
+      }));
       draftState.message = error instanceof Error ? error.message : 'Failed to add evidence.';
       updateBlockFromElement(actionTarget);
     }
   };
 
-  const handleKeydown = (event) => {
-    if (event.key === 'Escape') {
-      closeEvidenceLightbox(documentRef);
-    }
-  };
-
-  const handlePaste = async (event) => {
+  const handlePaste = (event) => {
     const clipboard = event.clipboardData;
     if (!clipboard || !clipboard.files || clipboard.files.length === 0) {
       return;
@@ -1603,37 +2370,24 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     event.preventDefault();
     const files = Array.from(clipboard.files);
 
-    try {
-      const nextItems = await Promise.all(
-        files.map((file) =>
-          createStoredEvidenceItem({
-            file,
-            scope,
-            evidenceType: 'screenshot',
-            note: 'Pasted from clipboard',
-          }),
-        ),
-      );
+    const draftState = ensureDraftState(draftsByKey, scope.key);
+    draftState.files = files;
+    draftState.queue = files.map((file) => createQueueEntry({ name: file.name, status: 'queued' }));
+    draftState.message = `${files.length} ${files.length === 1 ? 'file pasted and staged' : 'files pasted and staged'}.`;
 
-      if (nextItems.length > 0) {
-        if (scope.level === 'criterion') {
-          store.actions.addCriterionEvidenceItems(scope.criterionCode, nextItems);
-        } else {
-          store.actions.addEvaluationEvidenceItems(nextItems);
-        }
+    if (!hasMeaningfulText(draftState.evidenceType)) {
+      draftState.evidenceType = 'screenshot';
+    }
 
-        const draftState = ensureDraftState(draftsByKey, scope.key);
-        draftState.message = `${nextItems.length} file(s) pasted and added.`;
+    if (!hasMeaningfulText(draftState.note)) {
+      draftState.note = 'Pasted from clipboard';
+    }
 
-        const evidenceBlock = block.matches(EVIDENCE_BLOCK_SELECTOR)
-          ? block
-          : block.querySelector(EVIDENCE_BLOCK_SELECTOR);
-        if (evidenceBlock) {
-          syncEvidenceBlock({ block: evidenceBlock, state: store.getState(), draftsByKey });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to attach pasted evidence', error);
+    const evidenceBlock = block.matches(EVIDENCE_BLOCK_SELECTOR)
+      ? block
+      : block.querySelector(EVIDENCE_BLOCK_SELECTOR);
+    if (evidenceBlock) {
+      syncBlock(evidenceBlock);
     }
   };
 
@@ -1654,7 +2408,7 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     block.classList.remove('is-drag-active');
   };
 
-  const handleDrop = async (event) => {
+  const handleDrop = (event) => {
     event.preventDefault();
     const block =
       event.target instanceof HTMLElement ? event.target.closest(EVIDENCE_BLOCK_SELECTOR) : null;
@@ -1668,67 +2422,67 @@ export const initializeEvidenceUi = ({ root = document, store } = {}) => {
     const editable = getScopeEditableState(store.getState(), scope);
     if (!editable) return;
 
-    try {
-      const nextItems = await Promise.all(
-        files.map((file) =>
-          createStoredEvidenceItem({
-            file,
-            scope,
-            evidenceType: 'screenshot',
-            note: file.name,
-          }),
-        ),
-      );
+    const draftState = ensureDraftState(draftsByKey, scope.key);
+    draftState.files = files;
+    draftState.queue = files.map((file) => createQueueEntry({ name: file.name, status: 'queued' }));
+    draftState.message = `${files.length} ${files.length === 1 ? 'file dropped and staged' : 'files dropped and staged'}.`;
 
-      if (nextItems.length > 0) {
-        if (scope.level === 'criterion') {
-          store.actions.addCriterionEvidenceItems(scope.criterionCode, nextItems);
-        } else {
-          store.actions.addEvaluationEvidenceItems(nextItems);
-        }
-        const draftState = ensureDraftState(draftsByKey, scope.key);
-        draftState.message = `${nextItems.length} file(s) added.`;
-        syncEvidenceBlock({ block, state: store.getState(), draftsByKey });
-      }
-    } catch (error) {
-      const draftState = ensureDraftState(draftsByKey, scope.key);
-      draftState.message = error instanceof Error ? error.message : 'Failed to add evidence.';
-      syncEvidenceBlock({ block, state: store.getState(), draftsByKey });
+    if (!hasMeaningfulText(draftState.evidenceType)) {
+      draftState.evidenceType = inferDraftEvidenceType(files);
     }
+
+    if (!hasMeaningfulText(draftState.note)) {
+      draftState.note = files.length === 1 ? files[0].name : `${files.length} dropped files`;
+    }
+
+    syncBlock(block);
   };
 
   questionnaireRoot.addEventListener('input', handleInput);
   questionnaireRoot.addEventListener('change', handleChange);
   documentRef.addEventListener('click', handleClick);
-  documentRef.addEventListener('keydown', handleKeydown);
   documentRef.addEventListener('paste', handlePaste);
   documentRef.addEventListener('dragover', handleDragOver);
   documentRef.addEventListener('dragleave', handleDragLeave);
   documentRef.addEventListener('drop', handleDrop);
+  documentRef.addEventListener(TEST_RUN_SYNC_EVENT, handleTestRunSync);
 
   cleanup.push(() => {
+    destroyed = true;
     questionnaireRoot.removeEventListener('input', handleInput);
     questionnaireRoot.removeEventListener('change', handleChange);
     documentRef.removeEventListener('click', handleClick);
-    documentRef.removeEventListener('keydown', handleKeydown);
     documentRef.removeEventListener('paste', handlePaste);
     documentRef.removeEventListener('dragover', handleDragOver);
     documentRef.removeEventListener('dragleave', handleDragLeave);
     documentRef.removeEventListener('drop', handleDrop);
+    documentRef.removeEventListener(TEST_RUN_SYNC_EVENT, handleTestRunSync);
+    ensureSurfaceManager({
+      documentRef,
+      statusRegion: documentRef.getElementById('reviewShellStatusLiveRegion'),
+    }).unregisterSurface(LIGHTBOX_SURFACE_ID);
   });
 
   const unsubscribe = store.subscribe(
     (state) => {
-      syncEvidenceBlocks({
-        questionnaireRoot,
-        state,
-        draftsByKey,
-      });
+      syncAllBlocks(state);
     },
     { immediate: true },
   );
 
   cleanup.push(unsubscribe);
+
+  if (usesBackendEvidence) {
+    queueMicrotask(() => {
+      syncEvidenceProjectionFromServer().catch((error) => {
+        const message = error instanceof Error ? error.message : 'Failed to load stored evidence.';
+        draftsByKey.forEach((draftState) => {
+          draftState.message = message;
+        });
+        syncAllBlocks(store.getState());
+      });
+    });
+  }
 
   return {
     destroy() {

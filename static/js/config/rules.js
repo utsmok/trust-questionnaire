@@ -157,6 +157,14 @@ export const WORKFLOW_PAGE_RULES = Object.freeze({
   }),
 });
 
+export const WORKFLOW_OWNER_ASSIGNMENT_ROLES = Object.freeze({
+  [WORKFLOW_MODES.NOMINATION]: 'nominator',
+  [WORKFLOW_MODES.PRIMARY_EVALUATION]: 'primary_evaluator',
+  [WORKFLOW_MODES.SECOND_REVIEW]: 'second_reviewer',
+  [WORKFLOW_MODES.FINAL_TEAM_DECISION]: 'decision_participant',
+  [WORKFLOW_MODES.RE_EVALUATION]: 'primary_evaluator',
+});
+
 export const FIELD_VISIBILITY_RULES = freezeArray([
   createRule({
     id: 'show_prior_evaluation_id',
@@ -654,4 +662,8 @@ export const GOVERNANCE_RULES = Object.freeze({
   finalTeamDecisionEditableSectionId: SECTION_IDS.S10C,
   secondReviewReferenceSectionIds: REVIEW_REFERENCE_PAGE_IDS,
   finalDecisionReferenceSectionIds: FINAL_DECISION_REFERENCE_PAGE_IDS,
+  governanceSectionIds: freezeArray([SECTION_IDS.S10A, SECTION_IDS.S10B, SECTION_IDS.S10C]),
+  workflowOwnerAssignmentRoles: WORKFLOW_OWNER_ASSIGNMENT_ROLES,
+  workflowSubmissionFieldId: FIELD_IDS.S0.SUBMISSION_TYPE,
+  modeLockedFieldIds: freezeArray([FIELD_IDS.S0.SUBMISSION_TYPE]),
 });

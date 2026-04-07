@@ -161,6 +161,23 @@ const cloneRecordLookup = (records = {}) =>
     ]),
   );
 
+const clonePlainData = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((entry) => clonePlainData(entry));
+  }
+
+  if (isPlainObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, clonePlainData(entry)]),
+    );
+  }
+
+  return value;
+};
+
+const cloneWorkflowAuthority = (workflowAuthority = {}) =>
+  isPlainObject(workflowAuthority) ? clonePlainData(workflowAuthority) : {};
+
 const CRITERION_SKIP_RECORD_KEYS = Object.freeze([
   'skipState',
   'skipReasonCode',
@@ -429,6 +446,15 @@ const cloneEvaluation = (evaluation = createEmptyEvaluationState()) => ({
   },
 });
 
+export const cloneEvaluationState = (evaluation = createEmptyEvaluationState()) =>
+  cloneEvaluation(evaluation);
+
+export const areEvaluationStatesEqual = (left, right) => areNormalizedValuesEqual(left, right);
+
+export const createPersistableEvaluationSnapshot = (
+  stateOrEvaluation = createEmptyEvaluationState(),
+) => cloneEvaluation(stateOrEvaluation?.evaluation ?? stateOrEvaluation);
+
 const resolveActivePageId = (pageOrder, requestedPageId) => {
   if (requestedPageId && pageOrder.includes(requestedPageId)) {
     return requestedPageId;
@@ -472,23 +498,33 @@ const createUiState = ({
   };
 };
 
-const createState = ({ initialEvaluation, pageOrder }) => {
+const createState = ({ initialEvaluation, pageOrder, workflowAuthority = {} }) => {
   const evaluation = cloneEvaluation(initialEvaluation);
-  const derived = deriveQuestionnaireState(evaluation);
+  const reviewMeta = { workflowAuthority: cloneWorkflowAuthority(workflowAuthority) };
+  const derived = deriveQuestionnaireState(evaluation, reviewMeta);
   const ui = createUiState({ pageOrder, activePageId: pageOrder?.[0] ?? null });
 
-  return { evaluation, derived, ui };
+  return { evaluation, derived, ui, reviewMeta };
 };
 
-const createStateWithEvaluation = (previousState, evaluation) => ({
+const createStateWithEvaluation = (
+  previousState,
   evaluation,
-  derived: deriveQuestionnaireState(evaluation),
-  ui: createUiState({
-    ...previousState.ui,
-    pageOrder: previousState.ui.pageOrder,
-    activePageId: previousState.ui.activePageId,
-  }),
-});
+  workflowAuthority = previousState.reviewMeta?.workflowAuthority ?? {},
+) => {
+  const reviewMeta = { workflowAuthority: cloneWorkflowAuthority(workflowAuthority) };
+
+  return {
+    evaluation,
+    derived: deriveQuestionnaireState(evaluation, reviewMeta),
+    ui: createUiState({
+      ...previousState.ui,
+      pageOrder: previousState.ui.pageOrder,
+      activePageId: previousState.ui.activePageId,
+    }),
+    reviewMeta,
+  };
+};
 
 const pickBestVisiblePageId = (
   pageOrder,
@@ -548,9 +584,10 @@ export const selectPrincipleCompletion = (state, sectionId) => {
 export const createAppStore = ({
   initialEvaluation = createEmptyEvaluationState(),
   pageOrder = CANONICAL_PAGE_SEQUENCE,
+  workflowAuthority = {},
 } = {}) => {
   const listeners = new Set();
-  let state = createState({ initialEvaluation, pageOrder });
+  let state = createState({ initialEvaluation, pageOrder, workflowAuthority });
 
   const notify = (nextState, previousState) => {
     listeners.forEach((listener) => {
@@ -575,6 +612,26 @@ export const createAppStore = ({
     commit((previousState) => {
       const evaluation = cloneEvaluation(nextEvaluation);
       return createStateWithEvaluation(previousState, evaluation);
+    });
+
+  const setWorkflowAuthority = (workflowAuthority) =>
+    commit((previousState) => {
+      const nextWorkflowAuthority = cloneWorkflowAuthority(workflowAuthority);
+
+      if (
+        areNormalizedValuesEqual(
+          previousState.reviewMeta?.workflowAuthority ?? {},
+          nextWorkflowAuthority,
+        )
+      ) {
+        return previousState;
+      }
+
+      return createStateWithEvaluation(
+        previousState,
+        previousState.evaluation,
+        nextWorkflowAuthority,
+      );
     });
 
   const setFieldValue = (fieldId, value) =>
@@ -899,6 +956,7 @@ export const createAppStore = ({
     },
     actions: {
       replaceEvaluation,
+      setWorkflowAuthority,
       setFieldValue,
       setSectionValue,
       setCriterionValue,
@@ -907,6 +965,7 @@ export const createAppStore = ({
       setCriterionSkipRationale,
       clearCriterionSkip,
       setCriterionScore,
+      replaceEvidenceProjection: evidenceActions.replaceEvidenceProjection,
       addEvaluationEvidenceItems: evidenceActions.addEvaluationEvidenceItems,
       addCriterionEvidenceItems: evidenceActions.addCriterionEvidenceItems,
       reuseCriterionEvidenceAsset: evidenceActions.reuseCriterionEvidenceAsset,

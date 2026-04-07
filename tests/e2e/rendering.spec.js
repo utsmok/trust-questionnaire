@@ -63,6 +63,23 @@ test('adapts shell and rating scales across responsive breakpoints', async ({ pa
 	await expect(scoreDropdown).toBeVisible();
 });
 
+test('keeps criterion statements and evidence controls visibly explicit in dense workspace mode', async ({ page }) => {
+	await gotoApp(page);
+	await setWorkflow(page, 'primary_evaluation');
+	await clickElement(page.locator('.strip-cell[data-page-id="TR"]'));
+
+	const criterionCard = page.locator('.criterion-card[data-criterion="TR1"]');
+	await expect(criterionCard.locator('.criterion-card-code')).toHaveText('TR1');
+	await expect(criterionCard.locator('.criterion-card-statement')).toBeVisible();
+	await expect(criterionCard.locator('.criterion-card-statement')).not.toHaveText('');
+
+	const evidenceBlock = criterionCard.locator('[data-evidence-block="true"]');
+	await expect(evidenceBlock.locator('.evidence-block-title')).toHaveText(/TR1 evidence association/);
+	await expect(evidenceBlock.locator('.evidence-block-description')).toContainText('Attach only evidence that directly supports TR1');
+	await expect(evidenceBlock.locator('[data-evidence-action="choose-files"]')).toBeVisible();
+	await expect(evidenceBlock.locator('.evidence-input-label')).toContainText(['Evidence type', 'Reuse stored evidence', 'Note']);
+});
+
 test('honors reduced-motion token overrides when the media preference requests it', async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	await gotoApp(page);
@@ -81,4 +98,22 @@ test('honors reduced-motion token overrides when the media preference requests i
 		fast: '0ms',
 		normal: '0ms',
 	});
+});
+
+test('keeps key workspace controls legible in forced colors mode', async ({ page }) => {
+	await page.emulateMedia({ forcedColors: 'active' });
+	await gotoApp(page);
+	await setWorkflow(page, 'primary_evaluation');
+	await clickElement(page.locator('.strip-cell[data-page-id="TR"]'));
+
+	const forcedColorStyles = await page.locator('.criterion-card[data-criterion="TR1"] .criterion-card-code').evaluate((element) => {
+		const styles = getComputedStyle(element);
+		return {
+			forcedColorAdjust: styles.forcedColorAdjust,
+			borderTopStyle: styles.borderTopStyle,
+		};
+	});
+
+	expect(forcedColorStyles.forcedColorAdjust).toBe('none');
+	expect(forcedColorStyles.borderTopStyle).toBe('solid');
 });

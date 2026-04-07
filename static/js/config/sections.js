@@ -28,6 +28,12 @@ export const SECTION_IDS = Object.freeze({
   S10C: 'S10C',
 });
 
+export const GOVERNANCE_STAGE_KEYS = Object.freeze({
+  PRIMARY_HANDOFF: 'primary_handoff',
+  SECOND_REVIEW: 'second_review',
+  FINAL_DECISION: 'final_team_decision',
+});
+
 export const CONTENT_TOPIC_AREAS = Object.freeze({
   CONTEXT: 'context',
   REFERENCE: 'reference',
@@ -35,6 +41,9 @@ export const CONTENT_TOPIC_AREAS = Object.freeze({
 });
 
 import { freezeArray } from '../utils/shared.js';
+import { GUIDANCE_TOPIC_REGISTRY } from '../content/guidance-topics.js';
+import { REFERENCE_TOPIC_REGISTRY } from '../content/reference-topics.js';
+import { ABOUT_TOPIC_REGISTRY } from '../content/about-topics.js';
 
 const indexBy = (items, key = 'id') =>
   Object.freeze(Object.fromEntries(items.map((item) => [item[key], item])));
@@ -334,6 +343,7 @@ export const SECTION_REGISTRY = freezeArray([
     quickJump: false,
     principleKey: null,
     accentKey: 'governance',
+    governanceStage: GOVERNANCE_STAGE_KEYS.PRIMARY_HANDOFF,
     completionGroupId: 'governance',
     pagerOrder: 10,
     workflowStates: createWorkflowStates({
@@ -357,6 +367,7 @@ export const SECTION_REGISTRY = freezeArray([
     quickJump: false,
     principleKey: null,
     accentKey: 'governance',
+    governanceStage: GOVERNANCE_STAGE_KEYS.SECOND_REVIEW,
     completionGroupId: 'governance',
     pagerOrder: 11,
     workflowStates: createWorkflowStates({
@@ -378,6 +389,7 @@ export const SECTION_REGISTRY = freezeArray([
     quickJump: false,
     principleKey: null,
     accentKey: 'governance',
+    governanceStage: GOVERNANCE_STAGE_KEYS.FINAL_DECISION,
     completionGroupId: 'governance',
     pagerOrder: 12,
     workflowStates: createWorkflowStates({
@@ -389,199 +401,19 @@ export const SECTION_REGISTRY = freezeArray([
   }),
 ]);
 
+const toContentTopic = (topic, area) =>
+  Object.freeze({
+    id: topic.id,
+    area,
+    title: topic.title,
+    pageIds: freezeArray(topic.pageIds ?? []),
+    sourceRefs: freezeArray(topic.sourceRefs ?? []),
+  });
+
 export const CONTENT_TOPIC_REGISTRY = freezeArray([
-  Object.freeze({
-    id: 'context.workflow-control',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Workflow control guidance',
-    pageIds: freezeArray([SECTION_IDS.S0]),
-    sourceRefs: freezeArray([
-      'docs/trust-questionnaire.md#section-0',
-      'docs/improvement_03_04_2026/02_navigation_sidebar_pagination.md',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.tool-profile',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Tool profile and scope guidance',
-    pageIds: freezeArray([SECTION_IDS.S1]),
-    sourceRefs: freezeArray([
-      'docs/trust-questionnaire.md#section-1',
-      'docs/trust-framework-v2.md#2-scope-and-definitions',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.evaluation-setup',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Evaluation setup and evidence expectations',
-    pageIds: freezeArray([SECTION_IDS.S2]),
-    sourceRefs: freezeArray([
-      'docs/trust-questionnaire.md#section-2',
-      'docs/trust-framework-v2.md#5-minimum-evidence-requirements',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.transparent',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Transparent principle context',
-    pageIds: freezeArray([SECTION_IDS.TR]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#31-transparent-tr',
-      'docs/trust-questionnaire.md#section-3-transparent-tr',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.reliable',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Reliable principle context',
-    pageIds: freezeArray([SECTION_IDS.RE]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#32-reliable-re',
-      'docs/trust-questionnaire.md#section-4-reliable-re',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.user-centric',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'User-centric principle context',
-    pageIds: freezeArray([SECTION_IDS.UC]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#33-user-centric-uc',
-      'docs/trust-questionnaire.md#section-5-user-centric-uc',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.secure',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Secure principle context',
-    pageIds: freezeArray([SECTION_IDS.SE]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#34-secure-se',
-      'docs/trust-questionnaire.md#section-6-secure-se',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.traceable',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Traceable principle context',
-    pageIds: freezeArray([SECTION_IDS.TC]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#35-traceable-tc',
-      'docs/trust-questionnaire.md#section-7-traceable-tc',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.critical-fails-and-confidence',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Critical fail and confidence guidance',
-    pageIds: freezeArray([SECTION_IDS.S8]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#44-confidence-levels',
-      'docs/trust-framework-v2.md#45-critical-fail-flags',
-      'docs/trust-questionnaire.md#section-8-critical-fails-and-confidence',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.overall-recommendation',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Overall recommendation guidance',
-    pageIds: freezeArray([SECTION_IDS.S9]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#42-per-principle-judgment',
-      'docs/trust-framework-v2.md#43-final-recommendation-categories',
-      'docs/trust-questionnaire.md#section-9-overall-recommendation',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.primary-evaluation-handoff',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Primary evaluation handoff guidance',
-    pageIds: freezeArray([SECTION_IDS.S10A]),
-    sourceRefs: freezeArray([
-      'docs/trust-questionnaire.md#section-10--second-review-and-governance',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.second-review',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Second review guidance',
-    pageIds: freezeArray([SECTION_IDS.S10B]),
-    sourceRefs: freezeArray([
-      'docs/trust-questionnaire.md#section-10--second-review-and-governance',
-      'docs/trust-framework-v2.md#63-disagreement-handling',
-    ]),
-  }),
-  Object.freeze({
-    id: 'context.final-team-decision',
-    area: CONTENT_TOPIC_AREAS.CONTEXT,
-    title: 'Final team decision guidance',
-    pageIds: freezeArray([SECTION_IDS.S10C]),
-    sourceRefs: freezeArray([
-      'docs/trust-questionnaire.md#section-10--second-review-and-governance',
-      'docs/trust-framework-v2.md#6-governance-and-review-workflow',
-    ]),
-  }),
-  Object.freeze({
-    id: 'reference.scoring-model',
-    area: CONTENT_TOPIC_AREAS.REFERENCE,
-    title: 'Scoring model',
-    pageIds: freezeArray([]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#4-evaluation-scoring-model',
-      'docs/trust-questionnaire.md#standard-answer-sets',
-    ]),
-  }),
-  Object.freeze({
-    id: 'reference.answer-sets',
-    area: CONTENT_TOPIC_AREAS.REFERENCE,
-    title: 'Standard answer sets',
-    pageIds: freezeArray([]),
-    sourceRefs: freezeArray(['docs/trust-questionnaire.md#standard-answer-sets']),
-  }),
-  Object.freeze({
-    id: 'reference.evidence-requirements',
-    area: CONTENT_TOPIC_AREAS.REFERENCE,
-    title: 'Evidence requirements',
-    pageIds: freezeArray([]),
-    sourceRefs: freezeArray(['docs/trust-framework-v2.md#5-minimum-evidence-requirements']),
-  }),
-  Object.freeze({
-    id: 'reference.critical-fail-flags',
-    area: CONTENT_TOPIC_AREAS.REFERENCE,
-    title: 'Critical fail flags',
-    pageIds: freezeArray([]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#45-critical-fail-flags',
-      'docs/trust-questionnaire.md#critical-fail-flags-checkboxes',
-    ]),
-  }),
-  Object.freeze({
-    id: 'about.framework-overview',
-    area: CONTENT_TOPIC_AREAS.ABOUT,
-    title: 'Framework overview',
-    pageIds: freezeArray([]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#version-note',
-      'docs/trust-framework-v2.md#1-introduction',
-    ]),
-  }),
-  Object.freeze({
-    id: 'about.scope-and-definitions',
-    area: CONTENT_TOPIC_AREAS.ABOUT,
-    title: 'Scope and definitions',
-    pageIds: freezeArray([]),
-    sourceRefs: freezeArray(['docs/trust-framework-v2.md#2-scope-and-definitions']),
-  }),
-  Object.freeze({
-    id: 'about.governance-workflow',
-    area: CONTENT_TOPIC_AREAS.ABOUT,
-    title: 'Governance and review workflow',
-    pageIds: freezeArray([]),
-    sourceRefs: freezeArray([
-      'docs/trust-framework-v2.md#6-governance-and-review-workflow',
-      'docs/trust-questionnaire.md#section-10--second-review-and-governance',
-    ]),
-  }),
+  ...GUIDANCE_TOPIC_REGISTRY.map((topic) => toContentTopic(topic, CONTENT_TOPIC_AREAS.CONTEXT)),
+  ...REFERENCE_TOPIC_REGISTRY.map((topic) => toContentTopic(topic, CONTENT_TOPIC_AREAS.REFERENCE)),
+  ...ABOUT_TOPIC_REGISTRY.map((topic) => toContentTopic(topic, CONTENT_TOPIC_AREAS.ABOUT)),
 ]);
 
 export const SECTION_REGISTRY_BY_ID = indexBy(SECTION_REGISTRY);
@@ -611,4 +443,10 @@ export const PRINCIPLE_SECTION_IDS = freezeArray([
   SECTION_IDS.UC,
   SECTION_IDS.SE,
   SECTION_IDS.TC,
+]);
+
+export const GOVERNANCE_SECTION_IDS = freezeArray([
+  SECTION_IDS.S10A,
+  SECTION_IDS.S10B,
+  SECTION_IDS.S10C,
 ]);

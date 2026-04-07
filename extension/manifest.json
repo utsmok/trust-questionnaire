@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "TRUST Capture Pilot",
+  "description": "Explicit, user-triggered capture into existing TRUST reviews using paired and revocable extension sessions.",
+  "version": "0.1.0",
+  "minimum_chrome_version": "120",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "permissions"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "TRUST Capture",
+    "default_popup": "popup.html"
+  }
+}

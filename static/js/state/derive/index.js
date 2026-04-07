@@ -97,19 +97,22 @@ export const createEmptyEvaluationState = () => ({
   overrides: { principleJudgments: {} },
 });
 
-export const deriveQuestionnaireState = (evaluation = EMPTY_OBJECT) => {
+export const deriveQuestionnaireState = (evaluation = EMPTY_OBJECT, context = EMPTY_OBJECT) => {
   const state = normalizeState(evaluation);
-  const pageStates = derivePageStates(state);
+  const pageStates = derivePageStates(state, context);
   const criterionStates = deriveCriterionStates(state, pageStates);
   const principleJudgments = derivePrincipleJudgments(state, {
+    ...context,
     pageStates,
     criterionStates,
   });
   const evidenceCompleteness = deriveEvidenceCompleteness(state, {
+    ...context,
     pageStates,
     criterionStates,
   });
   const completionChecklist = deriveCompletionChecklist(state, {
+    ...context,
     pageStates,
     criterionStates,
     evidenceCompleteness,
@@ -119,26 +122,31 @@ export const deriveQuestionnaireState = (evaluation = EMPTY_OBJECT) => {
     [FIELD_IDS.S8.COMPLETION_CHECKLIST]: completionChecklist.selectedValues,
   };
   const recommendationConstraints = deriveRecommendationConstraints(state, {
+    ...context,
     pageStates,
     derivedFieldValues,
   });
   const workflowEscalations = deriveWorkflowEscalations(state, {
+    ...context,
     pageStates,
     derivedFieldValues,
   });
   const fieldStates = deriveFieldStates(state, {
+    ...context,
     pageStates,
     criterionStates,
     derivedFieldValues,
     recommendationConstraints,
   });
   const sectionStates = deriveSectionStates(state, {
+    ...context,
     pageStates,
     fieldStates,
     recommendationConstraints,
     criterionStates,
   });
   const completionProgress = deriveCompletionProgress(state, {
+    ...context,
     pageStates,
     criterionStates,
     fieldStates,

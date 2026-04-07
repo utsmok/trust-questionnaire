@@ -8,9 +8,7 @@ import { SECTION_IDS } from '../../config/sections.js';
 import { EMPTY_OBJECT, getWorkflowMode, getWorkflowPageRule, normalizeState } from './helpers.js';
 import { matchesCondition } from './rules-eval.js';
 
-export const derivePageStates = (evaluation) => {
-  const state = normalizeState(evaluation);
-  const workflowMode = getWorkflowMode(state);
+export const buildWorkflowPageStates = (workflowMode) => {
   const workflowRule = getWorkflowPageRule(workflowMode);
   const editableSet = new Set(workflowRule.editableSectionIds);
   const readOnlySet = new Set(workflowRule.readOnlySectionIds);
@@ -55,6 +53,79 @@ export const derivePageStates = (evaluation) => {
     primaryPagerSectionIds: workflowRule.primaryPagerSectionIds,
     accessibleSectionIds,
   };
+};
+
+const getNarrowedWorkflowState = (baselineWorkflowState, overlayWorkflowState) => {
+  if (baselineWorkflowState === SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED) {
+    return SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED;
+  }
+
+  if (!overlayWorkflowState) {
+    return baselineWorkflowState;
+  }
+
+  if (baselineWorkflowState === SECTION_WORKFLOW_STATES.READ_ONLY) {
+    return overlayWorkflowState === SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED
+      ? SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED
+      : SECTION_WORKFLOW_STATES.READ_ONLY;
+  }
+
+  return overlayWorkflowState;
+};
+
+export const applyWorkflowAuthorityOverlay = (
+  baselinePageStates,
+  workflowAuthority = EMPTY_OBJECT,
+) => {
+  const sectionPermissions = workflowAuthority?.sectionPermissions ?? EMPTY_OBJECT;
+  const bySectionId = {};
+
+  for (const sectionId of CANONICAL_PAGE_SEQUENCE) {
+    const baseline = baselinePageStates.bySectionId[sectionId];
+    const permission = sectionPermissions[sectionId] ?? null;
+    const workflowState = getNarrowedWorkflowState(
+      baseline.workflowState,
+      permission?.workflowState,
+    );
+
+    bySectionId[sectionId] = {
+      ...baseline,
+      workflowState,
+      isAccessible: workflowState !== SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED,
+      isEditable: workflowState === SECTION_WORKFLOW_STATES.EDITABLE,
+      isReadOnly: workflowState === SECTION_WORKFLOW_STATES.READ_ONLY,
+      reasonCode: permission?.reasonCode ?? baseline.reasonCode ?? null,
+      reason: permission?.reason ?? baseline.reason ?? null,
+    };
+  }
+
+  const accessibleSectionIds = CANONICAL_PAGE_SEQUENCE.filter(
+    (sectionId) => bySectionId[sectionId].isAccessible,
+  );
+
+  return {
+    ...baselinePageStates,
+    bySectionId,
+    editableSectionIds: CANONICAL_PAGE_SEQUENCE.filter(
+      (sectionId) => bySectionId[sectionId].isEditable,
+    ),
+    readOnlySectionIds: CANONICAL_PAGE_SEQUENCE.filter(
+      (sectionId) => bySectionId[sectionId].isReadOnly,
+    ),
+    systemSkippedSectionIds: CANONICAL_PAGE_SEQUENCE.filter(
+      (sectionId) =>
+        bySectionId[sectionId].workflowState === SECTION_WORKFLOW_STATES.SYSTEM_SKIPPED,
+    ),
+    accessibleSectionIds,
+  };
+};
+
+export const derivePageStates = (evaluation, context = EMPTY_OBJECT) => {
+  const state = normalizeState(evaluation);
+  const workflowMode = getWorkflowMode(state, context);
+  const baselinePageStates = buildWorkflowPageStates(workflowMode);
+
+  return applyWorkflowAuthorityOverlay(baselinePageStates, context.workflowAuthority);
 };
 
 export const deriveNavigationState = derivePageStates;

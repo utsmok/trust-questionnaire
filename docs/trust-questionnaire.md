@@ -4,6 +4,47 @@
 
 > This document is the canonical specification for the TRUST framework evaluation questionnaire. It defines every field, section, and response option required to assess AI-based information search tools. Use this document as the authoritative reference when implementing the questionnaire in Microsoft Forms or any other platform.
 
+## Persisted Review-Record Note (T001)
+
+This document specifies the **questionnaire content**. Saved-review persistence adds a separate review-record envelope defined in:
+
+- `docs/contracts/review-state-contract.md`
+- `docs/contracts/lifecycle-state-map.md`
+- `docs/contracts/schema-versioning-policy.md`
+
+The following persisted metadata are required by the T001 contracts and are **not** questionnaire response fields:
+
+| Metadata field | Required | Notes |
+|----------------|----------|-------|
+| `review_id` | Yes | Stable internal identifier for the saved review record. |
+| `public_id` | Yes | Stable human-facing identifier for routes, exports, and operator workflows. |
+| `workflow_mode` | Yes | One of the current questionnaire workflow modes from `static/js/config/sections.js`; remains separate from lifecycle state. |
+| `lifecycle_state` | Yes | Backend review-record lifecycle value from `docs/contracts/lifecycle-state-map.md`; not a questionnaire field. |
+| `state_schema_version` | Yes | Persisted review-state schema version. Initial contract value: `"1"`. |
+| `framework_version` | Yes | TRUST framework semantics version. Initial contract value: `"2.0"`. |
+| `current_revision_number` | Yes | Monotonic immutable revision counter for the latest saved state. |
+| `current_etag` | Yes | Opaque concurrency token for accepted writes. |
+| `created_at` / `updated_at` | Yes | Saved-review record timestamps. |
+| `created_by_user_id` | Yes | User identifier for the actor that created the review record. |
+
+Questionnaire responses remain the inner `current_state_json` payload. The metadata above sit outside the questionnaire field inventory and must not be added to Appendix A field totals.
+
+## Evidence Model Note (T002)
+
+This document remains the canonical specification for **questionnaire prompts and reviewer-authored response fields**. It is **not** the canonical runtime or persistence model for evidence storage.
+
+For T002, the authoritative runtime/persistence evidence model is defined in:
+
+- `docs/contracts/evidence-model-contract.md`
+- `docs/contracts/evidence-manifest-compatibility.md`
+- `docs/contracts/import-export-package-contract.md`
+
+Interpret the evidence-related questionnaire labels in this document as follows:
+
+- per-criterion `Evidence summary` and `Evidence links` remain questionnaire-spec prompts for reviewers, including legacy/import normalization needs;
+- the runtime and persisted evidence model is one durable **asset + scoped link** system, not a separate primary `Evidence links` storage structure per criterion;
+- Section `2.10 Evidence folder link` remains a workflow/documentation field describing a shared-location practice, not the canonical durable evidence record once backend evidence storage exists.
+
 ---
 
 ## Standard Answer Sets
@@ -103,7 +144,7 @@ A checked flag indicates a critical deficiency that must be resolved before the 
 | 2.7  | Benchmark comparison performed| Dropdown (single)| Yes     | Yes / No                                                                                                   |
 | 2.8  | Benchmark sources             | Long text       | Conditional | Required when Benchmark comparison performed is "Yes." List the benchmark tools or sources compared.     |
 | 2.9  | Sensitive data entered        | Dropdown (single)| Yes     | Yes / No                                                                                                   |
-| 2.10 | Evidence folder link          | URL             | Yes      | Link to the shared folder containing screenshots, exported results, and other supporting evidence.         |
+| 2.10 | Evidence folder link          | URL             | Yes      | Link to the shared folder containing screenshots, exported results, and other supporting evidence. This is a questionnaire/workflow reference field, not the canonical durable evidence-storage model. |
 
 ---
 
@@ -509,7 +550,9 @@ Completion checklist items:
 
 ## Appendix A -- Field Summary Reference
 
-The table below provides a quick reference for all sections and their field counts.
+The table below provides a quick reference for the **questionnaire specification** section counts only.
+
+It does **not** include persisted review-record envelope metadata, and it does **not** define the runtime field-definition totals in `static/js/config/questionnaire-schema.js`.
 
 | Section | Title                        | Field count |
 |---------|------------------------------|-------------|
@@ -527,6 +570,25 @@ The table below provides a quick reference for all sections and their field coun
 | 10B     | Second Review                | 6           |
 | 10C     | Final Team Decision          | 6           |
 | **Total** |                             | **132**     |
+
+### Current Count Status (T001)
+
+The repository does not currently present one reconciled field total. The counts below refer to different layers and should not be merged into a single number until the repo is reconciled.
+
+| Source / layer | Count | Interpretation |
+|----------------|-------|----------------|
+| Appendix A total in this document | 132 | Current questionnaire-spec summary table total. |
+| Explicit section-by-section listings in this document | 135 | Body-content count. This differs from Appendix A because Section 6 explicitly lists 21 fields while the appendix row still says 18. |
+| Runtime field definitions in `static/js/config/questionnaire-schema.js` | 123 | Live runtime field-id namespace. This count includes derived-only field definitions. |
+| Runtime non-derived input field definitions | 117 | Runtime field definitions excluding the 6 derived-only ids (`tr/re/uc/se/tc.principleJudgment` and `s8.completionChecklist`). |
+| Actual persisted `current_state_json.fields` entries per saved review | Variable | Sparse stored response keys. This is not a fixed total and depends on review completeness and field activity. |
+
+Known current causes of divergence:
+
+- `static/js/config/questionnaire-schema.js` adds four Section 0 runtime fields not listed in the questionnaire body: `s0.reviewerName`, `s0.reviewerEmail`, `s0.reviewerAffiliation`, and `s0.reviewDate`.
+- The questionnaire body lists separate criterion fields for `Evidence summary` and `Evidence links`, while the runtime schema currently defines one combined `${criterion}.evidence` field per criterion. For T002, the split wording remains a questionnaire-spec prompt model, not the canonical runtime/export-package model; legacy summary/link text must be normalized into the durable asset/link evidence system before or during import.
+- Section `2.10 Evidence folder link` remains part of the questionnaire specification for reproducibility and shared-folder workflows, but it is not the canonical durable evidence record in the T002 contracts.
+- The runtime field-definition total and the questionnaire-spec total answer different questions; neither should be restated as the other's canonical count.
 
 ---
 
@@ -565,5 +627,5 @@ A principle receives an overall judgment based on its constituent criterion scor
 ---
 
 *Document version: 1.0*
-*Last updated: 2026-04-02*
+*Last updated: 2026-04-06*
 *Maintained by: EIS-IS Team, University of Twente*

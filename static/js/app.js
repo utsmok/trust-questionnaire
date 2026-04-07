@@ -1,3 +1,4 @@
+import { createAppShellController } from './shell/app-shell.js';
 import { initializeFormControls } from './behavior/form-controls.js';
 import { initializeKeyboardBehavior } from './behavior/keyboard.js';
 import { initializeNavigation } from './behavior/navigation.js';
@@ -9,7 +10,13 @@ const getDocumentRef = (root) => root?.ownerDocument ?? root ?? document;
 const getQuestionnaireRenderRoot = (root) =>
   getDocumentRef(root).getElementById('questionnaireRenderRoot');
 
-export const bootstrapApp = (root = document) => {
+let globalErrorHooksInstalled = false;
+
+const ensureGlobalErrorHooks = () => {
+  if (globalErrorHooksInstalled) {
+    return;
+  }
+
   window.addEventListener('error', (event) => {
     console.error('[app] uncaught error:', event.error);
   });
@@ -17,11 +24,33 @@ export const bootstrapApp = (root = document) => {
     console.error('[app] unhandled promise rejection:', event.reason);
   });
 
-  const store = createAppStore();
+  globalErrorHooksInstalled = true;
+};
+
+const isCompatibilityDocumentRoute = (root) => {
+  const documentRef = getDocumentRef(root);
+  const windowRef = documentRef.defaultView ?? window;
+  const pathname = windowRef.location?.pathname ?? '/';
+
+  return pathname === '/trust-framework.html';
+};
+
+export const bootstrapQuestionnaireWorkspace = ({
+  root = document,
+  initialEvaluation,
+  workflowAuthority = null,
+  routeContext = null,
+  workspacePreferences = null,
+} = {}) => {
+  ensureGlobalErrorHooks();
+
+  const store = createAppStore(
+    initialEvaluation === undefined
+      ? { workflowAuthority }
+      : { initialEvaluation, workflowAuthority },
+  );
   const questionnaireRenderRoot = getQuestionnaireRenderRoot(root);
 
-  // Lock body scroll now that the shell grid is initialized.
-  // Without JS, <noscript> styles allow scrolling as a fallback.
   document.body.style.overflow = 'hidden';
 
   if (questionnaireRenderRoot) {
@@ -31,21 +60,47 @@ export const bootstrapApp = (root = document) => {
     });
   }
 
-  const navigation = initializeNavigation({ root, store });
+  const navigation = initializeNavigation({
+    root,
+    store,
+    routeContext,
+    preferences: workspacePreferences,
+  });
   const formControls = initializeFormControls({ root, store });
   const keyboard = initializeKeyboardBehavior({
     root,
     navigateToPage: navigation.navigateToPage,
+    toggleSidebar: navigation.toggleSidebar,
+    setSidebarActiveTab: store.actions.setSidebarActiveTab,
   });
 
   return {
     store,
+    navigateToPage: navigation.navigateToPage,
+    replaceEvaluation: store.actions.replaceEvaluation,
+    setWorkflowAuthority: store.actions.setWorkflowAuthority,
     destroy() {
       keyboard.destroy();
       formControls.destroy();
       navigation.destroy();
     },
   };
+};
+
+export const bootstrapApp = async (root = document) => {
+  ensureGlobalErrorHooks();
+
+  if (isCompatibilityDocumentRoute(root)) {
+    document.body.dataset.appMode = 'compatibility';
+    document.body.dataset.appSurface = 'compatibility';
+    return bootstrapQuestionnaireWorkspace({ root });
+  }
+
+  document.body.style.overflow = 'hidden';
+  return createAppShellController({
+    root,
+    mountWorkspace: (options) => bootstrapQuestionnaireWorkspace({ root, ...options }),
+  });
 };
 
 let appInstance = null;

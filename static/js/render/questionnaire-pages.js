@@ -38,6 +38,18 @@ import {
 import { createEvidenceBlockElement, createEvidenceScope } from './evidence.js';
 import { EMPTY_ARRAY, freezeArray, isPlainObject } from '../utils/shared.js';
 
+const createTestRunPanelPlaceholder = ({ documentRef, criterionCode = null } = {}) =>
+  createElement('div', {
+    documentRef,
+    className: criterionCode
+      ? 'tooling-test-run-criterion-summary'
+      : 'tooling-test-run-panel-shell',
+    dataset: {
+      testRunPanel: criterionCode ? 'criterion-summary' : 'main',
+      criterionCode,
+    },
+  });
+
 const EMPTY_OBJECT = Object.freeze({});
 const SECTION_NOTE_HELP_TEXT =
   "Free-form note for observations that don't fit elsewhere. Does not satisfy any required field.";
@@ -1515,7 +1527,8 @@ export const createQuestionnairePageElement = (
               documentRef,
               criterionCode: criterionModel.criterionCode,
               headingId: criterionModel.headingId,
-              title: `${criterionModel.criterion.code} — ${criterionModel.criterion.title}`,
+              codeText: criterionModel.criterion.code,
+              title: criterionModel.criterion.title,
               statement: criterionModel.criterion.statement,
               accentClass: pageModel.accentClass,
               dataset: {
@@ -1532,7 +1545,6 @@ export const createQuestionnairePageElement = (
                 id: criterionModel.elementId,
               },
               children: [
-                createCriterionSkipElement(criterionModel, documentRef),
                 createFieldGrid({
                   documentRef,
                   layout: 'single',
@@ -1544,6 +1556,10 @@ export const createQuestionnairePageElement = (
                     createFieldGroupElement(fieldModel, documentRef, { respectVisibility }),
                   ),
                 }),
+                createTestRunPanelPlaceholder({
+                  documentRef,
+                  criterionCode: criterionModel.criterionCode,
+                }),
                 createEvidenceBlockElement({
                   documentRef,
                   scope: createEvidenceScope({
@@ -1552,6 +1568,7 @@ export const createQuestionnairePageElement = (
                   }),
                   editable: criterionModel.evidenceEditable,
                 }),
+                createCriterionSkipElement(criterionModel, documentRef),
               ],
             }),
           ),
@@ -1569,6 +1586,8 @@ export const createQuestionnairePageElement = (
           editable: pageModel.pageState.isEditable,
         })
       : null;
+  const testRunPanel =
+    pageModel.pageId === SECTION_IDS.S2 ? createTestRunPanelPlaceholder({ documentRef }) : null;
   const sectionMeta = createSectionMetaElement(pageModel.sectionMeta, documentRef);
 
   return createSection({
@@ -1600,7 +1619,7 @@ export const createQuestionnairePageElement = (
       pageInvalid: pageModel.sectionState.invalid,
       pageBlocked: pageModel.sectionState.blocked,
     },
-    children: [criteriaStack, ...fieldGrids, evaluationEvidenceBlock, sectionMeta],
+    children: [criteriaStack, ...fieldGrids, testRunPanel, evaluationEvidenceBlock, sectionMeta],
   });
 };
 

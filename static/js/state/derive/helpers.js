@@ -677,7 +677,8 @@ export const isFieldValuePresent = (field, value) => {
   }
 };
 
-export const getWorkflowMode = (state) =>
+export const getWorkflowMode = (state, context = EMPTY_OBJECT) =>
+  context.workflowAuthority?.workflowMode ??
   getFieldValue(state, FIELD_IDS.S0.SUBMISSION_TYPE) ??
   state.workflow.mode ??
   WORKFLOW_MODES.PRIMARY_EVALUATION;

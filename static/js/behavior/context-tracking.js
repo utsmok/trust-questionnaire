@@ -33,7 +33,20 @@ export const updateHashForPage = (windowRef, pageId) => {
   windowRef.history?.replaceState?.(null, '', nextUrl);
 };
 
-export const createContextTrackingController = ({ root = document, store, navigateToPage }) => {
+const resolveRouteOwnedPageId = (routeContext, pageOrder, windowRef) => {
+  if (typeof routeContext?.getCurrentPageId !== 'function') {
+    return null;
+  }
+
+  return routeContext.getCurrentPageId({ pageOrder, windowRef }) ?? null;
+};
+
+export const createContextTrackingController = ({
+  root = document,
+  store,
+  navigateToPage,
+  routeContext = null,
+}) => {
   const documentRef = getDocumentRef(root);
   const windowRef = documentRef.defaultView ?? window;
   const questionnaireRenderRoot = documentRef.getElementById('questionnaireRenderRoot');
@@ -72,10 +85,9 @@ export const createContextTrackingController = ({ root = document, store, naviga
   };
 
   const handleHashChange = () => {
-    const targetPageId = resolvePageIdFromHash(
-      windowRef.location.hash,
-      store.getState().ui.pageOrder,
-    );
+    const targetPageId = routeContext
+      ? resolveRouteOwnedPageId(routeContext, store.getState().ui.pageOrder, windowRef)
+      : resolvePageIdFromHash(windowRef.location.hash, store.getState().ui.pageOrder);
 
     if (!targetPageId) {
       return;
@@ -86,22 +98,27 @@ export const createContextTrackingController = ({ root = document, store, naviga
 
   questionnaireRenderRoot.addEventListener('focusin', handleQuestionnaireContextTarget);
   questionnaireRenderRoot.addEventListener('click', handleQuestionnaireContextTarget);
-  windowRef.addEventListener('hashchange', handleHashChange);
+
+  if (!routeContext) {
+    windowRef.addEventListener('hashchange', handleHashChange);
+  }
 
   cleanup.push(() => {
     questionnaireRenderRoot.removeEventListener('focusin', handleQuestionnaireContextTarget);
     questionnaireRenderRoot.removeEventListener('click', handleQuestionnaireContextTarget);
-    windowRef.removeEventListener('hashchange', handleHashChange);
+
+    if (!routeContext) {
+      windowRef.removeEventListener('hashchange', handleHashChange);
+    }
   });
 
-  const initialPageId = resolvePageIdFromHash(
-    windowRef.location.hash,
-    store.getState().ui.pageOrder,
-  );
+  const initialPageId = routeContext
+    ? resolveRouteOwnedPageId(routeContext, store.getState().ui.pageOrder, windowRef)
+    : resolvePageIdFromHash(windowRef.location.hash, store.getState().ui.pageOrder);
 
   if (initialPageId) {
     navigateToPage(initialPageId, { resetSubAnchor: true });
-  } else {
+  } else if (!routeContext) {
     updateHashForPage(windowRef, store.getState().ui.activePageId);
   }
 
@@ -114,6 +131,15 @@ export const createContextTrackingController = ({ root = document, store, naviga
       }
 
       lastActivePageId = state.ui.activePageId;
+
+      if (routeContext?.replaceLocationForPage) {
+        routeContext.replaceLocationForPage({
+          windowRef,
+          pageId: state.ui.activePageId,
+        });
+        return;
+      }
+
       updateHashForPage(windowRef, state.ui.activePageId);
     },
     { immediate: true },

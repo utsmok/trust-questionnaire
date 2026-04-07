@@ -7,6 +7,7 @@ import {
 import { SKIP_STATES } from '../config/rules.js';
 import { getFieldControlId } from '../render/questionnaire-pages.js';
 import { initializeEvidenceUi } from '../render/evidence.js';
+import { initializeTestPlanPanel } from '../render/test-plan-panel.js';
 import { toArray, getDocumentRef, isPlainObject } from '../utils/shared.js';
 const EVIDENCE_BLOCK_SELECTOR = '[data-evidence-block="true"]';
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -865,6 +866,10 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
       return;
     }
 
+    if (control.disabled || control.readOnly) {
+      return;
+    }
+
     if (control.dataset.sectionRecordKey) {
       handleSectionControlCommit(control, store);
       return;
@@ -909,6 +914,10 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
     const control = event.target;
 
     if (!isFormControl(control)) {
+      return;
+    }
+
+    if (control.disabled || control.readOnly) {
       return;
     }
 
@@ -1035,6 +1044,10 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
 
     const triggerEl = event.target.closest('.score-dropdown-trigger');
     if (triggerEl) {
+      if (triggerEl.disabled || triggerEl.getAttribute('aria-disabled') === 'true') {
+        return;
+      }
+
       const dropdown = triggerEl.closest('.score-dropdown');
       if (dropdown?.classList.contains('is-open')) {
         closeScoreDropdown(dropdown);
@@ -1066,6 +1079,9 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
     const dropdown = (trigger || option).closest('.score-dropdown');
     const panel = dropdown?.querySelector('.score-dropdown-panel');
     if (!dropdown || !panel) return;
+    if (trigger?.disabled || trigger?.getAttribute('aria-disabled') === 'true') {
+      return;
+    }
 
     const options = Array.from(panel.querySelectorAll('.score-dropdown-option'));
     if (options.length === 0) return;
@@ -1141,6 +1157,14 @@ export const initializeFieldHandlers = ({ root = document, store }) => {
   });
   cleanup.push(() => {
     evidenceUi.destroy();
+  });
+
+  const testPlanPanel = initializeTestPlanPanel({
+    root: documentRef,
+    store,
+  });
+  cleanup.push(() => {
+    testPlanPanel.destroy();
   });
 
   const unsubscribe = store.subscribe(

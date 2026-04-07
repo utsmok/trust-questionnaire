@@ -5,13 +5,9 @@ import {
   SECTION_REGISTRY,
   getSectionDefinition,
 } from '../config/sections.js';
-import {
-  toArray,
-  getDocumentRef,
-  clearChildren,
-  setAccentKey,
-  createSourceList,
-} from '../utils/shared.js';
+import { getDocumentRef, clearChildren, setAccentKey, createSourceList } from '../utils/shared.js';
+import { getAboutTopicDefinition } from '../content/about-topics.js';
+import { appendStructuredTopicBlocks } from './content-topic-blocks.js';
 
 const ABOUT_TOPIC_IDS = Object.freeze(
   CONTENT_TOPIC_REGISTRY.filter((topic) => topic.area === CONTENT_TOPIC_AREAS.ABOUT).map(
@@ -19,29 +15,10 @@ const ABOUT_TOPIC_IDS = Object.freeze(
   ),
 );
 
-const parseTopicIds = (rawValue) =>
-  typeof rawValue === 'string' ? rawValue.trim().split(/\s+/).filter(Boolean) : [];
-
 const getRelatedPagesForTopic = (topicId) =>
   SECTION_REGISTRY.filter((section) => section.aboutTopicIds.includes(topicId));
 
 const getTopicAccentKey = (topicId) => getRelatedPagesForTopic(topicId)[0]?.accentKey ?? 'control';
-
-const extractAboutSections = (mount) => {
-  const sectionsByTopicId = new Map();
-
-  toArray(mount?.querySelectorAll('[data-topic-area="about"][data-topic-ids]')).forEach(
-    (section) => {
-      parseTopicIds(section.dataset.topicIds)
-        .filter((topicId) => topicId.startsWith('about.'))
-        .forEach((topicId) => {
-          sectionsByTopicId.set(topicId, section);
-        });
-    },
-  );
-
-  return sectionsByTopicId;
-};
 
 const buildAboutShell = (mount, documentRef) => {
   clearChildren(mount);
@@ -106,7 +83,6 @@ export const createAboutPanelController = ({ root = document }) => {
     };
   }
 
-  const sectionsByTopicId = extractAboutSections(mount);
   const aboutShell = buildAboutShell(mount, documentRef);
   const cleanup = [];
 
@@ -121,7 +97,7 @@ export const createAboutPanelController = ({ root = document }) => {
     const heading = documentRef.createElement('p');
     const list = documentRef.createElement('div');
     const topicDefinition = activeTopicId ? getContentTopicDefinition(activeTopicId) : null;
-    const topicSection = activeTopicId ? (sectionsByTopicId.get(activeTopicId) ?? null) : null;
+    const topicContent = activeTopicId ? getAboutTopicDefinition(activeTopicId) : null;
     const topicAccentKey = activeTopicId ? getTopicAccentKey(activeTopicId) : 'control';
 
     setAccentKey(mount, topicAccentKey);
@@ -154,7 +130,7 @@ export const createAboutPanelController = ({ root = document }) => {
 
     aboutShell.nav.append(heading, list);
 
-    if (!topicDefinition || !topicSection) {
+    if (!topicDefinition || !topicContent) {
       return;
     }
 
@@ -193,7 +169,19 @@ export const createAboutPanelController = ({ root = document }) => {
       meta.appendChild(relatedPages);
     }
 
-    aboutShell.view.append(meta, topicSection);
+    const topicBody = documentRef.createElement('section');
+    topicBody.className = 'doc-section';
+    topicBody.dataset.section = topicAccentKey;
+
+    if (topicContent.summary) {
+      const summary = documentRef.createElement('p');
+      summary.textContent = topicContent.summary;
+      topicBody.appendChild(summary);
+    }
+
+    appendStructuredTopicBlocks(documentRef, topicBody, topicContent);
+
+    aboutShell.view.append(meta, topicBody);
   };
 
   const sync = (state) => {

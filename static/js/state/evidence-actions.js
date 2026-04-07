@@ -62,6 +62,7 @@ const normalizeEvidenceItem = (item, { scope = 'evaluation', criterionCode = nul
     size: normalizeEvidenceSizeValue(item.size),
     isImage: item.isImage === true || isImageMimeType(resolvedMimeType),
     dataUrl: resolvedDataUrl,
+    downloadUrl: normalizeTextValue(item.downloadUrl ?? item.download_url),
     previewDataUrl:
       normalizeTextValue(item.previewDataUrl) ??
       (isImageMimeType(resolvedMimeType) ? resolvedDataUrl : null),
@@ -203,6 +204,41 @@ export const createEvidenceActions = ({
   createStateWithEvaluation,
   areNormalizedValuesEqual,
 }) => {
+  const replaceEvidenceProjection = ({ evaluationItems = [], criterionItems = {} } = {}) =>
+    commit((previousState) => {
+      const nextEvaluationItems = finalizeEvidenceItemsForInsert(
+        normalizeEvidenceItems(evaluationItems, {
+          scope: 'evaluation',
+        }),
+      );
+      const nextCriterionItems = Object.fromEntries(
+        Object.entries(criterionItems ?? {}).map(([criterionCode, items]) => [
+          criterionCode,
+          finalizeEvidenceItemsForInsert(
+            normalizeEvidenceItems(items, {
+              scope: 'criterion',
+              criterionCode,
+            }),
+          ),
+        ]),
+      );
+      const currentEvaluationItems = previousState.evaluation.evidence?.evaluation ?? [];
+      const currentCriterionItems = previousState.evaluation.evidence?.criteria ?? {};
+
+      if (
+        areNormalizedValuesEqual(currentEvaluationItems, nextEvaluationItems) &&
+        areNormalizedValuesEqual(currentCriterionItems, nextCriterionItems)
+      ) {
+        return previousState;
+      }
+
+      const evaluation = cloneEvaluation(previousState.evaluation);
+      evaluation.evidence.evaluation = nextEvaluationItems;
+      evaluation.evidence.criteria = nextCriterionItems;
+
+      return createStateWithEvaluation(previousState, evaluation);
+    });
+
   const addEvaluationEvidenceItems = (items) =>
     commit((previousState) => {
       const normalizedItems = finalizeEvidenceItemsForInsert(
@@ -469,6 +505,7 @@ export const createEvidenceActions = ({
     });
 
   return {
+    replaceEvidenceProjection,
     addEvaluationEvidenceItems,
     addCriterionEvidenceItems,
     reuseCriterionEvidenceAsset,

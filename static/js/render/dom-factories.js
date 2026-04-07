@@ -792,6 +792,9 @@ export const createScoreDropdown = ({
   inputDataset = {},
   attributes = {},
 } = {}) => {
+  const panelId = fieldId
+    ? `${fieldId.replace(/[^a-zA-Z0-9_-]/g, '-')}-score-dropdown-panel`
+    : null;
   const normalizedSelectedValue =
     selectedValue === null || selectedValue === undefined
       ? null
@@ -806,6 +809,7 @@ export const createScoreDropdown = ({
       ...dataset,
       fieldId,
       controlKind: 'score_dropdown',
+      surfaceKind: 'score-dropdown',
     },
     attributes,
   });
@@ -829,6 +833,8 @@ export const createScoreDropdown = ({
       type: 'button',
       'aria-haspopup': 'listbox',
       'aria-expanded': 'false',
+      'aria-controls': panelId,
+      'aria-keyshortcuts': 'Enter Space Escape ArrowDown ArrowUp Home End',
       disabled: readOnly ? true : null,
     },
     children: [
@@ -853,6 +859,7 @@ export const createScoreDropdown = ({
     documentRef,
     className: 'score-dropdown-panel',
     attributes: {
+      id: panelId,
       role: 'listbox',
       hidden: true,
       'aria-hidden': 'true',
@@ -905,6 +912,7 @@ export const createCriterionCard = ({
   documentRef,
   criterionCode,
   headingId = null,
+  codeText = criterionCode,
   title,
   statement,
   accentClass = null,
@@ -923,20 +931,42 @@ export const createCriterionCard = ({
   });
 
   card.append(
-    createElement('h3', {
+    createElement('div', {
       documentRef,
-      text: title,
-      attributes: {
-        id: headingId,
-      },
+      className: 'criterion-card-header',
+      children: [
+        createElement('div', {
+          documentRef,
+          className: 'criterion-card-heading-row',
+          children: [
+            createElement('span', {
+              documentRef,
+              className: 'criterion-card-code',
+              text: codeText,
+            }),
+            createElement('h3', {
+              documentRef,
+              className: 'criterion-card-title',
+              text: title,
+              attributes: {
+                id: headingId,
+              },
+            }),
+          ],
+        }),
+        createElement('p', {
+          documentRef,
+          className: 'criterion-card-statement',
+          text: statement,
+        }),
+      ],
     }),
-    createElement('p', {
+    createElement('div', {
       documentRef,
-      text: statement,
+      className: 'criterion-card-body',
+      children,
     }),
   );
-
-  appendChildren(card, children);
 
   return card;
 };

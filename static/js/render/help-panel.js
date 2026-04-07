@@ -4,6 +4,12 @@ import {
   getContentTopicDefinition,
   getSectionDefinition,
 } from '../config/sections.js';
+import { GLOBAL_SHORTCUTS } from '../config/shortcut-registry.js';
+import {
+  HELP_LEGEND_CARD_REGISTRY,
+  HELP_SURFACE_SECTIONS,
+  getGuidanceTopicDefinition,
+} from '../content/guidance-topics.js';
 import { PROGRESS_STATES } from '../state/derive.js';
 import {
   getDocumentRef,
@@ -15,22 +21,6 @@ import {
   getCompletionGroupLabel,
 } from '../utils/shared.js';
 import { REFERENCE_DRAWER_BY_TOPIC_ID } from './reference-drawers.js';
-
-const PAGE_HELP_SUMMARIES = Object.freeze({
-  S0: 'Set workflow mode, tool identity, and responder role before relying on later completion or routing behavior.',
-  S1: 'Record provider, scope, and access characteristics here; these values frame later security and governance interpretation.',
-  S2: 'Use this page to make the evaluation auditable: scenarios, benchmark choices, and evidence boundary belong here first.',
-  TR: 'Section color marks transparency context; scores and follow-up blockers stay local to each criterion.',
-  RE: 'Use repeated-run and verification evidence to separate reliability scoring from final recommendation language.',
-  UC: 'User-centric scoring is about fit, workflow integration, usability, and explicit uncertainty cues—not general enthusiasm.',
-  SE: 'Security scoring should stay distinct from recommendation outcomes; unresolved compliance concerns escalate visibly.',
-  TC: 'Traceability requires inspectable provenance and source linkage; a positive tone is not the same thing as traceability.',
-  S8: 'Critical fails and confidence are workflow/status controls. They modify downstream recommendation logic without replacing section identity.',
-  S9: 'Recommendation colors represent decision outcomes only; the section accent still marks where you are in the questionnaire.',
-  S10A: 'Use handoff pages to expose uncertainty, not hide it. Governance pages stay explicitly tagged and separately colored.',
-  S10B: 'Second review captures agreement and conflict as first-class workflow outcomes; keep recommendation state distinct from governance context.',
-  S10C: 'Final decision records publication and review cadence. It closes the workflow without overwriting the evidence trail.',
-});
 
 const WORKFLOW_STATE_LABELS = Object.freeze({
   [SECTION_WORKFLOW_STATES.EDITABLE]: 'Editable',
@@ -69,6 +59,18 @@ const createLegendCard = ({ documentRef, titleText, bodyText, chips = [] }) => {
   return card;
 };
 
+const formatShortcutCombo = (combo) => {
+  const parts = [];
+
+  if (combo.ctrlKey) parts.push('Ctrl');
+  if (combo.altKey) parts.push('Alt');
+  if (combo.shiftKey) parts.push('Shift');
+  if (combo.metaKey) parts.push('Meta');
+
+  parts.push(combo.key.length === 1 ? combo.key.toUpperCase() : combo.key);
+  return parts.join(' + ');
+};
+
 export const createHelpPanelController = ({ root = document }) => {
   const documentRef = getDocumentRef(root);
   const mount = documentRef.getElementById('helpLegendMount');
@@ -85,6 +87,9 @@ export const createHelpPanelController = ({ root = document }) => {
     const pageState = state.derived.pageStates.bySectionId[state.ui.activePageId] ?? null;
     const sectionProgress =
       state.derived.completionProgress?.bySectionId?.[state.ui.activePageId] ?? null;
+    const guidanceTopic = pageDefinition?.contextTopicId
+      ? getGuidanceTopicDefinition(pageDefinition.contextTopicId)
+      : null;
     const contextTopicDefinition = pageDefinition?.contextTopicId
       ? getContentTopicDefinition(pageDefinition.contextTopicId)
       : null;
@@ -116,7 +121,7 @@ export const createHelpPanelController = ({ root = document }) => {
     );
     currentSummary.className = 'about-topic-suggestion';
     currentSummary.textContent =
-      PAGE_HELP_SUMMARIES[state.ui.activePageId] ??
+      guidanceTopic?.summary ??
       contextTopicDefinition?.title ??
       'Use the page index, pager, and context surface together; section color marks location, state chips mark workflow and completion.';
 
@@ -159,67 +164,14 @@ export const createHelpPanelController = ({ root = document }) => {
     legendGrid.className = 'reference-cards';
 
     legendGrid.append(
-      createLegendCard({
-        documentRef,
-        titleText: 'Section context',
-        bodyText:
-          'Accent color answers "where am I?". It follows the active page across chrome, sidebar markers, contextual docs, and the completion strip.',
-        chips: [
-          createChip(documentRef, pageDefinition?.pageCode ?? 'PAGE', { helpRole: 'context' }),
-          createChip(documentRef, 'Reference', { helpRole: 'info' }),
-          createChip(documentRef, 'About', { helpRole: 'info' }),
-        ],
-      }),
-      createLegendCard({
-        documentRef,
-        titleText: 'Score scale',
-        bodyText:
-          'Criterion scores stay local to score controls and legends. They no longer double as page or workflow colors.',
-        chips: [
-          createChip(documentRef, '0 Fails', { score: '0' }),
-          createChip(documentRef, '1 Partial', { score: '1' }),
-          createChip(documentRef, '2 Baseline', { score: '2' }),
-          createChip(documentRef, '3 Strong', { score: '3' }),
-        ],
-      }),
-      createLegendCard({
-        documentRef,
-        titleText: 'Workflow and progress',
-        bodyText:
-          'Workflow tags show editability; progress tags show completion or attention state. They overlay section context rather than replacing it.',
-        chips: [
-          createChip(documentRef, 'Editable', { workflowState: 'editable' }),
-          createChip(documentRef, 'Read-only', { workflowState: 'read_only' }),
-          createChip(documentRef, 'Skipped', { workflowState: 'system_skipped' }),
-        ],
-      }),
-      createLegendCard({
-        documentRef,
-        titleText: 'Judgment state',
-        bodyText:
-          'Principle judgments are outcome states, not section colors. They stay contained inside their own controls and badges.',
-        chips: [
-          createChip(documentRef, 'Pass', { judgment: 'pass' }),
-          createChip(documentRef, 'Conditional', { judgment: 'conditional_pass' }),
-          createChip(documentRef, 'Fail', { judgment: 'fail' }),
-        ],
-      }),
-      createLegendCard({
-        documentRef,
-        titleText: 'Recommendation state',
-        bodyText:
-          'Recommendation colors now match the decision meaning: positive, caveated, provisional, restricted, negative, or neutral.',
-        chips: [
-          createChip(documentRef, 'Recommended', { recommendationState: 'recommended' }),
-          createChip(documentRef, 'Caveats', { recommendationState: 'recommended_with_caveats' }),
-          createChip(documentRef, 'Needs review', {
-            recommendationState: 'needs_review_provisional',
-          }),
-          createChip(documentRef, 'Pilot only', { recommendationState: 'pilot_only' }),
-          createChip(documentRef, 'Not recommended', { recommendationState: 'not_recommended' }),
-          createChip(documentRef, 'Out of scope', { recommendationState: 'out_of_scope' }),
-        ],
-      }),
+      ...HELP_LEGEND_CARD_REGISTRY.map((card) =>
+        createLegendCard({
+          documentRef,
+          titleText: card.title,
+          bodyText: card.body,
+          chips: card.chips.map((chip) => createChip(documentRef, chip.label, chip.dataset)),
+        }),
+      ),
     );
 
     legendSection.append(legendKicker, legendGrid);
@@ -236,19 +188,10 @@ export const createHelpPanelController = ({ root = document }) => {
       'width:100%;border-collapse:collapse;font-size:var(--text-body);';
     shortcutsTable.setAttribute('role', 'table');
 
-    const shortcutRows = [
-      ['Alt + 1', 'Jump to Transparent (TR)'],
-      ['Alt + 2', 'Jump to Reliable (RE)'],
-      ['Alt + 3', 'Jump to User-centric (UC)'],
-      ['Alt + 4', 'Jump to Secure (SE)'],
-      ['Alt + 5', 'Jump to Traceable (TC)'],
-      ['Alt + t', 'Jump to first page with code starting with T'],
-      ['Alt + r', 'Jump to first page with code starting with R'],
-      ['Alt + u', 'Jump to first page with code starting with U'],
-      ['Alt + s', 'Jump to first page with code starting with S'],
-      ['Alt + c', 'Jump to first page with code starting with C'],
-      ['Escape', 'Close sidebar drawer'],
-    ];
+    const shortcutRows = GLOBAL_SHORTCUTS.map((shortcut) => [
+      shortcut.combos.map(formatShortcutCombo).join(' / '),
+      shortcut.description,
+    ]);
 
     shortcutRows.forEach(([key, action]) => {
       const row = documentRef.createElement('tr');
@@ -271,9 +214,22 @@ export const createHelpPanelController = ({ root = document }) => {
 
     shortcutsSection.append(shortcutsKicker, shortcutsTable);
 
+    const overviewSection = documentRef.createElement('section');
+    overviewSection.className = 'help-panel-section';
+    const overviewKicker = documentRef.createElement('p');
+    overviewKicker.className = 'workspace-title';
+    overviewKicker.textContent = 'Shared help route';
+    overviewSection.appendChild(overviewKicker);
+
+    HELP_SURFACE_SECTIONS.forEach((topic) => {
+      const paragraph = documentRef.createElement('p');
+      paragraph.textContent = topic.paragraphs?.[0] ?? topic.summary ?? topic.title;
+      overviewSection.appendChild(paragraph);
+    });
+
     const shell = documentRef.createElement('div');
     shell.className = 'help-panel-shell';
-    shell.append(currentSection, legendSection, shortcutsSection);
+    shell.append(currentSection, legendSection, shortcutsSection, overviewSection);
     mount.appendChild(shell);
   };
 

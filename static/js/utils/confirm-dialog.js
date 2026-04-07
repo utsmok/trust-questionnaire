@@ -1,3 +1,5 @@
+import { ensureSurfaceManager } from './surface-manager.js';
+
 let activeDialog = null;
 
 const DIALOG_STYLES = `
@@ -76,6 +78,11 @@ export const confirmDialog = (message, { documentRef = document } = {}) => {
 
   return new Promise((resolve) => {
     const previousFocus = documentRef.activeElement;
+    const surfaceManager = ensureSurfaceManager({
+      documentRef,
+      statusRegion: documentRef.getElementById('reviewShellStatusLiveRegion'),
+    });
+    const surfaceId = `confirm-dialog:${Date.now()}`;
 
     const overlay = documentRef.createElement('div');
     overlay.className = 'confirm-overlay';
@@ -106,47 +113,27 @@ export const confirmDialog = (message, { documentRef = document } = {}) => {
 
     let settled = false;
 
-    const teardown = (result) => {
+    const finalize = (result) => {
       if (settled) return;
       settled = true;
-      documentRef.removeEventListener('keydown', handleKeydown);
       activeDialog = null;
-      overlay.remove();
-      if (previousFocus && typeof previousFocus.focus === 'function') {
-        previousFocus.focus();
+      if (surfaceManager.isSurfaceOpen(surfaceId)) {
+        surfaceManager.closeSurface(surfaceId, {
+          reason: result ? 'confirm' : 'cancel',
+        });
       }
+      surfaceManager.unregisterSurface(surfaceId);
+      overlay.remove();
       resolve(result);
     };
 
-    const handleKeydown = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        teardown(false);
-      }
-      if (e.key === 'Tab') {
-        const focusable = card.querySelectorAll(
-          'button:not([disabled]), [href]:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        );
-        if (focusable.length < 2) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (e.shiftKey && documentRef.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && documentRef.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    documentRef.addEventListener('keydown', handleKeydown);
-
-    cancelButton.addEventListener('click', () => teardown(false));
-    confirmButton.addEventListener('click', () => teardown(true));
+    cancelButton.addEventListener('click', () => finalize(false));
+    confirmButton.addEventListener('click', () => finalize(true));
 
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) teardown(false);
+      if (e.target === overlay) {
+        surfaceManager.closeSurface(surfaceId, { reason: 'backdrop' });
+      }
     });
 
     actionsEl.appendChild(cancelButton);
@@ -158,6 +145,33 @@ export const confirmDialog = (message, { documentRef = document } = {}) => {
 
     activeDialog = overlay;
 
-    confirmButton.focus();
+    surfaceManager.registerSurface({
+      id: surfaceId,
+      element: overlay,
+      label: 'confirmation dialog',
+      priority: 50,
+      modal: true,
+      initialFocusTarget: confirmButton,
+      restoreFocusTarget: previousFocus,
+      closeAnnouncement: 'Closed confirmation dialog.',
+      onAfterClose({ reason }) {
+        if (reason === 'escape' || reason === 'backdrop' || reason === 'programmatic') {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          activeDialog = null;
+          surfaceManager.unregisterSurface(surfaceId);
+          overlay.remove();
+          resolve(false);
+        }
+      },
+    });
+
+    surfaceManager.openSurface(surfaceId, {
+      trigger: previousFocus instanceof HTMLElement ? previousFocus : null,
+      initialFocusTarget: confirmButton,
+      announceMessage: 'Opened confirmation dialog.',
+    });
   });
 };

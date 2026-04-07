@@ -20,6 +20,11 @@ const normalizeNumberValue = (value) => {
   return Number.isFinite(nextValue) ? nextValue : null;
 };
 
+const normalizeManifestDataUrl = (value) => {
+  const normalizedValue = normalizeTextValue(value);
+  return normalizedValue?.startsWith('data:') ? normalizedValue : null;
+};
+
 export const serializeEvidenceItem = (
   item,
   { scope = 'evaluation', criterionCode = null, sectionId = null } = {},
@@ -38,7 +43,7 @@ export const serializeEvidenceItem = (
       normalizeTextValue(sectionId ?? item.sectionId))
     : (normalizeTextValue(sectionId ?? item.sectionId) ?? SECTION_IDS.S2);
   const resolvedScope = resolvedCriterionCode || scope === 'criterion' ? 'criterion' : 'evaluation';
-  const resolvedDataUrl = normalizeTextValue(item.dataUrl ?? item.url ?? item.href);
+  const resolvedDataUrl = normalizeManifestDataUrl(item.dataUrl ?? item.url ?? item.href);
   const resolvedPreviewDataUrl =
     normalizeTextValue(item.previewDataUrl) ??
     (resolvedMimeType && isImageMimeType(resolvedMimeType) ? resolvedDataUrl : null);

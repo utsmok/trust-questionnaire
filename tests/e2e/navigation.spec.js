@@ -42,6 +42,8 @@ test('enables quick jumps and context anchor routing in primary evaluation mode'
 
 	await expect(page.locator('#questionnaire-criterion-tr2')).toBeFocused();
 	await expect(page.locator('#contextSidebarMount .context-anchor-button.is-active')).toContainText('TR2');
+	await expect(page.locator('#questionnaire-criterion-tr2 .criterion-card-statement')).toBeVisible();
+	await expect(page.locator('#questionnaire-criterion-tr2 [data-evidence-action="choose-files"]')).toBeVisible();
 
 	const sidebarToggle = page.locator('[data-sidebar-toggle]').first();
 	await clickElement(sidebarToggle);
